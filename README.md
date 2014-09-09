@@ -7,24 +7,32 @@ Jacob Meigs
 
 Contact Information
 Daniel Vu
+
 dvv297@gmail.com
+
 https://github.com/dv297
 
 Daniel Conner
+
 connerda93@gmail.com
+
 https://github.com/connerda
 
 Austin Riley
+
 austinriley91@gmail.com
+
 https://github.com/Aystub
 
 Jake Meigs
+
 jakemeigs@gmail.com
+
 https://github.com/Jmeigs1
 
 Meeting Times
 Thursday
-1:00 pm – 2:00 pm
+1:00 pm â€“ 2:00 pm
 Online Communication
 Facebook
 Google+
@@ -36,10 +44,10 @@ Approach
 -	Once appropriate, establish mobile platform
 
 Roles
-Captain – Daniel Vu
-Client Representative – Austin Riley
-Editor – Jake Meigs
-Code Analyst – Daniel Conner
+Captain â€“ Daniel Vu
+Client Representative â€“ Austin Riley
+Editor â€“ Jake Meigs
+Code Analyst â€“ Daniel Conner
 
 Conflict Resolution
 Team Member Issues
@@ -64,7 +72,7 @@ Edu Studio
 Mission
 To improve educational tools for students and parents and provide a consistent and balanced learning environment.
 Objectives
--	Increase parental awareness and interactions with their children to improve the student’s learning environment
+-	Increase parental awareness and interactions with their children to improve the studentâ€™s learning environment
 -	Foster parent and teacher relationships
--	Facilitate teacher’s ease of access so that they can focus on the students rather than the tools
+-	Facilitate teacherâ€™s ease of access so that they can focus on the students rather than the tools
 
