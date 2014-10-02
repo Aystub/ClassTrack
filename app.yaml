@@ -1,22 +1,65 @@
-application: usc-classtrack
+application: foobar
 version: 1
-runtime: php
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
-- url: /js
-  static_dir: js
+- url: /.*
+  script: main.app
 
-- url: /css
-  static_dir: css
-
-- url: /images
-  static_dir: images
+- url: /assets
+  static_dir: assets
 
 
+libraries:                                                                      
+- name: jinja2                                                                  
+  version: latest                                                               
+- name: markupsafe                                                              
+  version: latest 
 
 
-- url: .*
-  script: index.php
+
+# application: usc-classtrack
+# version: 1
+# runtime: python27
+# api_version: 1
+# threadsafe: true
+
+# handlers:
+# - url: .*
+#   script: main.application
+
+# - url: /assets
+#   script: assets
+
+# - url: /crons/.*
+#   script: main.application
+#   login: admin
+
+# - url: /generate-test-data/
+#   script: main.application
+#   login: admin
+
+# libraries:
+# - name: webapp2
+#   version: latest
+# - name: jinja2
+#   version: latest
+
+# All PHP stuff
+# handlers:
+# - url: /js
+#   static_dir: js
+
+# - url: /css
+#   static_dir: css
+
+# - url: /images
+#   static_dir: images
 
 
+
+
+# - url: .*
+#   script: index.php
