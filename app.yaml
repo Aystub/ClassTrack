@@ -1,16 +1,18 @@
-application: foobar
+application: usc-classtrack
 version: 1
 runtime: python27
 api_version: 1
 threadsafe: true
 
 handlers:
-- url: /.*
-  script: main.app
+
 
 - url: /assets
   static_dir: assets
 
+# This handler has to go last, because it will catch everything
+- url: /.*
+  script: main.app
 
 libraries:                                                                      
 - name: jinja2                                                                  

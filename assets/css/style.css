@@ -140,7 +140,7 @@ body {
 .jumbotron
 {
 	height:400px;
-	background:url("..assets/images/children.jpg");
+	background:url("/assets/images/children.jpg");
 	background-size: 100% auto;
 	background-position: 0px -150px;
 }
