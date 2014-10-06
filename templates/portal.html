@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block header %}{{ header }}{% endblock %}
+{% block content %}
+    {{ super() }}
+
+	{% if user %} 
+
+		<center><h1>Welcome to ClassTrack!</h1>
+		<h3>Don't worry, it'll be better than our football team</h3>
+
+		<img src="http://media.gogamecocks.com/smedia/2014/10/05/13/34/19qM75.AuSt.168.JPG"/>
+
+		</center>
+
+	{% else %}
+		<div class="displaybox">
+			<p>You must <a href="{{ login }}">login</a> first.</p>
+		</div>
+	{% endif %}
+{% endblock %}
+
+{% block footer %}
+	{{ super() }}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block header %}{{ header }}{% endblock %}
+{% block content %}
+    {{ super() }}
+    
+	<div class="jumbotron">
+		<div class="container">
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="starter-template">
+			<h1>ClassTrack</h1>
+			<p class="lead">The fast and easy way to stay connected to your children's education.</p>
+		</div>
+
+		<div class="row">
+			<div class="col-md-4">
+				<h2>Convenient</h2>
+				<p>With support for all web, iPhone, and Android platforms, you can always be sure that school news is always readily available. </p>
+			</div>
+			<div class="col-md-4">
+				<h2>Fast</h2>
+				<p>We have made ensured that all your favorite functionalities are easy to get to and that you'll never waste time looking for the thing you need. </p>
+			</div>
+			<div class="col-md-4">
+				<h2>Easy to Use</h2>
+				<p>We have done research to make sure that students, parents, and teachers can use ClassTrack with the utmost of ease.</p>
+			</div>
+		</div>
+	</div>
+
+	<div class="push"></div>
+
+{% endblock %}
+
+{% block footer %}
+    {{ super() }}
+{% endblock %}

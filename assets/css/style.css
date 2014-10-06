@@ -18,6 +18,18 @@ height: 150px; /* This needs to be the same as footer height */
 	height:200px;
 }
 
+.displaybox {
+  margin-top: 25px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+  border: 2px solid;
+  border-color: #eee;
+  margin-bottom: 1em;
+  padding: 10px;
+  background-color: #fee;
+}
+
 
 .footer {
     padding:20px;
