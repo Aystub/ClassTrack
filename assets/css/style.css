@@ -151,11 +151,18 @@ body {
 /* ----- Jumbotron -----*/
 .jumbotron
 {
-	height:400px;
-	background:url("/assets/images/children.jpg");
-	background-size: 100% auto;
-	background-position: 0px -150px;
+  
 }
+
+.front_page_jumbotron
+{
+  height: 500px;
+  background-color: #2A80B9;
+  background-image: url("/assets/images/children.jpg");
+  background-size: cover;
+  background-position: 0px -150px;
+}
+
 
 /* ----- Footer -----*/
 .footer-links ul, .footer-links li

@@ -23,16 +23,31 @@ class MyHandler(webapp2.RequestHandler):
 		template = jinja_environment.get_template(afile)
 		self.response.out.write(template.render(self.templateValues))
 
+	def navbarSetup(self):
+		self.templateValues['index'] = 'index.html'
+		self.templateValues['about'] = 'about.html'
+		self.templateValues['contact'] = 'contact.html'
 class MainPageHandler(MyHandler):
 	def get(self):
 		self.setupUser()
+		self.navbarSetup()
 		if self.user:
 			self.templateValues['user'] = self.user
 			self.templateValues['title'] = 'My Portal'
 			self.redirect('/portal/')
 		else:
 			self.templateValues['title'] = 'ClassTrack'
-			self.render('main.html')
+			self.templateValues['about'] = 'about.html'
+			self.render('index.html')
+
+class AboutPageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		self.navbarSetup()
+		if self.user:
+			self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'ClassTrack'
+		self.render('about.html')
 
 class PortalPageHandler(MyHandler):
 	def get(self):
@@ -45,6 +60,21 @@ class PortalPageHandler(MyHandler):
 			self.templateValues['title'] = 'ClassTrack'
 			self.redirect('/')
 
-app = webapp2.WSGIApplication([('/portal/', PortalPageHandler),
-							   ('/', MainPageHandler)],
-                              debug=True)
+
+
+class ContactPageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		self.navbarSetup()
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'ClassTrack'
+		self.render('contact.html')
+
+
+routes = [
+	('/portal/', PortalPageHandler),
+	('/', MainPageHandler),
+	('/about.html', AboutPageHandler),
+    ('/contact.html', ContactPageHandler)
+]
+app = webapp2.WSGIApplication(routes=routes, debug=True)
