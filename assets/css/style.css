@@ -8,11 +8,11 @@ height: 100%;
 min-height: 100%;
 height: auto !important;
 height: 100%;
-margin: 0 auto -150px; /* This needs to be the same as footer height */
+margin: 0 auto -180px; /* This needs to be the same as footer height */
 position:relative;
 }
 .footer {
-height: 150px; /* This needs to be the same as footer height */
+height: 180px; /* This needs to be the same as footer height */
 }
 .push{
 	height:200px;
@@ -151,22 +151,21 @@ body {
 /* ----- Jumbotron -----*/
 .jumbotron
 {
-  
+  background-repeat: no-repeat;
 }
 
 .front_page_jumbotron
 {
-  height: 500px;
-  background-color: #2A80B9;
+  height: 480px;
   background-image: url("/assets/images/children.jpg");
   background-size: cover;
-  background-position: 0px -150px;
 }
 
 
 /* ----- Footer -----*/
-.footer-links ul, .footer-links li
+.footer-links ul, .footer-links li, .footer-links a
 {
+  color: #FFF;
 	list-style: none;
 	padding-bottom:4px;
 }

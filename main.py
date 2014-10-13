@@ -70,11 +70,22 @@ class ContactPageHandler(MyHandler):
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('contact.html')
 
+class NotFoundPageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		self.navbarSetup()
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'ClassTrack'
+		self.render('404.html')
+
 
 routes = [
 	('/portal/', PortalPageHandler),
 	('/', MainPageHandler),
+	('/index.html', MainPageHandler),
 	('/about.html', AboutPageHandler),
-    ('/contact.html', ContactPageHandler)
+    ('/contact.html', ContactPageHandler),
+    ('/.*', NotFoundPageHandler)
 ]
+
 app = webapp2.WSGIApplication(routes=routes, debug=True)
