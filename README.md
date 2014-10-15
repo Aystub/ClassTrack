@@ -1,5 +1,7 @@
 ClassTrack
 
+usc-classtrack.appspot.com
+
 Austin Riley
 Daniel Conner
 Daniel Vu
