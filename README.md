@@ -1,6 +1,6 @@
 ClassTrack
 
-usc-classtrack.appspot.com
+http://usc-classtrack.appspot.com/
 
 Austin Riley
 Daniel Conner
