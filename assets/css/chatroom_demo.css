@@ -1,0 +1,177 @@
+html
+{
+	height:100%;
+	margin:0;
+	padding:0;
+}
+
+body
+{
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+
+.navbar-custom
+{
+	box-shadow: 0 2px 5px rgba(0,0,0,.26);
+}
+
+#blackout
+{
+	background: #333;
+	width: 100%;
+	min-height: 100%;
+}
+
+
+#lightbox {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 500px;
+	margin-left: -250px;
+	background: #fff;
+	z-index: 1001;
+	display: none;
+}
+#lightbox-shadow {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #000;
+	filter: alpha(opacity=75);
+	-moz-opacity: 0.75;
+	-khtml-opacity: 0.75;
+	opacity: 0.75;
+	z-index: 1000;
+	display: none;
+}
+
+
+
+.conference_media_center
+{
+	background-color:#cc00db;
+	width:100%;
+	height:auto; 
+	overflow:hidden;
+  	padding:0;
+  	margin:0;
+  	font-size:0;
+}
+
+.video_container
+{
+	  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	  box-sizing: border-box;         /* Opera/IE 8+ */	
+  	width:50%;
+  	padding:0;
+  	margin:0;
+	display:inline-block;
+
+}
+
+.video_controls
+{
+	position: relative;
+	background-color:#51002E;
+	width:100%;
+	height:100px;
+	text-align: center;
+	padding-top:20px;
+	padding-bottom:20px;
+}
+
+#localVideo
+{
+	width:100%;
+	background-color:#123123;
+}
+
+#remoteVideo
+{
+	width:100%;
+	background-color:#321321;
+}
+
+#conference_directions
+{
+	color:#FFF;
+	width:100%;
+	height:150px;
+	background-color:#432432;
+}
+
+
+.custom_button
+{
+  position: relative;
+  vertical-align: top;
+  width: 200px;
+  height: 60px;
+  padding: 0;
+  font-size: 22px;
+  text-align: center;
+  border: 0;
+  cursor: pointer;
+  margin-right:10px;
+  margin-left:10px;
+}
+
+#connect_button
+{
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #27ae60;
+  border-bottom: 2px solid #219d55;
+  -webkit-box-shadow: inset 0 -2px #219d55;
+  box-shadow: inset 0 -2px #219d55;
+}
+
+#connect_button:active
+{
+	top: 1px;
+  outline: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+#mute_button
+{
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #2c3e50;
+  border-bottom: 2px solid #22303f;
+  -webkit-box-shadow: inset 0 -2px #22303f;
+  box-shadow: inset 0 -2px #22303f;
+}
+
+#mute_button:active
+{
+  top: 1px;
+  outline: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+#disconnect_button
+{
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #e74c3c;
+  border-bottom: 2px solid #db4334;
+  -webkit-box-shadow: inset 0 -2px #db4334;
+  box-shadow: inset 0 -2px #db4334;
+}
+
+#disconnect_button:active
+{
+  top: 1px;
+  outline: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
