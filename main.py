@@ -69,6 +69,14 @@ class ContactPageHandler(MyHandler):
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('contact.html')
+		
+class ConferencePageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		self.navbarSetup()
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'WebRTC'
+		self.render('WebRTC_demo.html')
 
 class NotFoundPageHandler(MyHandler):
 	def get(self):
@@ -81,6 +89,7 @@ class NotFoundPageHandler(MyHandler):
 
 routes = [
 	('/portal/', PortalPageHandler),
+	('/chatroom/', ConferencePageHandler),
 	('/', MainPageHandler),
 	('/index.html', MainPageHandler),
 	('/about.html', AboutPageHandler),
