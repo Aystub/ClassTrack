@@ -13,7 +13,7 @@
 	<!-- Bootstrap core CSS -->
 	<link href="/assets/css/bootstrap.min.css" rel="stylesheet">
 	<link href="/assets/css/style.css" rel="stylesheet">
-   
+
 </head>
 
 <body>
@@ -47,6 +47,7 @@
 					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-default navbar-btn"><a href="{{ logout }}">Logout</a></button></p>
 						{% else %}
 							<button type="button" class="btn btn-default navbar-btn"><a href="{{ login }}">Login</a></button>
+							<button type="button" class="btn btn-default navbar-btn"><a href="{{ signup }}">Signup</a></button>
 						{% endif %}
 					</div>
 				</div><!--/.nav-collapse -->
