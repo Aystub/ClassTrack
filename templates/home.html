@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<link rel="icon" href="../../favicon.ico">
+
+	<title>{{ title }}</title>
+
+	<!-- Bootstrap core CSS -->
+	<link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/assets/css/style.css" rel="stylesheet">
+	<link href="/assets/css/simple-sidebar.css" rel="stylesheet">
+
+		<script src="/assets/js/jquery.js"></script>
+	<script src="/assets/js/bootstrap.min.js"></script>
+	<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+	<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+   
+</head>
+
+<body>
+
+
+<div id ="wrapper" class="toggled">
+<!-- Sidebar -->
+<div id="sidebar-wrapper">
+    <ul class="sidebar-nav">
+        <li class="sidebar-brand">
+				<a class="menu-toggle" href="#">Close Menu</a>
+        </li>
+        <li>
+            <a href="#">Home</a>
+        </li>
+        <li>
+        	<p>Current Class Selected: {{selected_class}}<p>
+        </li>
+        <li>
+            <a href="#">Switch Class</a>
+        </li>
+        <li>
+            <a href="#">Calendar</a>
+        </li>
+        <li>
+            <a href="#">Grades</a>
+        </li>
+        <li>
+            <a href="#">Documents</a>
+        </li>
+        <li>
+            <a href="#">Schedule Conference</a>
+        </li>
+        <li>
+            <a href="#">Contact Teacher</a>
+        </li>
+    </ul>
+</div>
+<!-- /#sidebar-wrapper -->
+
+		<div class="navbar-custom-global" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+						<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="{{ index }}">ClassTrack</a>
+				</div>
+				<div class="collapse navbar-collapse">
+				</div>
+			</div>
+		</div>
+
+
+
+		<div class="navbar-mini-menu" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+						<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+<!-- 					<a class="navbar-brand" href="{{ index }}">ClassTrack</a>
+ -->				</div>
+				<div class="collapse navbar-collapse">
+					<ul class="nav navbar-nav">
+						<li id="navbar-mini-menu-toggle">Menu</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	<div class="jumbotron home_jumbotron">
+		<div class="row" id="class_button_holder">
+				{% for class in classes %}
+					<div class="class_button_container">
+						<img src="assets/images/apple.png"/>
+						<h2> {{class}} </h2>
+					</div>		
+				{% endfor %}
+				<div style="clear:both"></div>
+		</div>
+	</div>
+
+<div class="container">
+
+	<div class="home_jumbotron_push"></div>
+
+	<div class="row">
+		<div class="home_filter col-md-3">
+			<h2>Newsfeed Filters</h2>
+				{% for filter in filter_list %}
+				<div class="checkbox">
+					<label>
+						<input type="checkbox" name="filter_list" value = {{filter}}>{{filter}}
+					</label>
+				</div>
+				{% endfor %}
+		</div>
+		<div class="col-md-1"></div>
+		<div class="home_newsfeed col-md-7">
+		<h1>Newsfeed</h1>
+			{% for news in newsfeed_list %}
+				<div class="alert" role="alert">
+				  <span class="glyphicon glyphicon-th" aria-hidden="true"></span>
+				  {{news}}
+				  <br/>
+				  <a href="#">Read More</a>
+				</div>
+			{% endfor %}
+		</div>
+
+
+
+</div>
+
+
+
+		<div class="push"></div>
+	</div>
+
+	<div class="footer">
+
+		<div class="row">
+			<div class="col-md-2 footer-links">
+				<ul>
+					<li><a href="index.html">Home</a></li>
+					<li><a href="about.html">About Us</a></li>
+					<li><a href="contact.html">Contact Us</a></li>
+					<li><a href="terms.html">Terms and Conditions</a></li>
+				</ul>
+			</div>
+		</div>
+		<div style="text-align:center" class="row">
+		<p>&copy EduSolutions</p>
+		</div>
+	</div>
+
+
+<script>
+	$(document).ready(function(){
+		findSizesForClassButtons();
+		// animateButtons()
+		newsfeedMinHeight();
+        $(".menu-toggle").click(function(e) {
+        	$("#wrapper").toggleClass("toggled");
+   		 });
+
+        $('#navbar-mini-menu-toggle').hover(function(){
+        	$("#wrapper").toggleClass("toggled");
+        }, 
+        function(){
+
+        });
+
+
+	});
+
+	$(window).resize(function(){
+		findSizesForClassButtons();
+		// animateButtons()
+		newsfeedMinHeight();
+	});
+
+	function newsfeedMinHeight()
+	{
+		if($('.home_newsfeed').height() < $('.home_filter').height())
+		{
+			console.log("Done");
+			$('.home_newsfeed').height($('.home_filter').height());
+		}
+	}
+
+	function findSizesForClassButtons()
+	{
+		var numChildren = $('#class_button_holder').children().size();
+		var containerWidth = $('#class_button_holder').width()/numChildren;
+		// Somehow this width is different than set by CSS
+		var originalButtonWidth = containerWidth*0.5;
+		if(originalButtonWidth < 50)
+		{
+			originalButtonWidth = 50;
+		}
+		$('.class_button_container > img').width(originalButtonWidth); 
+		$('.class_button_container').width(containerWidth);
+	}
+
+	function animateButtons()
+	{
+		var originalButtonWidth = $('.class_button_container > img').width();
+		// Animation for class button hover
+		$(".class_button_container").hover(function()
+			{
+	    		$(this).children('img').stop().animate({ width : originalButtonWidth+10 });
+	    		// $(this).children('h1').hide().fadeIn(200);
+			},
+		function()
+			{
+	      		$(this).children('img').stop().animate({ width :  originalButtonWidth});
+	    		// $(this).children('h1').fadeTo(200,0);
+			}
+		);
+	}
+
+</script>
+
+</body>
+</html>

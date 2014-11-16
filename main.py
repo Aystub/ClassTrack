@@ -4,6 +4,7 @@ from google.appengine.api import users
 import jinja2
 import logging
 
+
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
@@ -60,6 +61,21 @@ class PortalPageHandler(MyHandler):
 			self.templateValues['title'] = 'ClassTrack'
 			self.redirect('/')
 
+class HomePageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		class_list = ['Math', 'PE', 'Geography', 'English']
+		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Upcoming Events']
+		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14']
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'Home'
+		self.templateValues['selected_class'] = 'English'
+		self.templateValues['classes'] = class_list
+		self.templateValues['filter_list'] = filter_list
+		self.templateValues['newsfeed_list'] = newsfeed_list
+		self.render('home.html')
+
+
 
 
 class ContactPageHandler(MyHandler):
@@ -89,11 +105,13 @@ class NotFoundPageHandler(MyHandler):
 
 routes = [
 	('/portal/', PortalPageHandler),
-	('/chatroom/', ConferencePageHandler),
+	('/chatroom_demo.html', ConferencePageHandler),
 	('/', MainPageHandler),
 	('/index.html', MainPageHandler),
 	('/about.html', AboutPageHandler),
     ('/contact.html', ContactPageHandler),
+    ('/home.html', HomePageHandler),
+
     ('/.*', NotFoundPageHandler)
 ]
 
