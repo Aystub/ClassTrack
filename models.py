@@ -69,4 +69,11 @@ class Meeting(ndb.Model):
 	def id(self):
 		return self.key.id()
 
-class 
+class classes(ndb.Model):
+	teacher = ndb.StringProperty()
+	school = ndb.StringProperty()
+	studentList = ndb.StringProperty(repeated=True)
+	name = ndb.StringProperty()
+	
+	def id(self):
+		return self.key.id()
