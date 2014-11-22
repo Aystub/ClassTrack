@@ -158,10 +158,11 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
-
+		meeting = []
+		
         user_data = self.user_model.create_user(email,
             first_name=first_name, password_raw=password,
-            last_name=last_name, verified=False)
+            last_name=last_name, verified=False, meetings=meeting)
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
             return
@@ -428,7 +429,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
+		self.user_model
+        #conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list

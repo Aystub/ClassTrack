@@ -64,7 +64,8 @@ class Post(ndb.Model):
 class Meeting(ndb.Model):
 	created = ndb.DateTimeProperty(auto_add_now=True)
 	time = ndb.DateTimeProperty()
-	people = ndb.StringProperty(repeated=True)
+	attending = ndb.StringProperty(repeated=True)
+	invited = ndb.StringProperty(repeated=True)
 	
 	def id(self):
 		return self.key.id()
