@@ -158,7 +158,7 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
-		meeting = []
+		meeting = ['aa','bb']
 		
         user_data = self.user_model.create_user(email,
             first_name=first_name, password_raw=password,
