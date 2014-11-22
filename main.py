@@ -479,6 +479,14 @@ class ConferencePageHandler(MyHandler):
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         self.render('chatroom_demo.html')
 
+class AddConferencePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.render('addConference.html')
+
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -519,6 +527,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
     webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+    webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),    
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
