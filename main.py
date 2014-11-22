@@ -134,7 +134,7 @@ class MainPageHandler(MyHandler):
             self.templateValues['user'] = self.user_info
             self.templateValues['username'] = str(self.user_info['auth_ids'])[3:-2]
             self.templateValues['post'] = '/post'
-            self.redirect('/portal/')
+            self.redirect('/home.html')
         else:
             self.render('index.html')
 
@@ -217,6 +217,7 @@ class VerificationHandler(MyHandler):
         else:
             logging.info('verification type not supported')
             self.abort(404)
+
 class HomePageHandler(MyHandler):
 	def get(self):
 		self.setupUser()
