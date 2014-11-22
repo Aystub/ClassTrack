@@ -319,6 +319,7 @@ class AuthenticatedHandler(MyHandler):
 #Change the model from Card to whatever. I setup a Card model for something else I was doing,
 #however the code is still relevant to read over since this is how we'll put posts into
 #the datastore.
+
 class PostHandler(MyHandler):
     def get(self):
         self.redirect('/')
@@ -326,8 +327,9 @@ class PostHandler(MyHandler):
     def post(self):
         the_post = self.request.get('the_post')
         owner = str(self.user_info['auth_ids'])
-
-        thePost = models.NFPost(caption=the_post, owner=owner)
+        postClass = self.request.get('classid')
+        
+        thePost = models.NFPost(caption=the_post, owner=owner, classID=postClass)
 
         future = thePost.put()
 
@@ -354,6 +356,18 @@ class PostHandler(MyHandler):
 #
 #        });
 
+class PrivateMessageHandler(MyHandler):
+    def get(self):
+        self.redirect('/')
+        
+    def post(self):
+        the_message = self.request.get('the_message')
+        the_sender = str(self.user_info['auth_ids'])
+        the_reciever = self.request.get('reciever')
+        
+        theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, message=the_message)
+        
+        future = theMessage.put()
 
 class AboutPageHandler(MyHandler):
     def get(self):
@@ -401,11 +415,13 @@ class NotFoundPageHandler(MyHandler):
         
 class PostTestHandler(MyHandler):
     def get(self):
-		self.setupUser()
-		self.navbarSetup()
-		self.templateValues['user'] = self.user
-		self.templateValues['title'] = 'postTest'
-		self.render('post_test.html')
+        self.setupUser()
+        self.navbarSetup()
+        post_q = models.NFPost.query().fetch()
+        self.templateValues['posts'] = post_q
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'postTest'
+        self.render('post_test.html')
 
 
 class CalendarPageHandler(MyHandler):
@@ -470,7 +486,6 @@ config = {
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainPageHandler, name='home'),
-    webapp2.Route('/post_test.html', PostTestHandler, name='postTest'),
     webapp2.Route('/index.html', MainPageHandler, name='index'),
     webapp2.Route('/signup', SignupPageHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
@@ -480,6 +495,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
+    webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', PostHandler, name='about'),

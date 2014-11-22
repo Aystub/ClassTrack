@@ -62,3 +62,12 @@ class NFPost(ndb.Model):
 
     def remove(self):
         self.key.delete()
+        
+class PrivateMessage(ndb.Model):
+    sender = ndb.StringProperty(required=True)
+    reciever = ndb.StringProperty(required=True)
+    message = ndb.TextProperty()
+    time = ndb.DateTimeProperty(auto_now_add=True)
+    
+    def id(self):
+        return self.key.id()
