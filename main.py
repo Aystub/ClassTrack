@@ -158,13 +158,11 @@ class SignupPageHandler(MyHandler):
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
 
-        unique_properties = ['email_address']
-        user_data = self.user_model.create_user(user_name,
-            unique_properties,
-            email_address=email, first_name=first_name, password_raw=password,
+        user_data = self.user_model.create_user(email,
+            first_name=first_name, password_raw=password,
             last_name=last_name, verified=False)
         if not user_data[0]: #user_data is a tuple
-            self.display_message('Unable to create user for email %s because of duplicate keys %s' % (user_name, user_data[1]))
+            self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
             return
 
         user = user_data[1]
@@ -277,13 +275,13 @@ class LoginPageHandler(MyHandler):
         self.render('login.html')
 
     def post(self):
-        user_name = self.request.get('user_name') #Get username value from html
+        email = self.request.get('email') #Get username value from html
         password = self.request.get('password') #Get password value from html
         try:
-            u = self.auth.get_user_by_password(user_name, password, remember=True, save_session=True)
+            u = self.auth.get_user_by_password(email, password, remember=True, save_session=True)
             self.redirect('/')
         except (InvalidAuthIdError, InvalidPasswordError) as e:
-            logging.info('Login failed for user %s because of %s', user_name, type(e))
+            logging.info('Login failed for user %s because of %s', email, type(e))
             self.templateValues = {}
             self.navbarSetup()
             self.templateValues['title'] = "Login"
