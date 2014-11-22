@@ -18,6 +18,10 @@
 
 		<script src="/assets/js/jquery.js"></script>
 		<script src="/assets/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="/assets/js/fancybox/source/jquery.fancybox.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="/assets/js/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
 		
@@ -45,7 +49,7 @@
 					</ul>
 					<div class="nav navbar-nav navbar-right">
 						{% if username %}
-					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-default navbar-btn"><a href="{{ logout }}">Logout</a></button></p>
+					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</a></button></p>
 						{% else %}
 							<a href="{{ login }}"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
 							<a href="{{ signup }}"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
@@ -64,7 +68,7 @@
 					<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>        
 					<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>        
 					<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>        
-					<li id="conferences_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>        
+					<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>        
 					<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Contact Teacher</a></li>
 	 			</ul>
 
@@ -162,7 +166,6 @@
 		{
 			if($('#sidebar').width()< "200px")
 			{
-				console.log("Triggered");
 				$('#sidebar').width("200px");
 				$('#content-right-of-sidebar').width($(document).width()-"200px");
 			}
