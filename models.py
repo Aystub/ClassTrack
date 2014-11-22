@@ -32,13 +32,14 @@ class User(webapp2_extras.appengine.auth.models.User):
     valid_token, user = ndb.get_multi([token_key, user_key])
     if valid_token and user:
         timestamp = int(time.mktime(valid_token.created.timetuple()))
-        return user, timestamp
-
+        return user, timestamp  
+    
     return None, None
 
 class NFPost(ndb.Model):
     schoolID = ndb.IntegerProperty(default=0)
     classID = ndb.IntegerProperty(default=0)
+    typeID = ndb.IntegerProperty(default=0)
     caption = ndb.TextProperty()
     owner = ndb.StringProperty(required=True)
     img = ndb.BlobProperty(default=None)
