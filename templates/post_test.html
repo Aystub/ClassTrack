@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{{ super() }}{% endblock %}
+
+{% block content %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+<script type="text/javascript">
+	jQuery(document).ready(function() {
+		jQuery("#filter").change(function() {
+			jQuery.ajax({
+				type: "POST",
+				url: "/reload.html",
+				data: {filter : jQuery("#filter").val()},
+				success: function(data) {
+					obj = JSON.parse(data);
+					jQuery('#Display').empty();
+					for(index = 0; index < obj.length; ++index) {
+						jQuery('#Display').append("<p>" + obj[index] + "</p>");
+					}
+				},
+				});
+			});
+	});
+
+</script>
+	<div class="container" style="padding:10px;">
+		 <form action="/post" method="post">
+			<div>School ID
+				<br/>
+				<input type="text" name="schoolID"></input>
+			</div>
+			<div>
+				Class ID
+				<br/><input type="text" name="classID"></input>
+			</div>
+				<div>
+				Post
+				<br/>
+				<textarea name="the_post" rows="3" cols="60"></textarea>
+			</div>
+			<div><input type="submit" value="Post Your Awesome Teacher Message to Class"></div>
+		</form>
+		<br/>
+		
+		<a href="/delete.html">Delete All Posts</a>
+		<br/><br/>
+		
+		Class ID Filter: 
+		<br/>
+		<input id="filter" type="text" name="filter"></input>
+		<br/>
+		<br/>
+		
+		<p>
+			<b>Message Area</b>
+		</p>
+		
+		<br/>
+		<div id="Display">
+			{% for Post in posts %}
+			<p>{{ Post.message }}</p>
+			{% endfor %}
+		</div>
+	</div>
+
+
+{% endblock %}
+
+{% block footer %}
+    {{ super() }}
+{% endblock %}
