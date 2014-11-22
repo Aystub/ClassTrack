@@ -223,7 +223,7 @@ class HomePageHandler(MyHandler):
 		self.setupUser()
 		class_list = ['Math', 'PE', 'Geography', 'English']
 		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
-		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14']
+		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14', 'LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'LAST ELEMENT']
 		children_list = ['Daniel', 'Maria', 'Lily']
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'Home'
@@ -388,7 +388,7 @@ class ConferencePageHandler(MyHandler):
 		self.setupUser()
 		self.navbarSetup()
 		self.templateValues['user'] = self.user
-		self.templateValues['title'] = 'WebRTC'
+		self.templateValues['title'] = 'Conferencing'
 		self.render('chatroom_demo.html')
 
 class NotFoundPageHandler(MyHandler):
@@ -398,6 +398,57 @@ class NotFoundPageHandler(MyHandler):
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('404.html')
+
+
+class CalendarPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Calendar | ClassTrack'
+        self.render('calendar.html')
+
+class GradesPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Grades | ClassTrack'
+        self.render('grades.html')
+
+class DocumentsPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Documents | ClassTrack'
+        self.render('documents.html')
+
+class ConferenceSchedulerPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
+        self.templateValues['conference_list'] = conference_list
+        self.render('conferenceSchedule.html')
+
+class ConferencePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.render('chatroom_demo.html')
+
+class ContactTeacherPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Contact | ClassTrack'
+        self.render('messaging.html')
 
 config = {
   'webapp2_extras.auth': {
@@ -424,5 +475,11 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', PostHandler, name='about'),
     webapp2.Route('/contact.html', PostHandler, name='contact'),
+    webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
+    webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
+    webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
+    webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
+    webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),    
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
