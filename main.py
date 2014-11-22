@@ -327,7 +327,7 @@ class PostHandler(MyHandler):
         the_post = self.request.get('the_post')
         owner = str(self.user_info['auth_ids'])
 
-        thePost = models.Post(caption=the_post, owner=owner)
+        thePost = models.NFPost(caption=the_post, owner=owner)
 
         future = thePost.put()
 
@@ -398,6 +398,14 @@ class NotFoundPageHandler(MyHandler):
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('404.html')
+        
+class PostTestHandler(MyHandler):
+    def get(self):
+		self.setupUser()
+		self.navbarSetup()
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'postTest'
+		self.render('post_test.html')
 
 
 class CalendarPageHandler(MyHandler):
@@ -462,6 +470,7 @@ config = {
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainPageHandler, name='home'),
+    webapp2.Route('/post_test.html', PostTestHandler, name='postTest'),
     webapp2.Route('/index.html', MainPageHandler, name='index'),
     webapp2.Route('/signup', SignupPageHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
