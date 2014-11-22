@@ -58,26 +58,91 @@
       </div>
     </div>
 
-    <div id="conference_directions">
-      <h1>Directions</h1>
+    <div class="row">
+      <div class="col-md-12">
+        
+      </div>
     </div>
 
-    <div class="conference_media_center">
+    <div class="row">
     <!-- Has to be on one line due to whitespace being included -->
-      <div class="video_container"><video id="localVideo" autoplay></video></div><div class="video_container"><video id="remoteVideo" autoplay></video></div> 
+      <div class="col-md-6"><video id="localVideo" autoplay style="background-color:#FFF"></video></div><div class="col-md-6" id="remote_video_container"></div> 
     </div>
     <div class="video_controls">
-        <button id="connect_button" class="custom_button">Connect</button>
-        <button id="mute_button" class="custom_button">Mute</button>
-        <button id="disconnect_button" class="custom_button">Disconnect</button>
+        <button id="connect_button" class="custom_button" onclick="connect()">Connect</button>
+        <button id="mute_button" class="custom_button" onclick="mute()">Mute</button>
+        <button id="disconnect_button" class="custom_button" onclick="disconnect()">Disconnect</button>
+        <button id="screen_sharing_button" class="custom_button" onclick="shareScreen()">Screen Sharing</button>
+
     </div>
 
-  <script src="../assets/js/VuLocalPeerConnection.js">
-    $(document).ready(function(){
-      start();
+    <div id="infoDiv"></div>
 
-    });
-  </script>
+
+
+
+        <script src="../assets/js/jquery.js"></script>
+        <script src="../assets/js/modernizr-latest.js"></script>
+        <script src="../assets/js/simplewebrtc/simplewebrtc.bundle.js"></script>
+        <script src="../assets/js/adapter.js"></script>
+        <script>
+          var webrtc;
+
+          function connect(){
+            webrtc = new SimpleWebRTC({
+            // the id/element dom element that will hold "our" video
+            localVideoEl: 'localVideo',
+            // the id/element dom element that will hold remote videos
+            remoteVideosEl: 'remote_video_container',
+            // immediately ask for camera access
+            autoRequestMedia: true
+            });
+
+            webrtc.on('readyToCall', function () {
+            // you can name it anything
+            webrtc.joinRoom('cupcake');
+            });
+
+            var getScreenMedia = require('getscreenmedia');
+
+getScreenMedia(function (err, stream) {
+    // if the browser doesn't support user media
+    // or the user says "no" the error gets passed
+    // as the first argument.
+    if (err) {
+       console.log('failed');
+    } else {
+       console.log('got a stream', stream);  
+    }
+})
+          }
+
+          function disconnect(){
+            webrtc.leaveRoom();
+            webrtc.stopLocalVideo();
+            $("#localVideo").height($("#remoteVideo").height());
+          }
+
+          function mute(){
+            if($("#mute_button").html() == "Mute"){
+              $("#mute_button").html("Unmute");
+            }
+            else{
+              $("#mute_button").html("Mute");
+            }
+          }
+
+          function shareScreen(){
+            // Toggle text
+            if($("#screen_sharing_button").html() == "Screen Sharing"){
+              $("#screen_sharing_button").html("Share Video");
+            }
+            else{
+              $("#screen_sharing_button").html("Screen Sharing");
+            }
+            
+          }
+        </script>
 
 
   </div>

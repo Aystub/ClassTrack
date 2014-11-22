@@ -1,1 +1,3 @@
 *.pyc
+*.sh
+main.pyc
