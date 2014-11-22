@@ -272,7 +272,7 @@ body {
 {
     height:200px;
     background-image: url('/assets/images/swirl_pattern.png');
-    background-repeat: repeat;
+    background-repeat: repeat-x, repeat-y;
 }
 
 .home_jumbotron_push
@@ -292,12 +292,15 @@ body {
 
 .class_button_container
 {
-  display:inline-block;
+  /*display:inline-block;*/
   width:20%;
 /*  min-width: 150px;
 */  height:auto;
   text-align: center;
 }
+
+/*@media all and (max-width: 300px) { .class_button_container { display:inline-block; }  }*/
+
 
 .class_button_container > h1
 {
@@ -351,4 +354,24 @@ border-radius: 10px;
   color: #FFF;
 	list-style: none;
 	padding-bottom:4px;
+}
+
+
+
+
+
+
+
+
+
+#sidebar {
+  width: inherit;
+  min-width: 220px;
+  max-width: 220px;
+  background-color:#123;
+  float: left;
+  height:100%;
+  position:relative;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
