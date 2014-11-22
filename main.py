@@ -133,12 +133,9 @@ class MainPageHandler(MyHandler):
             self.templateValues['user'] = self.user_info
             self.templateValues['username'] = str(self.user_info['auth_ids'])[3:-2]
             self.templateValues['post'] = '/post'
-            query = models.Card.query()
-            self.templateValues['cards'] = query
             self.redirect('/portal/')
         else:
             self.render('index.html')
-
 
 class NotFoundPageHandler(MyHandler):
     def get(self):
@@ -387,7 +384,6 @@ class NotFoundPageHandler(MyHandler):
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('404.html')
 
-
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -397,7 +393,6 @@ config = {
     'secret_key': 'YOUR_SECRET_KEY'
   }
 }
-
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainPageHandler, name='home'),
