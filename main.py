@@ -158,8 +158,8 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
-		meeting = ['aa','bb']
-		
+        meeting = ['empty']
+
         user_data = self.user_model.create_user(email,
             first_name=first_name, password_raw=password,
             last_name=last_name, verified=False, meetings=meeting)
@@ -429,7 +429,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-		self.user_model
+        self.user_model
         #conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
@@ -482,6 +482,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
     webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
-    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),    
+    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

@@ -60,13 +60,13 @@ class Post(ndb.Model):
 
     def remove(self):
         self.key.delete()
-		
+
 class Meeting(ndb.Model):
-	created = ndb.DateTimeProperty(auto_add_now=True)
+	created = ndb.DateTimeProperty(auto_now_add=True)
 	time = ndb.DateTimeProperty()
 	attending = ndb.StringProperty(repeated=True)
 	invited = ndb.StringProperty(repeated=True)
-	
+
 	def id(self):
 		return self.key.id()
 
@@ -75,6 +75,6 @@ class classes(ndb.Model):
 	school = ndb.StringProperty()
 	studentList = ndb.StringProperty(repeated=True)
 	name = ndb.StringProperty()
-	
+
 	def id(self):
 		return self.key.id()
