@@ -1,0 +1,34 @@
+	{% extends "baseActivity.html" %}
+	{% block title %}{{ title }}{% endblock %}
+	{% block top %}{{ super() }}{% endblock %}
+ 		
+
+ 	{% block sideNavWidget %}
+
+	{% endblock %}
+
+
+	{% block content %}
+		<div class="row">
+				<div class="col-md-1"></div>
+				<div class="col-md-10" role="alert">
+					<h1>Conference List</h1>
+				</div>
+				<div class="col-md-1"></div>
+		</div>
+		{% for conference in conference_list %}
+			<div class="row">
+				<div class="col-md-1"></div>
+				<div class="alert alert-success col-md-10" role="alert">
+					{{conference['time']}}
+					{{conference['message']}}
+					{{conference['participants']}}
+				</div>
+				<div class="col-md-1"></div>
+			</div>
+		{% endfor %}
+
+	{% endblock %}
+
+	{% block bottom %}{{ super() }}{% endblock %}
+

@@ -1,14 +1,13 @@
-html,body, #sidebar{background-color:#16A086;}
+.below_nav, #sidebar{background-color:#16A086;}
+
 
 
 #sidebar {
 	width:10%;
 	float: left;
-	height:100%;
 	position:relative;
 	overflow-y:auto;
 	overflow-x:hidden;
-	min-height: 100%;
 }
 
 
@@ -16,7 +15,14 @@ html,body, #sidebar{background-color:#16A086;}
 {
 	background-color:#FEFEFE;
 	width:90%;
+	height: auto;
 	float:right;
+}
+
+#content-right-of-sidebar, #sidebar
+{
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .side-nav-link
