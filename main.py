@@ -6,6 +6,7 @@ import jinja2
 import logging
 import datetime
 import models
+import json
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -319,15 +320,29 @@ class AuthenticatedHandler(MyHandler):
 #Change the model from Card to whatever. I setup a Card model for something else I was doing,
 #however the code is still relevant to read over since this is how we'll put posts into
 #the datastore.
+
+class jqueryPostHandler(MyHandler):
+    def get(self):
+        self.redirect('/')
+    
+    def post(self):
+        ids = self.request.get('IDValues')
+        data = json.loads(ids)
+        classIds = data["classIds"]
+        typeIds = data["typeIds"]
+        schoolIds = data["schoolIds"]
+        qry = models.NFPost.query(models.NFPost.classID.IN(classIds),models.NFPost.typeID.IN(typeIds),models.NFPost.schoolID.IN(schoolIds))
+
 class PostHandler(MyHandler):
     def get(self):
         self.redirect('/')
 
     def post(self):
         the_post = self.request.get('the_post')
-        owner = str(self.user_info['auth_ids'])
-
-        thePost = models.Post(caption=the_post, owner=owner)
+        owner = str(self.user_info['auth_ids'][0])
+        postClass = self.request.get('classid')
+        
+        thePost = models.NFPost(caption=the_post, owner=owner, classID=postClass)
 
         future = thePost.put()
 
@@ -354,6 +369,18 @@ class PostHandler(MyHandler):
 #
 #        });
 
+class PrivateMessageHandler(MyHandler):
+    def get(self):
+        self.redirect('/')
+        
+    def post(self):
+        the_message = self.request.get('the_message')
+        the_sender = str(self.user_info['auth_ids'][0])
+        the_reciever = self.request.get('reciever')
+        
+        theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, message=the_message)
+        
+        future = theMessage.put()
 
 class AboutPageHandler(MyHandler):
     def get(self):
@@ -398,6 +425,16 @@ class NotFoundPageHandler(MyHandler):
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('404.html')
+        
+class PostTestHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        post_q = models.NFPost.query().fetch()
+        self.templateValues['posts'] = post_q
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'postTest'
+        self.render('post_test.html')
 
 
 class CalendarPageHandler(MyHandler):
@@ -471,6 +508,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
+    webapp2.Route('/jqpost', jqueryPostHandler, name='post'),
+    webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', PostHandler, name='about'),

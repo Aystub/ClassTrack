@@ -32,11 +32,14 @@ class User(webapp2_extras.appengine.auth.models.User):
     valid_token, user = ndb.get_multi([token_key, user_key])
     if valid_token and user:
         timestamp = int(time.mktime(valid_token.created.timetuple()))
-        return user, timestamp
-
+        return user, timestamp  
+    
     return None, None
 
-class Post(ndb.Model):
+class NFPost(ndb.Model):
+    schoolID = ndb.IntegerProperty(default=0)
+    classID = ndb.IntegerProperty(default=0)
+    typeID = ndb.IntegerProperty(default=0)
     caption = ndb.TextProperty()
     owner = ndb.StringProperty(required=True)
     img = ndb.BlobProperty(default=None)
@@ -49,14 +52,23 @@ class Post(ndb.Model):
     def getCard(num):
         """Returns the pin with the given num (a String), or None if there is no such num."""
         try:
-            theCard = Card.get_by_id(long(num))
-            return theCard
+            thePost = NFPost.get_by_id(long(num))
+            return thePost
         except ValueError:
             return None
 
     def getDict(self):
         """Returns a dictionary representation of parts of this pin."""
-        return {'cardID': self.id(), 'caption': self.caption, 'owner': self.owner, 'time': self.time}
+        return {'postID': self.id(), 'caption': self.caption, 'owner': self.owner, 'time': self.time}
 
     def remove(self):
         self.key.delete()
+        
+class PrivateMessage(ndb.Model):
+    sender = ndb.StringProperty(required=True)
+    reciever = ndb.StringProperty(required=True)
+    message = ndb.TextProperty()
+    time = ndb.DateTimeProperty(auto_now_add=True)
+    
+    def id(self):
+        return self.key.id()
