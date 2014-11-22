@@ -185,21 +185,6 @@ class VerificationHandler(MyHandler):
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']
         verification_type = kwargs['type']
-class HomePageHandler(MyHandler):
-	def get(self):
-		self.setupUser()
-		class_list = ['Math', 'PE', 'Geography', 'English']
-		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
-		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14']
-		children_list = ['Daniel', 'Maria', 'Lily']
-		self.templateValues['user'] = self.user
-		self.templateValues['title'] = 'Home'
-		self.templateValues['selected_class'] = 'English'
-		self.templateValues['classes'] = class_list
-		self.templateValues['filter_list'] = filter_list
-		self.templateValues['newsfeed_list'] = newsfeed_list
-		self.templateValues['children_list'] = children_list
-		self.render('home.html')
         # it should be something more concise like
         # self.auth.get_user_by_token(user_id, signup_token)
         # unfortunately the auth interface does not (yet) allow to manipulate
@@ -234,6 +219,22 @@ class HomePageHandler(MyHandler):
         else:
             logging.info('verification type not supported')
             self.abort(404)
+class HomePageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		class_list = ['Math', 'PE', 'Geography', 'English']
+		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
+		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14']
+		children_list = ['Daniel', 'Maria', 'Lily']
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'Home'
+		self.templateValues['selected_class'] = 'English'
+		self.templateValues['classes'] = class_list
+		self.templateValues['filter_list'] = filter_list
+		self.templateValues['newsfeed_list'] = newsfeed_list
+		self.templateValues['children_list'] = children_list
+		self.render('home.html')
+
 
 class SetPasswordHandler(MyHandler):
     @user_required
@@ -420,6 +421,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
+    webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', PostHandler, name='about'),
     webapp2.Route('/contact.html', PostHandler, name='contact'),
