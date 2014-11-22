@@ -13,6 +13,7 @@ from webapp2_extras import sessions
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
 
+
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
@@ -184,7 +185,21 @@ class VerificationHandler(MyHandler):
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']
         verification_type = kwargs['type']
-
+class HomePageHandler(MyHandler):
+	def get(self):
+		self.setupUser()
+		class_list = ['Math', 'PE', 'Geography', 'English']
+		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
+		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14']
+		children_list = ['Daniel', 'Maria', 'Lily']
+		self.templateValues['user'] = self.user
+		self.templateValues['title'] = 'Home'
+		self.templateValues['selected_class'] = 'English'
+		self.templateValues['classes'] = class_list
+		self.templateValues['filter_list'] = filter_list
+		self.templateValues['newsfeed_list'] = newsfeed_list
+		self.templateValues['children_list'] = children_list
+		self.render('home.html')
         # it should be something more concise like
         # self.auth.get_user_by_token(user_id, signup_token)
         # unfortunately the auth interface does not (yet) allow to manipulate
@@ -374,7 +389,7 @@ class ConferencePageHandler(MyHandler):
 		self.navbarSetup()
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'WebRTC'
-		self.render('WebRTC_demo.html')
+		self.render('chatroom_demo.html')
 
 class NotFoundPageHandler(MyHandler):
 	def get(self):

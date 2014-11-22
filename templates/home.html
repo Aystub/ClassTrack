@@ -1,0 +1,38 @@
+	{% extends "base_activity.html" %}
+	{% block title %}{{ title }}{% endblock %}
+	{% block top %}{{ super() }}{% endblock %}
+ 		
+
+ 	{% block sideNavWidget %}
+		<div class="home_filter">
+			<h2>Filters</h2>
+			{% for filter in filter_list %}
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" name="filter_list" value = {{filter}}>{{filter}}
+				</label>
+			</div>
+			{% endfor %}
+		</div>
+	{% endblock %}
+
+
+	{% block content %}
+
+			<div class="col-md-1"></div>
+			<div class="home_newsfeed col-md-8">
+				<h1>Newsfeed</h1>
+				{% for news in newsfeed_list %}
+				<div class="alert alert-warning" role="alert">
+					<span class="glyphicon glyphicon-th" aria-hidden="true"></span>
+					{{news}}
+					<br/>
+					<a href="#">Read More</a>
+				</div>
+				{% endfor %}
+			</div>
+			<div class="col-md-3"></div>
+	{% endblock %}
+
+	{% block bottom %}{{ super() }}{% endblock %}
+
