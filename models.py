@@ -36,7 +36,7 @@ class User(webapp2_extras.appengine.auth.models.User):
 
     return None, None
 
-class Card(ndb.Model):
+class Post(ndb.Model):
     caption = ndb.TextProperty()
     owner = ndb.StringProperty(required=True)
     img = ndb.BlobProperty(default=None)

@@ -156,7 +156,6 @@ class SignupPageHandler(MyHandler):
         self.render('signup.html')
 
     def post(self):
-        user_name = self.request.get('username')
         password = self.request.get('password')
         email = self.request.get('email')
         first_name = self.request.get('fname')
@@ -316,9 +315,9 @@ class PostHandler(MyHandler):
         the_post = self.request.get('the_post')
         owner = str(self.user_info['auth_ids'])
 
-        theCard = models.Card(caption=the_post, owner=owner)
+        thePost = models.Post(caption=the_post, owner=owner)
 
-        future = theCard.put()
+        future = thePost.put()
 
 # Here is an example of how we can use ajax to call one of our handlers. So doing a
 # "POST" to the url "/post" runs the post method defined in our PostHandler since
