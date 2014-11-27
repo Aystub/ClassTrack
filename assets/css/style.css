@@ -375,3 +375,8 @@ border-radius: 10px;
   overflow-y:auto;
   overflow-x:hidden;
 }
+
+.class_list_container
+{
+    color: #ffffff;
+}

@@ -24,6 +24,7 @@
 
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+		{%block scriptBlock %}{% endblock %}
 		
 	</head>
 
@@ -46,7 +47,11 @@
 						{% for child in children_list%}
 						<li><a href="#">{{child}}</a></li>
 						{%endfor%}
+						<li><a>Current Class Selected</a></li>
+						<li><a>{{selected_class}}</a></li>
 					</ul>
+
+
 					<div class="nav navbar-nav navbar-right">
 						{% if username %}
 					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</a></button></p>
@@ -65,7 +70,17 @@
 				<ul class="nav nav-pills nav-stacked">
 					<!-- <li class="active"><a href="#">Section</a></li> -->
 					<li id="home_li"><a class="side-nav-link" href="home.html">Home</a></li>        
-					<li><a class="side-nav-link" href="#">Switch Class</a></li>        
+					<li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect.html">Switch Class</a></li>    
+				    <script>
+				        $(document).ready(function() {
+				            $('.fancybox').fancybox({
+							   width: 640,
+						   		height: 450,
+						   		fitToView : false,
+						   		autoSize : false
+				            });
+				        });
+				    </script>
 					<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>        
 					<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>        
 					<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>        
@@ -81,12 +96,10 @@
 
 			
 			<div id="content-right-of-sidebar">
-				<div class="row">
 
 				{% block content %}{% endblock %}
 
 
-				</div>
 			</div>
 
 		</div>
@@ -108,11 +121,12 @@
 		function setup()
 		{
 			var path = window.location.pathname.substring(1, (window.location.pathname.length-5));
+			$("#"+path+"_li").addClass("side-nav-active");
 			findSizesForClassButtons();
 			newsfeedMinHeight();
 			fixHeights();
-			$("#"+path+"_li").addClass("side-nav-active");
 			fixWidth();
+
 		}
 
 		function newsfeedMinHeight()
@@ -165,11 +179,9 @@
 
 		function fixWidth()
 		{
-			if($('#sidebar').width()< "200px")
-			{
-				$('#sidebar').width("200px");
-				$('#content-right-of-sidebar').width($(document).width()-"200px");
-			}
+			console.log($('#sidebar').width());
+			$('#sidebar').width(150);
+			$('#content-right-of-sidebar').width($(document).width()-150);
 		}
 
 	</script>

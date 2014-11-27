@@ -54,6 +54,11 @@ class MyHandler(webapp2.RequestHandler):
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
+        children_list = ['Daniel', 'Maria', 'Lily']
+        self.templateValues['children_list'] = children_list
+        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+        self.templateValues['selected_class'] = class_list[len(class_list)-1]
+
 
     def render(self, afile):
         "Render the given file"
@@ -222,17 +227,12 @@ class VerificationHandler(MyHandler):
 class HomePageHandler(MyHandler):
 	def get(self):
 		self.setupUser()
-		class_list = ['Math', 'PE', 'Geography', 'English']
 		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
 		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14', 'LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'LAST ELEMENT']
-		children_list = ['Daniel', 'Maria', 'Lily']
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'Home'
-		self.templateValues['selected_class'] = 'English'
-		self.templateValues['classes'] = class_list
 		self.templateValues['filter_list'] = filter_list
 		self.templateValues['newsfeed_list'] = newsfeed_list
-		self.templateValues['children_list'] = children_list
 		self.render('home.html')
 
 
@@ -466,9 +466,11 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
+        conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
+        self.templateValues['conference_invitation_list'] = conference_invitation_list
         self.render('conferenceSchedule.html')
 
 class ConferencePageHandler(MyHandler):
@@ -494,6 +496,18 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Contact | ClassTrack'
         self.render('messaging.html')
+
+class ClassSelectPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Class Select | ClassTrack'
+        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+        self.templateValues['class_list'] = class_list
+        self.templateValues['selected_class'] = class_list[len(class_list)-1]
+        self.render('classSelect.html')
+
 
 config = {
   'webapp2_extras.auth': {
@@ -528,6 +542,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
-    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),    
+    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
+    
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
