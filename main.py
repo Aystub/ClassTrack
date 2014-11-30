@@ -5,6 +5,7 @@ from google.appengine.api import users
 import jinja2
 import logging
 import datetime
+from datetime import datetime
 import models
 import json
 
@@ -465,7 +466,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
+        conference_list = models.Conference.query().fetch()
+        # conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
@@ -488,6 +490,16 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         self.render('addConference.html')
+    def post(self):
+        extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
+        post = models.Conference(
+                purpose = self.request.get('purpose'),
+                participants = self.request.get('participants'),
+                datetime = extractedDateTime,
+            )
+        post.put()
+        self.response.write("<h1> Conference Added </h1>")
+
 
 class ContactTeacherPageHandler(MyHandler):
     def get(self):

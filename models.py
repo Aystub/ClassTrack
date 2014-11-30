@@ -72,3 +72,8 @@ class PrivateMessage(ndb.Model):
     
     def id(self):
         return self.key.id()
+
+class Conference(ndb.Model):
+    purpose = ndb.StringProperty(required=True)
+    participants = ndb.StringProperty(required=True)
+    datetime = ndb.DateProperty(required=True)
