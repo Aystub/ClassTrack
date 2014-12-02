@@ -558,14 +558,10 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
-<<<<<<< HEAD
     webapp2.Route('/about.html', AboutPageHandler, name='about'),
     webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
-=======
-    webapp2.Route('/about.html', PostHandler, name='about'),
-    webapp2.Route('/contact.html', PostHandler, name='contact'),
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
@@ -573,8 +569,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
->>>>>>> d0d3b538a2cedc0b64bb3b5f9cc7d70fdce88c66
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
