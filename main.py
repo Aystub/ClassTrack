@@ -554,13 +554,9 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
     webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
-<<<<<<< HEAD
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-=======
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
-    
->>>>>>> origin/master
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
