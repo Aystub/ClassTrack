@@ -1,0 +1,45 @@
+	{% extends "baseActivity.html" %}
+	{% block title %}{{ title }}{% endblock %}
+	{% block top %}{{ super() }}{% endblock %}
+	{% block scriptBlock %}
+		{{super()}}
+		<script type="text/javascript" src="/assets/js/fullcalendar/lib/moment.min.js"></script>
+		<script type="text/javascript" src="/assets/js/fullcalendar/fullcalendar.js"></script>
+        <link rel="stylesheet" href="/assets/js/fullcalendar/fullcalendar.min.css" type="text/css" media="screen" />
+
+	{% endblock %}
+ 		
+
+ 	{% block sideNavWidget %}
+
+	{% endblock %}
+
+
+	{% block content %}
+		<div id='calendar'></div>
+		<script>
+			// Full Calendar
+			// http://fullcalendar.io/
+			// Data can be retrieved through AJAX
+			$(document).ready(function(){
+				    $('#calendar').fullCalendar({
+				    	height: 500,
+			    	    events: [
+				        {
+				            title  : 'Thanksgiving',
+				            start  : '2014-11-27'
+				        },
+				        {
+				            title  : 'CSCE 490 Presentation',
+				            start  : '2014-12-05',
+				        }
+				    ]
+			    });
+			});
+		</script>
+	{% endblock %}
+
+	{% block bottom %}{{ super() }}{% endblock %}
+	}
+	}
+

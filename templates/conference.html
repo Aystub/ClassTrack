@@ -1,0 +1,102 @@
+	{% extends "baseActivity.html" %}
+	{% block title %}{{ title }}{% endblock %}
+	{% block scriptBlock %}
+		super()
+        <script src="../assets/js/modernizr-latest.js"></script>
+        <script src="../assets/js/simplewebrtc/simplewebrtc.bundle.js"></script>
+        <script src="../assets/js/adapter.js"></script>
+	      <link rel="stylesheet" type="text/css" href="../assets/css/chatroom_demo.css">
+
+	{% endblock%}
+	{% block top %}{{ super() }}{% endblock %}
+ 		
+
+ 	{% block sideNavWidget %}
+
+	{% endblock %}
+
+
+	{% block content %}
+	  <div class="row">
+    <!-- Has to be on one line due to whitespace being included -->
+      <div class="col-md-6"><video id="localVideo" autoplay style="background-color:#FFF"></video></div><div class="col-md-6" id="remote_video_container"></div> 
+    </div>
+    <div class="video_controls">
+        <button id="connect_button" class="custom_button" onclick="connect()">Connect</button>
+        <button id="mute_button" class="custom_button" onclick="mute()">Mute</button>
+        <button id="disconnect_button" class="custom_button" onclick="disconnect()">Disconnect</button>
+        <button id="screen_sharing_button" class="custom_button" onclick="shareScreen()">Screen Sharing</button>
+
+    </div>
+
+    <div id="infoDiv"></div>
+
+
+
+
+        <script>
+          var webrtc;
+
+          function connect(){
+            webrtc = new SimpleWebRTC({
+            // the id/element dom element that will hold "our" video
+            localVideoEl: 'localVideo',
+            // the id/element dom element that will hold remote videos
+            remoteVideosEl: 'remote_video_container',
+            // immediately ask for camera access
+            autoRequestMedia: true
+            });
+
+            webrtc.on('readyToCall', function () {
+            // you can name it anything
+            webrtc.joinRoom('cupcake');
+            });
+
+            var getScreenMedia = require('getscreenmedia');
+
+			getScreenMedia(function (err, stream) {
+			    // if the browser doesn't support user media
+			    // or the user says "no" the error gets passed
+			    // as the first argument.
+			    if (err) {
+			       console.log('failed');
+			    } else {
+			       console.log('got a stream', stream);  
+			    }
+			})
+          }
+
+          function disconnect(){
+            webrtc.leaveRoom();
+            webrtc.stopLocalVideo();
+            $("#localVideo").height($("#remoteVideo").height());
+          }
+
+          function mute(){
+            if($("#mute_button").html() == "Mute"){
+              $("#mute_button").html("Unmute");
+            }
+            else{
+              $("#mute_button").html("Mute");
+            }
+          }
+
+          function shareScreen(){
+            // Toggle text
+            if($("#screen_sharing_button").html() == "Screen Sharing"){
+              $("#screen_sharing_button").html("Share Video");
+            }
+            else{
+              $("#screen_sharing_button").html("Screen Sharing");
+            }
+            
+          }
+        </script>
+
+
+
+
+	{% endblock %}
+
+	{% block bottom %}{{ super() }}{% endblock %}
+
