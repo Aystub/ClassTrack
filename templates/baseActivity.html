@@ -8,28 +8,22 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 		<link rel="icon" href="../../favicon.ico">
-
 		<title>{{ title }}</title>
-
 		<!-- Bootstrap core CSS -->
 		<link href="/assets/css/bootstrap.css" rel="stylesheet">
 		<link href="/assets/css/sidebar.css" rel="stylesheet">
 		<link href="/assets/css/home.css" rel="stylesheet">
-
 		<script src="/assets/js/jquery.js"></script>
 		<script src="/assets/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="/assets/js/fancybox/source/jquery.fancybox.css" type="text/css" media="screen" />
         <script type="text/javascript" src="/assets/js/fancybox/source/jquery.fancybox.js"></script>
-
-
+        <script type="text/javascript" src="/assets/js/touchswipe/jquery.touchSwipe.min.js"></script>
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
 		{%block scriptBlock %}{% endblock %}
 		
 	</head>
-
 	<body>
-
 		<div class="navbar-custom-global navbar-fixed-top" role="navigation">
 			<div class="container">
 				<div class="navbar-header">
@@ -50,12 +44,9 @@
 						<li><a>Current Class Selected</a></li>
 						<li><a>{{selected_class}}</a></li>
 					</ul>
-
-
 					<div class="nav navbar-nav navbar-right">
 						{% if username %}
 					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</a></button></p>
-
 						{% else %}
 							<a href="{{ login }}"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
 							<a href="{{ signup }}"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
@@ -64,7 +55,6 @@
 				</div><!--/.nav-collapse -->
 			</div>
 		</div>
-
 		<div class="below_nav">
 			<div id="sidebar">
 				<ul class="nav nav-pills nav-stacked">
@@ -87,37 +77,22 @@
 					<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>        
 					<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Contact Teacher</a></li>
 	 			</ul>
-
 	 		{%block sideNavWidget %}{% endblock %}
-
-
 			{%endblock%}
 			</div>
-
 			
 			<div id="content-right-of-sidebar">
-
 				{% block content %}{% endblock %}
-
-
 			</div>
-
 		</div>
-
-
-
-
 	{% block bottom %}
-
 	<script>
 		$(document).ready(function(){
 			setup();
 		});
-
 		$(window).resize(function(){
 			setup();
 		});
-
 		function setup()
 		{
 			var path = window.location.pathname.substring(1, (window.location.pathname.length-5));
@@ -126,9 +101,19 @@
 			newsfeedMinHeight();
 			fixHeights();
 			fixWidth();
-
+			// Swipe
+			  $(document).swipe( {
+		        //Generic swipe handler for all directions
+		       	 	swipeLeft:function(event, direction, distance, duration, fingerCount) {
+		       	 		collapseSideMenu();
+		        	},
+		       	 	swipeRight:function(event, direction, distance, duration, fingerCount) {
+		       	 		expandSideMenu();
+		       	 	},
+	   	 	        threshold:75
+		    	}
+		    );
 		}
-
 		function newsfeedMinHeight()
 		{
 			if($('.home_newsfeed').height() < $('.home_filter').height())
@@ -136,7 +121,6 @@
 				$('.home_newsfeed').height($('.home_filter').height());
 			}
 		}
-
 		function findSizesForClassButtons()
 		{
 			var numChildren = $('#class_button_holder').children().size();
@@ -150,7 +134,6 @@
 			$('.class_button_container > img').width(originalButtonWidth); 
 			$('.class_button_container').width(containerWidth);
 		}
-
 		function animateButtons()
 		{
 			var originalButtonWidth = $('.class_button_container > img').width();
@@ -165,27 +148,33 @@
 		    	}
 		    	);
 		}
-
 		function fixHeights()
 		{
 			if($('#content-right-of-sidebar').height() < $('.below_nav').height())
 			{
 				$('#sidebar').height($('.below_nav').height());
 				$('#content-right-of-sidebar').height($('.below_nav').height());
-
 			}
 			$('#sidebar').height($('#content-right-of-sidebar').height());
 		}
-
 		function fixWidth()
 		{
-			console.log($('#sidebar').width());
 			$('#sidebar').width(150);
 			$('#content-right-of-sidebar').width($(document).width()-150);
 		}
-
+		function collapseSideMenu()
+		{
+			$(".below_nav").css("background-color","#FFF");
+			$('#sidebar').stop().animate({width:0});
+			$('#content-right-of-sidebar').width($(document).width());
+		}
+		function expandSideMenu()
+		{
+			$(".below_nav").css("background-color","#16A086"); // Hardcoded value, this is just the color of the sidebar
+			$('#sidebar').stop().animate({width:150});
+			$('#content-right-of-sidebar').width($(document).width()-150);
+		}
 	</script>
-
 	</body>
 	</html>
 	{%endblock%}
