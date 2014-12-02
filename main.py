@@ -165,10 +165,11 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
+        meeting = ['empty']
 
         user_data = self.user_model.create_user(email,
             first_name=first_name, password_raw=password,
-            last_name=last_name, verified=False)
+            last_name=last_name, verified=False, meetings=meeting)
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
             return
@@ -553,9 +554,9 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
     webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
-    
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
