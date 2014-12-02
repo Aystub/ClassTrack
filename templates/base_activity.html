@@ -20,7 +20,7 @@
 		<script src="/assets/js/bootstrap.min.js"></script>
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
-		
+
 	</head>
 
 	<body>
@@ -44,6 +44,12 @@
 						{%endfor%}
 					</ul>
 					<div class="nav navbar-nav navbar-right">
+						{% if username %}
+						<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-default navbar-btn"><a href="{{ logout }}">Logout</a></button></p>
+						{% else %}
+						<a href="{{ login }}"><button type="button" class="btn btn-default navbar-btn">Login</button></a>
+						<a href="{{ signup }}"><button type="button" class="btn btn-default navbar-btn">Signup</button></a>
+						{% endif %}
 					</div>
 				</div><!--/.nav-collapse -->
 			</div>
@@ -53,12 +59,12 @@
 			<div id="sidebar">
 				<ul class="nav nav-pills nav-stacked">
 					<!-- <li class="active"><a href="#">Section</a></li> -->
-					<li class="side-nav-active"><a class="side-nav-link" href="#">Home</a></li>        
-					<li><a class="side-nav-link" href="#">Switch Class</a></li>        
-					<li><a class="side-nav-link" href="#">Calendar</a></li>        
-					<li><a class="side-nav-link" href="#">Grades</a></li>        
-					<li><a class="side-nav-link" href="#">Documents</a></li>        
-					<li><a class="side-nav-link" href="#">Conference</a></li>        
+					<li class="side-nav-active"><a class="side-nav-link" href="#">Home</a></li>
+					<li><a class="side-nav-link" href="#">Switch Class</a></li>
+					<li><a class="side-nav-link" href="#">Calendar</a></li>
+					<li><a class="side-nav-link" href="#">Grades</a></li>
+					<li><a class="side-nav-link" href="#">Documents</a></li>
+					<li><a class="side-nav-link" href="#">Conference</a></li>
 					<li><a class="side-nav-link" href="#">Contact Teacher</a></li>
 	<!-- 				<li><a href="#" id="side-nav-toggle" onclick="toggleSide()" class="side-nav-link">Close Menu</a></li>
 	 -->			</ul>
@@ -69,7 +75,7 @@
 			{%endblock%}
 			</div>
 
-			
+
 			<div id="content-right-of-sidebar">
 				<div class="row">
 
@@ -94,7 +100,7 @@
 
 			$('#side-nav-toggle').click(function(){
 				$("#wrapper").toggleClass("toggled");
-			}, 
+			},
 			function(){
 
 			});
@@ -132,7 +138,7 @@
 			{
 				originalButtonWidth = 50;
 			}
-			$('.class_button_container > img').width(originalButtonWidth); 
+			$('.class_button_container > img').width(originalButtonWidth);
 			$('.class_button_container').width(containerWidth);
 		}
 
