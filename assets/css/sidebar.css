@@ -3,7 +3,7 @@
 
 
 #sidebar {
-	width:10%;
+	width:15%;
 	float: left;
 	position:relative;
 	overflow-y:auto;
@@ -14,7 +14,7 @@
 #content-right-of-sidebar
 {
 	background-color:#FEFEFE;
-	width:90%;
+	width:85%;
 	height: auto;
 	float:right;
 }
@@ -33,34 +33,4 @@
 .side-nav-active
 {
 	background-color:#D55401;
-}
-
-.custom-nav-pills > li {
-  float: left;
-}
-.custom-nav-pills > li > a {
-  border-radius: 4px;
-}
-.custom-nav-pills > li + li {
-  margin-left: 2px;
-}
-.custom-nav-pills > li.active > a,
-.custom-nav-pills > li.active > a:hover,
-.custom-nav-pills > li.active > a:focus {
-  color: #fff;
-  background-color: #428bca;
-}
-
-a.list-group-item.active > .badge,
-.custom-nav-pills > .active > a > .badge {
-  color: #428bca;
-  background-color: #fff;
-}
-.custom-nav-pills > li > a > .badge {
-  margin-left: 3px;
-}
-
-.custom-nav-pills
-{
-	display:block; !important
 }

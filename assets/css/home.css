@@ -8,6 +8,45 @@ body{
 /* Bootstrap hack, removes horizontal scrollbar */
 .row { margin: 0; padding: 0 }
 
+/* Bootstrap hack, changes default media query size to fit login button */
+    @media (max-width:992px){
+    .navbar-header {
+        float: none;
+    }
+    .navbar-left,.navbar-right {
+        float: none !important;
+    }
+    .navbar-toggle {
+        display: block;
+    }
+    .navbar-collapse {
+        border-top: 1px solid transparent;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .navbar-fixed-top {
+        top: 0;
+        border-width: 0 0 1px;
+     }
+    .navbar-collapse.collapse {
+        display: none!important;
+    }
+    .navbar-nav {
+        float: none!important;
+        margin-top: 7.5px;
+     }
+     .navbar-nav>li {
+        float: none;
+    }
+    .navbar-nav>li>a {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    .collapse.in{
+        display:block !important;
+    } 
+}
+
+
 .clear { clear: both; }
 
 .container {
@@ -133,4 +172,29 @@ body{
 {
 	padding: 10px 15px;
 	color:#FFF;	
+}
+
+.custom_button
+{
+  position: relative;
+  vertical-align: top;
+  width: 200px;
+  height: 60px;
+  padding: 0;
+  font-size: 22px;
+  text-align: center;
+  border: 0;
+  cursor: pointer;
+  margin-right:10px;
+  margin-left:10px;
+}
+
+#add_button
+{
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #27ae60;
+  border-bottom: 2px solid #219d55;
+  -webkit-box-shadow: inset 0 -2px #219d55;
+  box-shadow: inset 0 -2px #219d55;
 }

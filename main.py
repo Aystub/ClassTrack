@@ -5,7 +5,9 @@ from google.appengine.api import users
 import jinja2
 import logging
 import datetime
+from datetime import datetime
 import models
+import json
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -53,6 +55,11 @@ class MyHandler(webapp2.RequestHandler):
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
+        children_list = ['Daniel', 'Maria', 'Lily']
+        self.templateValues['children_list'] = children_list
+        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+        self.templateValues['selected_class'] = class_list[len(class_list)-1]
+
 
     def render(self, afile):
         "Render the given file"
@@ -222,17 +229,12 @@ class VerificationHandler(MyHandler):
 class HomePageHandler(MyHandler):
 	def get(self):
 		self.setupUser()
-		class_list = ['Math', 'PE', 'Geography', 'English']
 		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
 		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14', 'LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'LAST ELEMENT']
-		children_list = ['Daniel', 'Maria', 'Lily']
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'Home'
-		self.templateValues['selected_class'] = 'English'
-		self.templateValues['classes'] = class_list
 		self.templateValues['filter_list'] = filter_list
 		self.templateValues['newsfeed_list'] = newsfeed_list
-		self.templateValues['children_list'] = children_list
 		self.render('home.html')
 
 
@@ -320,15 +322,29 @@ class AuthenticatedHandler(MyHandler):
 #Change the model from Card to whatever. I setup a Card model for something else I was doing,
 #however the code is still relevant to read over since this is how we'll put posts into
 #the datastore.
+
+class jqueryPostHandler(MyHandler):
+    def get(self):
+        self.redirect('/')
+    
+    def post(self):
+        ids = self.request.get('IDValues')
+        data = json.loads(ids)
+        classIds = data["classIds"]
+        typeIds = data["typeIds"]
+        schoolIds = data["schoolIds"]
+        qry = models.NFPost.query(models.NFPost.classID.IN(classIds),models.NFPost.typeID.IN(typeIds),models.NFPost.schoolID.IN(schoolIds))
+
 class PostHandler(MyHandler):
     def get(self):
         self.redirect('/')
 
     def post(self):
         the_post = self.request.get('the_post')
-        owner = str(self.user_info['auth_ids'])
-
-        thePost = models.Post(caption=the_post, owner=owner)
+        owner = str(self.user_info['auth_ids'][0])
+        postClass = self.request.get('classid')
+        
+        thePost = models.NFPost(caption=the_post, owner=owner, classID=postClass)
 
         future = thePost.put()
 
@@ -355,6 +371,18 @@ class PostHandler(MyHandler):
 #
 #        });
 
+class PrivateMessageHandler(MyHandler):
+    def get(self):
+        self.redirect('/')
+        
+    def post(self):
+        the_message = self.request.get('the_message')
+        the_sender = str(self.user_info['auth_ids'][0])
+        the_reciever = self.request.get('reciever')
+        
+        theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, message=the_message)
+        
+        future = theMessage.put()
 
 class AboutPageHandler(MyHandler):
     def get(self):
@@ -399,6 +427,16 @@ class NotFoundPageHandler(MyHandler):
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('404.html')
+        
+class PostTestHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        post_q = models.NFPost.query().fetch()
+        self.templateValues['posts'] = post_q
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'postTest'
+        self.render('post_test.html')
 
 
 class CalendarPageHandler(MyHandler):
@@ -429,11 +467,13 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        self.user_model
-        #conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
+        conference_list = models.Conference.query().fetch()
+        # conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
+        conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
+        self.templateValues['conference_invitation_list'] = conference_invitation_list
         self.render('conferenceSchedule.html')
 
 class ConferencePageHandler(MyHandler):
@@ -444,6 +484,24 @@ class ConferencePageHandler(MyHandler):
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         self.render('chatroom_demo.html')
 
+class AddConferencePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.render('addConference.html')
+    def post(self):
+        extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
+        post = models.Conference(
+                purpose = self.request.get('purpose'),
+                participants = self.request.get('participants'),
+                datetime = extractedDateTime,
+            )
+        post.put()
+        self.response.write("<h1> Conference Added </h1>")
+
+
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -451,6 +509,18 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Contact | ClassTrack'
         self.render('messaging.html')
+
+class ClassSelectPageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Class Select | ClassTrack'
+        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+        self.templateValues['class_list'] = class_list
+        self.templateValues['selected_class'] = class_list[len(class_list)-1]
+        self.render('classSelect.html')
+
 
 config = {
   'webapp2_extras.auth': {
@@ -473,6 +543,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
+    webapp2.Route('/jqpost', jqueryPostHandler, name='post'),
+    webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', PostHandler, name='about'),
@@ -482,6 +554,13 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
     webapp2.Route('/chatroom_demo.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+<<<<<<< HEAD
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
+=======
+    webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
+    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
+    
+>>>>>>> origin/master
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
