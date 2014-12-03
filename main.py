@@ -15,7 +15,6 @@ from webapp2_extras import sessions
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
 
-
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
@@ -32,16 +31,6 @@ def user_required(handler):
 
 class MyHandler(webapp2.RequestHandler):
     "Setup self.user and self.templateValues values."
-    """def setupUser(self):
-        self.user = users.get_current_user()
-        self.templateValues = {}
-        if self.user:
-            self.templateValues['logout'] = users.create_logout_url('/')
-            self.templateValues['username'] = self.user.nickname()
-        else:
-            self.templateValues['login'] = users.create_login_url('/')
-    """
-
     def setupUser(self):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
@@ -50,8 +39,8 @@ class MyHandler(webapp2.RequestHandler):
         self.templateValues = {}
         if self.user:
             self.templateValues['logout'] = '/logout'
-            self.templateValues['username'] = str(self.user_info['auth_ids'])[3:-2]
-            logging.info("username: %s", str(self.user_info['auth_ids'])[3:-2])
+            self.templateValues['username'] = self.user_info['auth_ids'][0]
+            logging.info("***********USERNAME: %s", self.user_info['auth_ids'][0])
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
@@ -139,7 +128,7 @@ class MainPageHandler(MyHandler):
         self.navbarSetup()
         if self.user_info:
             self.templateValues['user'] = self.user_info
-            self.templateValues['username'] = str(self.user_info['auth_ids'])[3:-2]
+            self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['post'] = '/post'
             self.redirect('/home.html')
         else:
@@ -153,6 +142,11 @@ class PostPageHandler(MyHandler):
     def get(self):
         self.render('post.html')
 
+class SchoolNameHandler(MyHandler):
+    def post(self):
+        school_query = models.School.query().fetch()
+        self.response.out.write(json.dumps([p.to_dict() for p in school_query]))
+
 class SignupPageHandler(MyHandler):
     def get(self):
         self.templateValues = {}
@@ -165,6 +159,17 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
+        school = self.request.get('school')
+        school_code_for_teacher = self.request.get('school_code')
+        if school_code_for_teacher:
+            user_type = 1
+        else:
+            user_type = 2
+        child = ['None']
+
+        user_data = self.user_model.create_user(email,
+            first_name=first_name, password_raw=password,
+            last_name=last_name, user_type=user_type, children=child, school=school, verified=False)
         meeting = ['empty']
 
         user_data = self.user_model.create_user(email,
@@ -326,7 +331,7 @@ class AuthenticatedHandler(MyHandler):
 class jqueryPostHandler(MyHandler):
     def get(self):
         self.redirect('/')
-    
+
     def post(self):
         ids = self.request.get('IDValues')
         data = json.loads(ids)
@@ -343,7 +348,7 @@ class PostHandler(MyHandler):
         the_post = self.request.get('the_post')
         owner = str(self.user_info['auth_ids'][0])
         postClass = self.request.get('classid')
-        
+
         thePost = models.NFPost(caption=the_post, owner=owner, classID=postClass)
 
         future = thePost.put()
@@ -368,20 +373,19 @@ class PostHandler(MyHandler):
 #                console.log(e);
 #              }
 #            });
-#
 #        });
 
 class PrivateMessageHandler(MyHandler):
     def get(self):
         self.redirect('/')
-        
+
     def post(self):
         the_message = self.request.get('the_message')
         the_sender = str(self.user_info['auth_ids'][0])
         the_reciever = self.request.get('reciever')
-        
+
         theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, message=the_message)
-        
+
         future = theMessage.put()
 
 class AboutPageHandler(MyHandler):
@@ -419,17 +423,6 @@ class NotFoundPageHandler(MyHandler):
 		self.templateValues['user'] = self.user
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('404.html')
-        
-class PostTestHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        post_q = models.NFPost.query().fetch()
-        self.templateValues['posts'] = post_q
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'postTest'
-        self.render('post_test.html')
-
 
 class CalendarPageHandler(MyHandler):
     def get(self):
@@ -538,6 +531,31 @@ class ClassSelectPageHandler(MyHandler):
         self.render('classSelect.html')
 
 
+class AddChildHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Child'
+        self.render('addChild.html')
+
+    def post(self):
+        link = self.request.get("student_id")
+        this_user = self.user
+        if this_user.children == ['None']:
+            this_user.children = [link]
+        else:
+            this_user.children += [link]
+        this_user.put()
+
+class LookupChildHandler(MyHandler):
+    def post(self):
+        student_id = self.request.get("childID")
+        student_query = models.Student.query().filter(models.Student.student_id==student_id)
+        self.response.out.write(json.dumps([p.to_dict() for p in student_query]))
+
+
+
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -551,6 +569,7 @@ config = {
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainPageHandler, name='home'),
     webapp2.Route('/index.html', MainPageHandler, name='index'),
+    webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
     webapp2.Route('/password', SetPasswordHandler),
@@ -563,15 +582,16 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
-    webapp2.Route('/about.html', PostHandler, name='about'),
-    webapp2.Route('/contact.html', PostHandler, name='contact'),
+    webapp2.Route('/about.html', AboutPageHandler, name='about'),
+    webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
+    webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+    webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
-    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect')    
     # webapp2.Route('/.*', NotFoundPageHandler)

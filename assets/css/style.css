@@ -283,7 +283,7 @@ body {
 #class_button_holder
 {
   width:100%;
-  margin-top: 10px; 
+  margin-top: 10px;
   text-align: center;
   position:relative;
   top:90px;
@@ -356,14 +356,6 @@ border-radius: 10px;
 	padding-bottom:4px;
 }
 
-
-
-
-
-
-
-
-
 #sidebar {
   width: inherit;
   min-width: 220px;
@@ -376,6 +368,28 @@ border-radius: 10px;
   overflow-x:hidden;
 }
 
+.suggestion{
+	font-size: 1.3em;
+	margin-left: 10px;
+	margin-top: 15px;
+	display: inline;
+	color: #4183D7;
+}
+.suggestion:hover{
+	background-color: #C5EFF7;
+	cursor: pointer;
+}
+
+.studentFound{
+	margin-top: 15px;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	text-align: center;
+	border: 1px solid black;
+	width: 100%;
+}
+=======
 .class_list_container
 {
     color: #ffffff;

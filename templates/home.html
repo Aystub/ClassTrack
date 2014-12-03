@@ -1,7 +1,6 @@
 	{% extends "baseActivity.html" %}
 	{% block title %}{{ title }}{% endblock %}
 	{% block top %}{{ super() }}{% endblock %}
- 		
 
  	{% block sideNavWidget %}
 		<div class="home_filter">
@@ -13,6 +12,9 @@
 				</label>
 			</div>
 			{% endfor %}
+		</div>
+		<div class="home_filter">
+			<a href="/addChild"><button type="button" class="btn btn-default navbar-btn">Add Child</button></a>
 		</div>
 	{% endblock %}
 
@@ -34,4 +36,3 @@
 	{% endblock %}
 
 	{% block bottom %}{{ super() }}{% endblock %}
-
