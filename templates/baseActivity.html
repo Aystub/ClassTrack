@@ -166,13 +166,15 @@
 		{
 			$(".below_nav").css("background-color","#FFF");
 			$('#sidebar').stop().animate({width:0});
-			$('#content-right-of-sidebar').width($(document).width());
+			$('#content-right-of-sidebar').stop().animate({width:$(document).width()});
 		}
 		function expandSideMenu()
 		{
-			$(".below_nav").css("background-color","#16A086"); // Hardcoded value, this is just the color of the sidebar
+			var rightwidth = $(document).width()-150;
 			$('#sidebar').stop().animate({width:150});
-			$('#content-right-of-sidebar').width($(document).width()-150);
+			$('#content-right-of-sidebar').stop().animate({width: rightwidth});
+			// $(".below_nav").css("background-color","#16A086"); // Hardcoded value, this is just the color of the sidebar
+
 		}
 	</script>
 	</body>

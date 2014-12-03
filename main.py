@@ -468,13 +468,10 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.templateValues['conference_invitation_list'] = conference_invitation_list
         self.render('conferenceSchedule.html')
 
-class ConferencePageHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.render('conference.html')
+
+
+
+
 
 class AddConferencePageHandler(MyHandler):
     def get(self):
@@ -488,10 +485,37 @@ class AddConferencePageHandler(MyHandler):
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = self.request.get('participants'),
-                datetime = extractedDateTime,
+                datetime = extractedDateTime
             )
         post.put()
         self.response.write("<h1> Conference Added </h1>")
+
+
+class ConferencePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.render('conference.html')
+    def post(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues = {}
+        purpose = self.request.get('purpose')
+        participants = self.request.get('participants')
+        datetime = self.request.get('datettime')
+        roomkey = self.request.get('roomkey')
+        self.templateValues['purpose'] = purpose
+        self.templateValues['participants'] = participants
+        self.templateValues['datetime'] = datetime
+        self.templateValues['roomkey'] = roomkey
+        self.render('conference.html')
+
+
+
+
+
 
 
 class ContactTeacherPageHandler(MyHandler):
@@ -549,6 +573,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
-    webapp2.Route('/.*', NotFoundPageHandler)
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect')    
+    # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

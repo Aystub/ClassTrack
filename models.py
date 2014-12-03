@@ -64,14 +64,6 @@ class NFPost(ndb.Model):
     def remove(self):
         self.key.delete()
 
-class Meeting(ndb.Model):
-	created = ndb.DateTimeProperty(auto_now_add=True)
-	time = ndb.DateTimeProperty()
-	attending = ndb.StringProperty(repeated=True)
-	invited = ndb.StringProperty(repeated=True)
-
-	def id(self):
-		return self.key.id()
 
 class classes(ndb.Model):
 	teacher = ndb.StringProperty()
@@ -95,4 +87,6 @@ class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
     participants = ndb.StringProperty(required=True)
     datetime = ndb.DateProperty(required=True)
-
+    created = ndb.DateTimeProperty(auto_now_add=True)
+    def id(self):
+        return self.key.id()

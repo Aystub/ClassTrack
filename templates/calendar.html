@@ -16,6 +16,7 @@
 
 
 	{% block content %}
+	<div class="row">
 		<div id='calendar'></div>
 		<script>
 			// Full Calendar
@@ -37,6 +38,7 @@
 			    });
 			});
 		</script>
+	</div>
 	{% endblock %}
 
 	{% block bottom %}{{ super() }}{% endblock %}

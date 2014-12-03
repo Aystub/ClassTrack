@@ -40,22 +40,30 @@
 
 		{% for conference in conference_list %}
 		<div class="row">
-			<div class="col-md-1"></div>
-			<div class="alert alert-success col-md-10" role="alert">
-				<div class="col-md-3">{{conference['datetime']	}}</div>
-				<div class="col-md-3">{{conference['purpose']}}</div>
-				<div class="col-md-3">{{conference['participants']}}</div>
-				<div class="col-md-3">
-					<div class="row">
-						<div class="col-md-4"><a href="conference.html" type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-expand" aria-hidden="true"></span> Join</a></div>
-						<div class="col-md-4"><a href="#" type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</a></div>
-						<div class="col-md-4"><a href="#" onclick="deleteConference()" type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</a></div>
-					</div>
+			<div class="alert alert-success col-md-12" role="alert">
+				<div class="col-md-2">{{conference['datetime']	}} </div>
+				<div class="col-md-2">{{conference['purpose']}}</div>
+				<div class="col-md-2">{{conference['participants']}}</div>
+				<div class="col-md-6">
+
+						<div class="col-md-4">
+							<form method="POST" action="conference.html">
+								<input type="hidden" name="roomkey" value={{conference.id()}}>
+								<input class="btn btn-default btn-block" type="submit" value="Enter">
+							</form>	
+						</div>
+						<div class="col-md-4">
+							<a href="#" class="btn btn-default btn-block">Edit</a>
+						</div>
+						<div class="col-md-4">
+							<a href="#" onclick="deleteConference()" class="btn btn-default btn-block">Delete</a>
+						</div>
 				</div>
 			</div>
-			<div class="col-md-1"></div>
 		</div>
 		{% endfor %}
+
+
 		<div class="row">
 			<div class="col-md-12" style="text-align:center">
 			<h1>Invitations</h1>
@@ -64,11 +72,11 @@
 		{% for invitation in conference_invitation_list %}
 		<div class="row">
 			<div class="col-md-1"></div>
-			<div class="alert alert-danger col-md-10" role="alert">
-				<div class="col-md-3">{{ invitation['time'] }}</div>
-				<div class="col-md-3">{{invitation['message']}}</div>
-				<div class="col-md-3">{{invitation['participants']}}</div>
-				<div class="col-md-3">
+			<div class="alert alert-danger col-md-12" role="alert">
+				<div class="col-md-2">{{ invitation['time'] }}</div>
+				<div class="col-md-2">{{invitation['message']}}</div>
+				<div class="col-md-2">{{invitation['participants']}}</div>
+				<div class="col-md-6">
 					<div class="row">
 						<div class="col-md-6"><button type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> Accept</button></div>
 						<div class="col-md-6"><button type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Decline</button></div>
@@ -77,6 +85,9 @@
 			</div>
 			<div class="col-md-1"></div>
 		</div>
+
+
+
 		<script>
 			function deleteConference()
 			{
