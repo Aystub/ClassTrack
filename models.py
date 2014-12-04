@@ -20,6 +20,9 @@ class User(webapp2_extras.appengine.auth.models.User):
         """
         self.password = security.generate_password_hash(raw_password, length=12)
 
+    def get_user_type(self):
+        return self.user_type
+
     @classmethod
     def get_by_auth_token(cls, user_id, token, subject='auth'):
         """Returns a user object based on a user ID and token.
