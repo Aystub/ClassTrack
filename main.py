@@ -18,6 +18,20 @@ from webapp2_extras.auth import InvalidPasswordError
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
+#JSON Serialization issues
+def default(obj):
+    """Default JSON serializer."""
+    import calendar, datetime
+
+    if isinstance(obj, datetime.datetime):
+        if obj.utcoffset() is not None:
+            obj = obj - obj.utcoffset()
+    millis = int(
+        calendar.timegm(obj.timetuple()) * 1000 +
+        obj.microsecond / 1000
+    )
+    return millis
+
 def user_required(handler):
     """Decorator that checks if there's a user associated with the current session.
     Will also fail if there's no session present.
@@ -161,14 +175,20 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         school = self.request.get('school')
         school_code_for_teacher = self.request.get('school_code')
+        student_id = self.request.get('student_id')
+        verified = False
         if school_code_for_teacher:
-            user_type = 1
+            user_type = 1 #user is a teacher
+        elif student_id:
+            user_type = 3 #user is a student
+            verified = True
+            email = student_id #Make student_id the auth_id for students
         else:
-            user_type = 2
+            user_type = 2 #user is a parent
         child = ['None']
-        
+
         meeting = ['empty']
-        
+
         user_data = self.user_model.create_user(email,
             first_name=first_name,
             password_raw=password,
@@ -176,23 +196,26 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             children=child,
             school=school,
-            verified=False)
-        
-        
+            verified=verified)
+
+
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
             return
 
-        user = user_data[1]
-        user_id = user.get_id()
+        if not student_id:
+            user = user_data[1]
+            user_id = user.get_id()
 
-        token = self.user_model.create_signup_token(user_id)
+            token = self.user_model.create_signup_token(user_id)
 
-        verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
+            verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-        msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
+            msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
 
-        self.display_message(msg.format(url=verification_url))
+            self.display_message(msg.format(url=verification_url))
+        else:
+            self.redirect('/addStudentData')
 
 class VerificationHandler(MyHandler):
     def get(self, *args, **kwargs):
@@ -547,8 +570,8 @@ class AddChildHandler(MyHandler):
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
-        student_query = models.Student.query().filter(models.Student.student_id==student_id)
-        self.response.out.write(json.dumps([p.to_dict() for p in student_query]))
+        student_query = models.User.query().filter(models.User.auth_ids==student_id)
+        self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
 class MakeSchoolHandler(MyHandler):
     def get(self):
@@ -558,6 +581,13 @@ class MakeSchoolHandler(MyHandler):
         newschool.put()
         self.redirect('/')
 
+class AddStudentDataHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Student Data'
+        self.render('addStudentData.html')
 
 config = {
   'webapp2_extras.auth': {
@@ -574,6 +604,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/index.html', MainPageHandler, name='index'),
     webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
+    webapp2.Route('/addStudentData', AddStudentDataHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
     webapp2.Route('/password', SetPasswordHandler),
     webapp2.Route('/login', LoginPageHandler, name='login'),
@@ -596,7 +627,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
-    webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool')    
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool')
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

@@ -45,7 +45,7 @@ function studentLookup(jsonObj, sugDivID){
     $(sugDivID).html('<table id="studentTable" class="table"><tr><th>Full Name</th><th>Add</th></tr>');
 
     for(var i = 0; i < jsonObj.length; i++){
-      $("#studentTable tr:last").after('<tr><td>'+ jsonObj[i].full_name + '</td><td><button onclick="addChild('+"'"+jsonObj[i].student_id+"'"+')" class="btn btn-default">Add</button></td></tr>');
+      $("#studentTable tr:last").after('<tr><td>'+ jsonObj[i].first_name + " " + jsonObj[i].last_name + '</td><td><button onclick="addChild('+"'"+jsonObj[i].auth_ids[i]+"'"+')" class="btn btn-default">Add</button></td></tr>');
     }
 }
 
