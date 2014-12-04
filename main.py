@@ -684,13 +684,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-<<<<<<< HEAD
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
-=======
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool')
->>>>>>> AustinLand
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
