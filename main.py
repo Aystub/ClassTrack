@@ -341,10 +341,17 @@ class jqueryPostHandler(MyHandler):
     def post(self):
         ids = self.request.get('IDValues')
         data = json.loads(ids)
-        classIds = data["classIds"]
-        typeIds = data["typeIds"]
-        schoolIds = data["schoolIds"]
-        qry = models.NFPost.query(models.NFPost.classID.IN(classIds),models.NFPost.typeID.IN(typeIds),models.NFPost.schoolID.IN(schoolIds))
+        #classIds = data["classIds"]
+        typeIds = data['typeIds']
+        if not typeIds:
+            self.response.out.write(json.dumps(["No Filters Selected"]))
+        else:
+            typeIds = list(map(int, typeIds))
+            #typeIds = [0,1,2,3]
+            #schoolIds = data["schoolIds"]
+            qry = models.NFPost.query(models.NFPost.typeID.IN(typeIds)).order(-models.NFPost.time)
+            self.response.out.write(json.dumps([p.caption for p in qry]))
+            #self.response.out.write(json.dumps(typeIds))
 
 class PostHandler(MyHandler):
     def get(self):
@@ -581,7 +588,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
-    webapp2.Route('/jqpost', jqueryPostHandler, name='post'),
+    webapp2.Route('/jqNFpost', jqueryPostHandler, name='post'),
     webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/home.html', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
