@@ -26,7 +26,8 @@
 				{% for news in newsfeed_list %}
 				<div class="alert alert-warning" role="alert">
 					<span class="glyphicon glyphicon-th" aria-hidden="true"></span>
-					{{news}}
+					{{news.caption}}
+					<br/>
 					<br/>
 					<a href="#">Read More</a>
 				</div>

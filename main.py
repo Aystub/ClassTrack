@@ -166,15 +166,19 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = 2
         child = ['None']
-
-        user_data = self.user_model.create_user(email,
-            first_name=first_name, password_raw=password,
-            last_name=last_name, user_type=user_type, children=child, school=school, verified=False)
+        
         meeting = ['empty']
-
+        
         user_data = self.user_model.create_user(email,
-            first_name=first_name, password_raw=password,
-            last_name=last_name, verified=False, meetings=meeting)
+            first_name=first_name,
+            password_raw=password,
+            last_name=last_name,
+            user_type=user_type,
+            children=child,
+            school=school,
+            verified=False)
+        
+        
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
             return
@@ -232,15 +236,17 @@ class VerificationHandler(MyHandler):
             self.abort(404)
 
 class HomePageHandler(MyHandler):
-	def get(self):
-		self.setupUser()
-		filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
-		newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14', 'LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'LAST ELEMENT']
-		self.templateValues['user'] = self.user
-		self.templateValues['title'] = 'Home'
-		self.templateValues['filter_list'] = filter_list
-		self.templateValues['newsfeed_list'] = newsfeed_list
-		self.render('home.html')
+    def get(self):
+        self.setupUser()
+        filter_list = ['School News', 'PTA', 'Grades', 'Assignment', 'Events']
+        newsfeed_list = ['LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14', 'LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'Flu shots will be given 11/19/14','LHS went 41-27 against CHS!','Sarah made an 87 on her English-Chapter 5 Test','PTA is holding a meeting on 12/5/14', 'LAST ELEMENT']
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Home'
+        self.templateValues['filter_list'] = filter_list
+        # self.templateValues['newsfeed_list'] = newsfeed_list
+        qry = models.NFPost.query().order(-models.NFPost.time)
+        self.templateValues['newsfeed_list'] = qry
+        self.render('home.html')
 
 
 class SetPasswordHandler(MyHandler):
@@ -452,7 +458,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_list = models.Conference.query().fetch()
+        conference_list = models.Conference.query()
         # conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
@@ -460,10 +466,6 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.templateValues['conference_list'] = conference_list
         self.templateValues['conference_invitation_list'] = conference_invitation_list
         self.render('conferenceSchedule.html')
-
-
-
-
 
 
 class AddConferencePageHandler(MyHandler):
@@ -504,12 +506,6 @@ class ConferencePageHandler(MyHandler):
         self.templateValues['datetime'] = datetime
         self.templateValues['roomkey'] = roomkey
         self.render('conference.html')
-
-
-
-
-
-
 
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
@@ -554,6 +550,13 @@ class LookupChildHandler(MyHandler):
         student_query = models.Student.query().filter(models.Student.student_id==student_id)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query]))
 
+class MakeSchoolHandler(MyHandler):
+    def get(self):
+        newschool = models.School(
+                school_name = 'Seneca Middle School'
+            )
+        newschool.put()
+        self.redirect('/')
 
 
 config = {
@@ -593,6 +596,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect')    
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
+    webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool')    
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
