@@ -47,20 +47,12 @@
           <div class="nav navbar-nav navbar-right">
             {% if username %}
                 <p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</a></button></p>
-            {% else %}
-              <a href="{{ login }}"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
-              <a href="{{ signup }}"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
             {% endif %}
           </div>
         </div><!--/.nav-collapse -->
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-md-12">
-        
-      </div>
-    </div>
 
     <div class="row">
     <!-- Has to be on one line due to whitespace being included -->
@@ -74,7 +66,20 @@
 
     </div>
 
-    <div id="infoDiv"></div>
+    <div id="infoDiv">
+      
+
+
+    <div class="row" id="conference_properties">
+      <div class="alert alert-success col-md-12" role="alert">
+          <div class="col-md-4">{{datetime}} </div>
+          <div class="col-md-4">{{purpose}}</div>
+          <div class="col-md-4">{{participants}}</div>
+        </div>
+
+    </div>
+
+    </div>
 
 
 
@@ -98,7 +103,7 @@
 
             webrtc.on('readyToCall', function () {
             // you can name it anything
-            webrtc.joinRoom('cupcake');
+            webrtc.joinRoom('{{roomkey}}');
             });
 
             var getScreenMedia = require('getscreenmedia');
