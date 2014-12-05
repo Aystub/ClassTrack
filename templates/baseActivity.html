@@ -38,7 +38,13 @@
 				<div class="collapse navbar-collapse">
 					<ul class="nav navbar-nav">
 						<li><a>Child Select: </a></li>
+<<<<<<< HEAD
 						<li><select class="form-control" style="margin-top: 7px;">
+=======
+						{% if not children_list: %}
+							<li><a href="#">None</a></li>
+						{% endif %}
+>>>>>>> 0bdd1067005ebb38c5f025bb5b3601cb876969db
 						{% for child in children_list%}
 							<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
 						{%endfor%}
@@ -48,7 +54,7 @@
 					</ul>
 					<div class="nav navbar-nav navbar-right">
 						{% if username %}
-					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a></p>
+					    	<p style="display: inline;">Welcome, <b>{{ first_name }}!</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a></p>
 						{% else %}
 							<a href="/login"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
 							<a href="/signup"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>

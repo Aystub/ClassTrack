@@ -52,16 +52,23 @@ class MyHandler(webapp2.RequestHandler):
         self.user_exists = self.auth.get_user_by_session()
         self.templateValues = {}
         if self.user_exists:
+            children_name_list = []
             self.templateValues['logout'] = '/logout'
+            self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
+            self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+
+            #Children
+            children_ids = self.user.children
+            children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+            self.templateValues['children_list'] = children_query
+
+            #Classes
+            class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+            self.templateValues['selected_class'] = class_list[len(class_list)-1]
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
-        children_ids = self.user.children
-        children_query = models.User.query(models.User.auth_ids.IN(children_ids))
-        self.templateValues['children_list'] = children_query
-        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-        self.templateValues['selected_class'] = class_list[len(class_list)-1]
 
 
     def render(self, afile):
@@ -648,6 +655,14 @@ class TeacherRegistrationHandler(MyHandler):
         self.templateValues['title'] = 'Teacher Registration'
         self.render('teacherRegistration.html')
 
+class ChildRegistrationHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['title'] = 'Child Registration'
+        self.render('childRegistration.html')
+
+
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -677,7 +692,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', AboutPageHandler, name='about'),
     webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
-    webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
@@ -691,5 +705,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
+    webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
+    webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

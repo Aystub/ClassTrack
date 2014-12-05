@@ -28,10 +28,10 @@
 
 	<body>
 
-		<form role="form" action="/addConference.html" method="POST">
+		<form role="form" action="/addConference.html" method="POST" onSubmit="return window.checkValidity();">
 		  <div class="form-group">
 		    <label for="purpose">Purpose of Meeting:</label>
-		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting"></input>
+		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting" id="purpose-input"></input>
 		  </div>
 		  <div class="form-group">
 		    <label for="participants">Select a Teacher:</label>
@@ -63,9 +63,42 @@
 						// ['8am', '3pm']
 					]
 				});
+
+				$.fn.datepicker.defaults.format = "mm/dd/yyyy";
 				$('#timePicker').timepicker('option', { useSelect: true });
-				$('#datePicker').datepicker();
+				$('#datePicker').datepicker({
+				});
+
+
+				var d = new Date();
+
+				var month = d.getMonth()+1;
+				var day = d.getDate();
+
+				// var output = d.getFullYear() + '/' +
+				//     (month<10 ? '0' : '') + month + '/' +
+				//     (day<10 ? '0' : '') + day;
+
+				//  $("#date-input").text(output);
 			});
+
+			function checkValidity()
+			{
+				if($("#datePicker").val() == "")
+				{
+					alert("Please choose a date for the conference");
+					return false;
+				}
+				else if($("#purpose-input").val() == "")
+				{
+					alert("Please give a purpose for the meeting");
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
 		</script>
 	</body>
 	</html>

@@ -255,6 +255,13 @@ body {
 
 
 /* ----- Jumbotron -----*/
+
+@media (max-width: 600px) {
+  .jumbotron {
+    display: none;
+  }
+}
+
 .jumbotron
 {
   background-repeat: no-repeat;
@@ -264,8 +271,10 @@ body {
 {
   height: 480px;
   background-image: url("/assets/images/children.jpg");
-  background-size: cover;
+  background-size: 100% 100%;
 }
+
+@media screen-size min-width
 
 
 .home_jumbotron
