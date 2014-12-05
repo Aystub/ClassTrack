@@ -513,13 +513,19 @@ class AddConferencePageHandler(MyHandler):
 
     def post(self):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
+    #    part_list = self.request.get('participants')
+    #    part_string = self.user.first_name+' '+self.user.last_name+', '
+    #    for p in part_list:
+    #        part_string = part_string+', '+p
         post = models.Conference(
                 purpose = self.request.get('purpose'),
-                participants = self.request.get('participants'),
+                # note to someone later, get the auth_ids from html, send it to the tables we need it in,
+                # and then find the appropriate first/last name and print it
+                participants = self.user.first_name+' '+self.user.last_name+', '+self.request.get('participants'),
                 datetime = extractedDateTime
             )
         post.put()
-        self.response.write("<h1> Conference Added </h1>")
+        self.response.write("<h1>Conference Confirmed</h1>")
 
 class DelConferenceHandler(MyHandler):
     def post(self):

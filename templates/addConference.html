@@ -35,11 +35,13 @@
 		  </div>
 		  <div class="form-group">
 		    <label for="participants">Select a Teacher:</label>
-				<select>
+				<select id ="participant-select" name="participants">
 					{% for teacher in teachers %}
-						<option value="{{ teacher.auth_ids }}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
+						<option value="{{teacher.first_name}} {{teacher.last_name}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
 					{% endfor %}
 				</select>
+
+
 		  </div>
 		  <div class="form-group">
 		      <label for="date">Date:</label>
