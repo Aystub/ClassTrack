@@ -50,28 +50,27 @@ class MyHandler(webapp2.RequestHandler):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
         """
-        self.user2 = self.auth.get_user_by_session()
+        self.user_exists = self.auth.get_user_by_session()
         self.templateValues = {}
-        children_name_list = []
-        if self.user2:
+        if self.user_exists:
+            children_name_list = []
             self.templateValues['logout'] = '/logout'
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
-            logging.info("***********USERNAME: %s", self.user_info['auth_ids'][0])
-            children_auth_ids = self.user_model.get_by_id(self.user_info['user_id']).children
-            for child in children_auth_ids:
-                query = models.User.query().filter(models.User.auth_ids==child)
-                child_name = query.fetch()
-                for name in child_name:
-                    children_name_list.append(name.first_name)
+
+            #Children
+            children_ids = self.user.children
+            if not children_ids[0] == "None": #list is not empty
+                children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+                self.templateValues['children_list'] = children_query
+
+            #Classes
+            class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+            self.templateValues['selected_class'] = class_list[len(class_list)-1]
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
-        # children_list = ['Daniel', 'Maria', 'Lily']
-        self.templateValues['children_list'] = children_name_list
-        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-        self.templateValues['selected_class'] = class_list[len(class_list)-1]
 
 
     def render(self, afile):
@@ -146,7 +145,7 @@ class MyHandler(webapp2.RequestHandler):
         self.navbarSetup()
         self.templateValues['message'] = message
         self.render('message.html')
-    
+
     def login_check(self):
         if not self.user_info:
             self.redirect('index.html')
@@ -199,7 +198,7 @@ class SignupPageHandler(MyHandler):
         elif student_id:
             user_type = 3 #user is a student
             verified = True
-            # email = student_id #Make student_id the auth_id for students
+            email = student_id #Make student_id the auth_id for students
         else:
             user_type = 2 #user is a parent
         child = ['None']
@@ -283,8 +282,6 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        #self.templateValues['test'] = self.user.user_type
-        #self.templateValues['newsfeed_list'] = newsfeed_list
         qry = models.NFPost.query().order(-models.NFPost.time)
         self.templateValues['newsfeed_list'] = qry
         self.login_check()
@@ -662,15 +659,6 @@ class InitNDBHandler(MyHandler):
         nfpost.put()
         self.redirect('/')
 
-class AddStudentDataHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Add Student Data'
-        self.login_check()
-        self.render('addStudentData.html')
-
 class TeacherRegistrationHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -682,8 +670,10 @@ class ChildRegistrationHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
+        self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
+
 
 config = {
   'webapp2_extras.auth': {
@@ -700,7 +690,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/index.html', MainPageHandler, name='index'),
     webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
-    webapp2.Route('/addStudentData', AddStudentDataHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
     webapp2.Route('/password', SetPasswordHandler),
     webapp2.Route('/login', LoginPageHandler, name='login'),
