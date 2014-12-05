@@ -38,16 +38,14 @@
 				<div class="collapse navbar-collapse">
 					<ul class="nav navbar-nav">
 						<li><a>Child Select: </a></li>
-<<<<<<< HEAD
-						<li><select class="form-control" style="margin-top: 7px;">
-=======
-						{% if not children_list: %}
-							<li><a href="#">None</a></li>
+						{% if not children_list %}
+						<li><a href="/addChild">Add Child</a></li>
+						{% else %}
+							<li><select class="form-control" style="margin-top: 7px;">
+							{% for child in children_list%}
+								<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
+							{%endfor%}
 						{% endif %}
->>>>>>> 0bdd1067005ebb38c5f025bb5b3601cb876969db
-						{% for child in children_list%}
-							<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
-						{%endfor%}
 						</select></li>
 						<li><a>Current Class Selected</a></li>
 						<li><a>{{selected_class}}</a></li>

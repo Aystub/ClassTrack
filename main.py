@@ -8,6 +8,7 @@ import datetime
 from datetime import datetime
 import models
 import json
+import re
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -60,8 +61,9 @@ class MyHandler(webapp2.RequestHandler):
 
             #Children
             children_ids = self.user.children
-            children_query = models.User.query(models.User.auth_ids.IN(children_ids))
-            self.templateValues['children_list'] = children_query
+            if not children_ids[0] == "None": #list is not empty
+                children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+                self.templateValues['children_list'] = children_query
 
             #Classes
             class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
@@ -640,14 +642,6 @@ class InitNDBHandler(MyHandler):
         nfpost.put()
         self.redirect('/')
 
-class AddStudentDataHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Add Student Data'
-        self.render('addStudentData.html')
-
 class TeacherRegistrationHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -659,6 +653,7 @@ class ChildRegistrationHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
+        self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
 
@@ -678,7 +673,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/index.html', MainPageHandler, name='index'),
     webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
-    webapp2.Route('/addStudentData', AddStudentDataHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
     webapp2.Route('/password', SetPasswordHandler),
     webapp2.Route('/login', LoginPageHandler, name='login'),
