@@ -18,6 +18,20 @@ from webapp2_extras.auth import InvalidPasswordError
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
+#JSON Serialization issues
+def default(obj):
+    """Default JSON serializer."""
+    import calendar, datetime
+
+    if isinstance(obj, datetime.datetime):
+        if obj.utcoffset() is not None:
+            obj = obj - obj.utcoffset()
+    millis = int(
+        calendar.timegm(obj.timetuple()) * 1000 +
+        obj.microsecond / 1000
+    )
+    return millis
+
 def user_required(handler):
     """Decorator that checks if there's a user associated with the current session.
     Will also fail if there's no session present.
@@ -132,6 +146,8 @@ class MainPageHandler(MyHandler):
             self.templateValues['post'] = '/post'
             self.redirect('/home.html')
         else:
+            self.templateValues['login'] = "/login"
+            self.templateValues['signup'] = "/signup"
             self.render('index.html')
 
 class NotFoundPageHandler(MyHandler):
@@ -160,15 +176,21 @@ class SignupPageHandler(MyHandler):
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
         school = self.request.get('school')
-        school_code_for_teacher = self.request.get('school_code')
-        if school_code_for_teacher:
-            user_type = 1
+        teacher_code = self.request.get('teacher_code')
+        student_id = self.request.get('student_id')
+        verified = False
+        if teacher_code:
+            user_type = 1 #user is a teacher
+        elif student_id:
+            user_type = 3 #user is a student
+            verified = True
+            email = student_id #Make student_id the auth_id for students
         else:
-            user_type = 2
+            user_type = 2 #user is a parent
         child = ['None']
-        
-        meeting = ['empty']
-        
+
+        meeting = ['None']
+
         user_data = self.user_model.create_user(email,
             first_name=first_name,
             password_raw=password,
@@ -176,23 +198,26 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             children=child,
             school=school,
-            verified=False)
-        
-        
+            verified=verified)
+
+
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
             return
 
-        user = user_data[1]
-        user_id = user.get_id()
+        if not student_id:
+            user = user_data[1]
+            user_id = user.get_id()
 
-        token = self.user_model.create_signup_token(user_id)
+            token = self.user_model.create_signup_token(user_id)
 
-        verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
+            verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-        msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
+            msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
 
-        self.display_message(msg.format(url=verification_url))
+            self.display_message(msg.format(url=verification_url))
+        else:
+            self.redirect('/addStudentData')
 
 class VerificationHandler(MyHandler):
     def get(self, *args, **kwargs):
@@ -481,7 +506,11 @@ class AddConferencePageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
+        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        teachers = [teacher.to_dict() for teacher in teacher_query]
+        self.templateValues['teachers'] = teacher_query
         self.render('addConference.html')
+
     def post(self):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         post = models.Conference(
@@ -500,6 +529,7 @@ class ConferencePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         self.render('conference.html')
+
     def post(self):
         self.setupUser()
         self.navbarSetup()
@@ -554,8 +584,8 @@ class AddChildHandler(MyHandler):
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
-        student_query = models.Student.query().filter(models.Student.student_id==student_id)
-        self.response.out.write(json.dumps([p.to_dict() for p in student_query]))
+        student_query = models.User.query().filter(models.User.auth_ids==student_id)
+        self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
 class MakeSchoolHandler(MyHandler):
     def get(self):
@@ -577,6 +607,7 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
+
 class InitNDBHandler(MyHandler):
     def get(self):
         nfpost = models.NFPost(
@@ -585,14 +616,14 @@ class InitNDBHandler(MyHandler):
                 owner = str(self.user_info['auth_ids'][0])
             )
         nfpost.put()
-        
+
         nfpost = models.NFPost(
                 caption = 'Flu shots will be given 11/19/14',
                 typeID = 1,
                 owner = str(self.user_info['auth_ids'][0])
             )
         nfpost.put()
-        
+
         nfpost = models.NFPost(
                 caption = 'Sarah made an 87 on her English Test',
                 typeID = 3,
@@ -625,6 +656,21 @@ class InitNDBHandler(MyHandler):
         nfpost.put()
         self.redirect('/')
 
+class AddStudentDataHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Student Data'
+        self.render('addStudentData.html')
+
+class TeacherRegistrationHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['title'] = 'Teacher Registration'
+        self.render('teacherRegistration.html')
+
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -640,6 +686,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/index.html', MainPageHandler, name='index'),
     webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
+    webapp2.Route('/addStudentData', AddStudentDataHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
     webapp2.Route('/password', SetPasswordHandler),
     webapp2.Route('/login', LoginPageHandler, name='login'),
@@ -653,6 +700,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', AboutPageHandler, name='about'),
     webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
+    webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
@@ -661,11 +709,10 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),    
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
-
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

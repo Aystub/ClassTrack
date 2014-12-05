@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{{ super() }}{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  <div class="spacer25"></div>
+
+  <div class="col-md-4 col-md-offset-4">
+    <h1 style="margin-left:-15px;">Add New Student:</h1>
+    <br>
+    <form role="form" action="/signup" method="POST">
+      <div class="form-group">
+        <label for="school">School Name:</label>
+        <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="School Name"></input>
+        <div style="display: inline;" id="schoolSug"></div>
+      </div>
+      <div class="form-group">
+        <label for="fname">First Name:</label>
+        <input class="form-control" type="text" name="fname" placeholder="First Name"></input>
+      </div>
+      <div class="form-group">
+        <label for="lname">Last Name:</label>
+        <input class="form-control" type="text" name="lname" placeholder="Last Name"></input>
+      </div>
+      <div class="form-group">
+          <label for="student_id">Student Id:</label>
+          <input class="form-control" type="text" name="student_id" placeholder="Student Id"></input>
+      </div>
+      <button type="submit" class="btn btn-default">Submit</button>
+    </div>
+  </form>
+
+</div>
+
+{% endblock %}
