@@ -54,7 +54,6 @@ class MyHandler(webapp2.RequestHandler):
         if self.user:
             self.templateValues['logout'] = '/logout'
             self.templateValues['username'] = self.user_info['auth_ids'][0]
-            logging.info("***********USERNAME: %s", self.user_info['auth_ids'][0])
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
