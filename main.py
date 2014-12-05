@@ -353,11 +353,6 @@ class AuthenticatedHandler(MyHandler):
     def get(self):
         self.render('authenticated.html')
 
-
-#Change the model from Card to whatever. I setup a Card model for something else I was doing,
-#however the code is still relevant to read over since this is how we'll put posts into
-#the datastore.
-
 class jqueryPostHandler(MyHandler):
     def get(self):
         self.redirect('/')
@@ -389,28 +384,6 @@ class PostHandler(MyHandler):
         thePost = models.NFPost(caption=the_post, owner=owner, classID=postClass)
 
         future = thePost.put()
-
-# Here is an example of how we can use ajax to call one of our handlers. So doing a
-# "POST" to the url "/post" runs the post method defined in our PostHandler since
-# that is what is set to run when the url "/post" is called. The ajax stuff would obviously
-# need to be done in our js file, not here. I'm just lazy and dumping everything into
-# the main.
-#
-#       $("#postButton").click(function(){
-#            var caption = $("#thePost").val();
-#
-#            $.ajax({
-#              url: "/post",
-#              type: "POST",
-#              data: { the_post: caption },
-#              success: function() {
-#                console.log("yay success!");
-#              },
-#              error: function(e){
-#                console.log(e);
-#              }
-#            });
-#        });
 
 class PrivateMessageHandler(MyHandler):
     def get(self):
@@ -513,7 +486,9 @@ class AddConferencePageHandler(MyHandler):
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
-        participants = [self.user_info['auth_ids'][0], self.request.get('participants')]
+        teachers = self.request.get('participants')
+        teachers = teachers[0]
+        participants = [self.user_info['auth_ids'][0], teachers]
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,

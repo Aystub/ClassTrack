@@ -56,7 +56,10 @@
 							<a href="#" class="btn btn-default btn-block">Edit</a>
 						</div>
 						<div class="col-md-4">
-							<a href="#" onclick="deleteConference()" class="btn btn-default btn-block">Delete</a>
+							<form method="POST" action="delConference.html">
+								<input type="hidden" name="roomkey" value={{conference.id()}}>
+								<input class="btn btn-default btn-block" type="submit" value="Delete">
+							</form>
 						</div>
 				</div>
 			</div>
