@@ -1,4 +1,4 @@
 *.pyc
 *.sh
 main.pyc
-*.pyc
+models.pyc

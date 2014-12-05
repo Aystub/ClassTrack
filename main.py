@@ -50,10 +50,10 @@ class MyHandler(webapp2.RequestHandler):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
         """
-        self.user = self.auth.get_user_by_session()
+        self.user2 = self.auth.get_user_by_session()
         self.templateValues = {}
         children_name_list = []
-        if self.user:
+        if self.user2:
             self.templateValues['logout'] = '/logout'
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
@@ -143,6 +143,7 @@ class MyHandler(webapp2.RequestHandler):
     def display_message(self, message):
         """Utility function to display a template with a simple message."""
         self.templateValues = {}
+        self.navbarSetup()
         self.templateValues['message'] = message
         self.render('message.html')
 
@@ -278,7 +279,8 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        # self.templateValues['newsfeed_list'] = newsfeed_list
+        #self.templateValues['test'] = self.user.user_type
+        #self.templateValues['newsfeed_list'] = newsfeed_list
         qry = models.NFPost.query().order(-models.NFPost.time)
         self.templateValues['newsfeed_list'] = qry
         self.render('home.html')
@@ -364,11 +366,6 @@ class AuthenticatedHandler(MyHandler):
     def get(self):
         self.render('authenticated.html')
 
-
-#Change the model from Card to whatever. I setup a Card model for something else I was doing,
-#however the code is still relevant to read over since this is how we'll put posts into
-#the datastore.
-
 class jqueryPostHandler(MyHandler):
     def get(self):
         self.redirect('/')
@@ -400,28 +397,6 @@ class PostHandler(MyHandler):
         thePost = models.NFPost(caption=the_post, owner=owner, classID=postClass)
 
         future = thePost.put()
-
-# Here is an example of how we can use ajax to call one of our handlers. So doing a
-# "POST" to the url "/post" runs the post method defined in our PostHandler since
-# that is what is set to run when the url "/post" is called. The ajax stuff would obviously
-# need to be done in our js file, not here. I'm just lazy and dumping everything into
-# the main.
-#
-#       $("#postButton").click(function(){
-#            var caption = $("#thePost").val();
-#
-#            $.ajax({
-#              url: "/post",
-#              type: "POST",
-#              data: { the_post: caption },
-#              success: function() {
-#                console.log("yay success!");
-#              },
-#              error: function(e){
-#                console.log(e);
-#              }
-#            });
-#        });
 
 class PrivateMessageHandler(MyHandler):
     def get(self):
@@ -522,27 +497,19 @@ class AddConferencePageHandler(MyHandler):
         self.render('addConference.html')
 
     def post(self):
+        self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
-    #    part_list = self.request.get('participants')
-    #    part_string = self.user.first_name+' '+self.user.last_name+', '
-    #    for p in part_list:
-    #        part_string = part_string+', '+p
+        teachers = self.request.get('participants')
+        teachers = teachers[0]
+        participants = [self.user_info['auth_ids'][0], teachers]
         post = models.Conference(
                 purpose = self.request.get('purpose'),
-                # note to someone later, get the auth_ids from html, send it to the tables we need it in,
-                # and then find the appropriate first/last name and print it
-                participants = self.user.first_name+' '+self.user.last_name+', '+self.request.get('participants'),
+                participants = participants,
                 datetime = extractedDateTime
             )
         post.put()
-        self.response.write("<h1>Conference Confirmed</h1>")
+        self.response.write("<h1> Conference Added </h1>")
 
-class DelConferenceHandler(MyHandler):
-    def post(self):
-        key = self.request.get('roomkey')
-        key2 = ndb.Key('Conference', int(key))
-        key2.delete()
-        self.redirect('conferenceSchedule.html')
 
 class ConferencePageHandler(MyHandler):
     def get(self):
@@ -606,7 +573,7 @@ class AddChildHandler(MyHandler):
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
-        student_query = models.User.query().filter(models.User.auth_ids==student_id)
+        student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
 class MakeSchoolHandler(MyHandler):
@@ -736,7 +703,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conference.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
-    webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
