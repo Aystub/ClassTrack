@@ -1,0 +1,50 @@
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<link rel="icon" href="../../favicon.ico">
+
+		<title>{{ title }}</title>
+
+		<!-- Bootstrap core CSS -->
+		<link href="/assets/css/bootstrap.css" rel="stylesheet">
+		<link href="/assets/css/sidebar.css" rel="stylesheet">
+		<link href="/assets/css/home.css" rel="stylesheet">
+
+		<script src="/assets/js/jquery.js"></script>
+		<script src="/assets/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/assets/js/timepicker/jquery.timepicker.js"></script>
+        <link rel="stylesheet" href="/assets/js/timepicker/jquery.timepicker.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="/assets/js/datepicker/js/bootstrap-datepicker.js"></script>
+        <link rel="stylesheet" href="/assets/js/datepicker/css/datepicker.css" type="text/css" media="screen" />
+		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+		
+	</head>
+
+	<body>
+
+<form role="form" action="/addPost.html" method="POST">
+	<div class="form-group" id="add-post">
+		<textarea class="form-control" name="post-caption" cols="40" rows="5"></textarea>
+		<select class="form-control" name="post-typeID">
+			<option value = "1">Schools News</option>
+			<option value = "2">PTA</option>
+			<option value = "3">Grades</option>
+			<option value = "4">Assignments</option>
+			<option value = "5">Events</option>
+		</select>
+
+
+		<button type="submit" class="btn btn-default btn-block" style="margin-top:20px">Submit</button>
+	</div>
+</form>
+
+</body>
+</html>
+
+

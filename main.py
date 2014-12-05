@@ -594,6 +594,18 @@ class MakeSchoolHandler(MyHandler):
         newschool.put()
         self.redirect('/')
 
+class AddPostHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('addPost.html')
+    def post(self):
+        nfpost = models.NFPost(
+                caption = self.request.get('post-caption'),
+                typeID = int(self.request.get('post-typeID')),
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
 
 class InitNDBHandler(MyHandler):
     def get(self):
@@ -687,7 +699,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/about.html', AboutPageHandler, name='about'),
     webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
-    webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
@@ -700,5 +711,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
+    webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+    webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
