@@ -511,10 +511,12 @@ class AddConferencePageHandler(MyHandler):
         self.render('addConference.html')
 
     def post(self):
+        self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
+        participants = [self.user_info['auth_ids'][0], self.request.get('participants')]
         post = models.Conference(
                 purpose = self.request.get('purpose'),
-                participants = self.request.get('participants'),
+                participants = participants,
                 datetime = extractedDateTime
             )
         post.put()

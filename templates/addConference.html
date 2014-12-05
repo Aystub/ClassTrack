@@ -35,7 +35,7 @@
 		  </div>
 		  <div class="form-group">
 		    <label for="participants">Select a Teacher:</label>
-				<select>
+				<select name="participants">
 					{% for teacher in teachers %}
 						<option value="{{ teacher.auth_ids }}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
 					{% endfor %}
