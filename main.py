@@ -132,6 +132,7 @@ class MyHandler(webapp2.RequestHandler):
     def display_message(self, message):
         """Utility function to display a template with a simple message."""
         self.templateValues = {}
+        self.navbarSetup()
         self.templateValues['message'] = message
         self.render('message.html')
 
