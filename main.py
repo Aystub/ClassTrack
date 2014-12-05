@@ -49,16 +49,17 @@ class MyHandler(webapp2.RequestHandler):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
         """
-        self.user2 = self.auth.get_user_by_session()
+        self.user_exists = self.auth.get_user_by_session()
         self.templateValues = {}
-        if self.user2:
+        if self.user_exists:
             self.templateValues['logout'] = '/logout'
             self.templateValues['username'] = self.user_info['auth_ids'][0]
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
-        children_list = ['Daniel', 'Maria', 'Lily']
-        self.templateValues['children_list'] = children_list
+        children_ids = self.user.children
+        children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+        self.templateValues['children_list'] = children_query
         class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
         self.templateValues['selected_class'] = class_list[len(class_list)-1]
 
@@ -268,8 +269,6 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        #self.templateValues['test'] = self.user.user_type
-        #self.templateValues['newsfeed_list'] = newsfeed_list
         qry = models.NFPost.query().order(-models.NFPost.time)
         self.templateValues['newsfeed_list'] = qry
         self.render('home.html')

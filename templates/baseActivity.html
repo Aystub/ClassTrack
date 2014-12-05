@@ -21,7 +21,7 @@
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
 		{%block scriptBlock %}{% endblock %}
-		
+
 	</head>
 	<body>
 		<div class="navbar-custom-global navbar-fixed-top" role="navigation">
@@ -38,9 +38,11 @@
 				<div class="collapse navbar-collapse">
 					<ul class="nav navbar-nav">
 						<li><a>Child Select: </a></li>
+						<li><select class="form-control" style="margin-top: 7px;">
 						{% for child in children_list%}
-						<li><a href="#">{{child}}</a></li>
+							<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
 						{%endfor%}
+						</select></li>
 						<li><a>Current Class Selected</a></li>
 						<li><a>{{selected_class}}</a></li>
 					</ul>
@@ -59,8 +61,8 @@
 			<div id="sidebar">
 				<ul class="nav nav-pills nav-stacked">
 					<!-- <li class="active"><a href="#">Section</a></li> -->
-					<li id="home_li"><a class="side-nav-link" href="home.html">Home</a></li>        
-					<li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect.html">Switch Class</a></li>    
+					<li id="home_li"><a class="side-nav-link" href="home.html">Home</a></li>
+					<li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect.html">Switch Class</a></li>
 				    <script>
 				        $(document).ready(function() {
 				            $('.fancybox').fancybox({
@@ -71,16 +73,16 @@
 				            });
 				        });
 				    </script>
-					<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>        
-					<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>        
-					<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>        
-					<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>        
+					<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
+					<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
+					<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
+					<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
 					<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Contact Teacher</a></li>
 	 			</ul>
 	 		{%block sideNavWidget %}{% endblock %}
 			{%endblock%}
 			</div>
-			
+
 			<div id="content-right-of-sidebar">
 				{% block content %}{% endblock %}
 			</div>
@@ -131,7 +133,7 @@
 			{
 				originalButtonWidth = 50;
 			}
-			$('.class_button_container > img').width(originalButtonWidth); 
+			$('.class_button_container > img').width(originalButtonWidth);
 			$('.class_button_container').width(containerWidth);
 		}
 		function animateButtons()
