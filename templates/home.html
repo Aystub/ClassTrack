@@ -21,9 +21,28 @@
 
 	{% block content %}
 			<div class="col-md-1"></div>
-			<div class="home_newsfeed col-md-10c">
+			<div class="home_newsfeed col-md-10">
 				<h1>Newsfeed</h1>
-                <div id = "NewsFeed"> 
+        <div class="row">
+
+        {% if user.user_type == 2%}
+            <center><button href="addPost.html" id="add_button" class="custom_button fancybox fancybox.iframe">Add Post</button></center>
+            
+            <script>
+                $(document).ready(function() {
+                    $('.fancybox').fancybox({
+                  width: 640,
+                  height: 450,
+                  fitToView : false,
+                  autoSize : false
+                    });
+                });
+            </script>
+          </div>
+          {% endif %}
+
+
+        <div id = "NewsFeed"> 
 				{% for news in newsfeed_list %}
 				<div class="alert alert-warning" role="alert">
 					<span class="glyphicon glyphicon-th" aria-hidden="true"></span>
@@ -65,8 +84,10 @@
                         var posts = JSON.parse(data) 
                         console.log(posts);
                         for(var i = 0; i<posts.length; i++)
-                           
+                        {    
                             $("#NewsFeed").append('<div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-th" aria-hidden="true"></span><br/>' + posts[i] + '<br/><a href="#">Read More</a></div>');
+                        }
+                        fixHeights();
                         
                       },
                       error: function(e){
@@ -86,5 +107,3 @@
 
 
 	{% block bottom %}{{ super() }}{% endblock %}
-    
-   

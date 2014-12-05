@@ -197,9 +197,7 @@ body{
 
 .alert
 {
-  border-bottom: 1px solid #AAA;
-  border-top: 1px solid #AAA;
-
+  border: 1px solid #AAA;
 }
 
 
@@ -346,4 +344,20 @@ body{
   outline: none;
   -webkit-box-shadow: none;
   box-shadow: none;
+}
+
+#add-post:after {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #959595;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  content: "Post Message";
+}
+
+#add-post{
+  padding: 45px 15px 15px;
 }

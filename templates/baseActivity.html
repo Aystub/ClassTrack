@@ -48,8 +48,8 @@
 						{% if username %}
 					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a></p>
 						{% else %}
-							<a href="{{ login }}"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
-							<a href="{{ signup }}"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
+							<a href="/login"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
+							<a href="/signup"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
 						{% endif %}
 					</div>
 				</div><!--/.nav-collapse -->
@@ -150,6 +150,7 @@
 		}
 		function fixHeights()
 		{
+			$('#content-right-of-sidebar').height($('.home_newsfeed').height()+50);
 			if($('#content-right-of-sidebar').height() < $('.below_nav').height())
 			{
 				$('#sidebar').height($('.below_nav').height());
