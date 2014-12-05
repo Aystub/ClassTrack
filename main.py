@@ -146,6 +146,10 @@ class MyHandler(webapp2.RequestHandler):
         self.templateValues['message'] = message
         self.render('message.html')
 
+    def login_check(self):
+        if not self.user_info:
+            self.redirect('index.html')
+
 class MainPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -280,10 +284,13 @@ class HomePageHandler(MyHandler):
         self.templateValues['filter_list'] = filter_list
         qry = models.NFPost.query().order(-models.NFPost.time)
         self.templateValues['newsfeed_list'] = qry
+        self.login_check()
         self.render('home.html')
 
 
 class SetPasswordHandler(MyHandler):
+    def get(self):
+        self.redirect('/')
     @user_required
     def post(self):
         password = self.request.get('password')
@@ -432,7 +439,7 @@ class ContactPageHandler(MyHandler):
 	def get(self):
 		self.setupUser()
 		self.navbarSetup()
-		self.templateValues['user'] = self.user
+		self.templateValues['user'] = self.user()
 		self.templateValues['title'] = 'ClassTrack'
 		self.render('contact.html')
 
@@ -450,6 +457,7 @@ class CalendarPageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Calendar | ClassTrack'
+        self.login_check()
         self.render('calendar.html')
 
 class GradesPageHandler(MyHandler):
@@ -458,6 +466,7 @@ class GradesPageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Grades | ClassTrack'
+        self.login_check()
         self.render('grades.html')
 
 class DocumentsPageHandler(MyHandler):
@@ -466,6 +475,7 @@ class DocumentsPageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Documents | ClassTrack'
+        self.login_check()
         self.render('documents.html')
 
 class ConferenceSchedulerPageHandler(MyHandler):
@@ -479,6 +489,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
         self.templateValues['conference_invitation_list'] = conference_invitation_list
+        self.login_check()
         self.render('conferenceSchedule.html')
 
 
@@ -491,6 +502,7 @@ class AddConferencePageHandler(MyHandler):
         teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
         teachers = [teacher.to_dict() for teacher in teacher_query]
         self.templateValues['teachers'] = teacher_query
+        self.login_check()
         self.render('addConference.html')
 
     def post(self):
@@ -514,6 +526,7 @@ class ConferencePageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.login_check()
         self.render('conference.html')
 
     def post(self):
@@ -536,6 +549,7 @@ class ContactTeacherPageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Contact | ClassTrack'
+        self.login_check()
         self.render('messaging.html')
 
 class ClassSelectPageHandler(MyHandler):
@@ -547,6 +561,7 @@ class ClassSelectPageHandler(MyHandler):
         class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
         self.templateValues['class_list'] = class_list
         self.templateValues['selected_class'] = class_list[len(class_list)-1]
+        self.login_check()
         self.render('classSelect.html')
 
 
@@ -556,6 +571,7 @@ class AddChildHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Add Child'
+        self.login_check()
         self.render('addChild.html')
 
     def post(self):
@@ -584,6 +600,7 @@ class MakeSchoolHandler(MyHandler):
 class AddPostHandler(MyHandler):
     def get(self):
         self.templateValues = {}
+        self.login_check()
         self.render('addPost.html')
     def post(self):
         nfpost = models.NFPost(
