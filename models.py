@@ -148,7 +148,7 @@ class PrivateMessage(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
-    participants = ndb.StringProperty(repeated=True)
+    participants = ndb.StringProperty()
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
     def id(self):
