@@ -562,7 +562,7 @@ class AddChildHandler(MyHandler):
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
-        student_query = models.User.query().filter(models.User.auth_ids==student_id)
+        student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
 class MakeSchoolHandler(MyHandler):
