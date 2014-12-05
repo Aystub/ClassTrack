@@ -6,6 +6,9 @@ from google.appengine.ext import ndb
 from webapp2_extras import security
 
 class User(webapp2_extras.appengine.auth.models.User):
+    first_name = ndb.StringProperty()
+    last_name = ndb.StringProperty()
+    user_type = ndb.IntegerProperty()
     meetings = ndb.StringProperty()
     children = ndb.StringProperty(repeated=True)
 
@@ -14,7 +17,6 @@ class User(webapp2_extras.appengine.auth.models.User):
 
     def set_password(self, raw_password):
         """Sets the password for the current user
-
         :param raw_password:
             The raw password which will be hashed and stored
         """
@@ -26,7 +28,6 @@ class User(webapp2_extras.appengine.auth.models.User):
     @classmethod
     def get_by_auth_token(cls, user_id, token, subject='auth'):
         """Returns a user object based on a user ID and token.
-
         :param user_id:
             The user_id of the requesting user.
         :param token:
@@ -47,7 +48,6 @@ class User(webapp2_extras.appengine.auth.models.User):
 
     def set_password(self, raw_password):
         """Sets the password for the current user
-
         :param raw_password:
             The raw password which will be hashed and stored
         """
@@ -56,7 +56,6 @@ class User(webapp2_extras.appengine.auth.models.User):
     @classmethod
     def get_by_auth_token(cls, user_id, token, subject='auth'):
         """Returns a user object based on a user ID and token.
-
         :param user_id:
             The user_id of the requesting user.
         :param token:
@@ -125,30 +124,14 @@ class School(ndb.Model):
     def remove(self):
         self.key.delete()
 
-class Student(ndb.Model):
-    student_id = ndb.StringProperty()
-    full_name = ndb.StringProperty()
-    class_list = ndb.StringProperty(repeated=True)
-    school_name = ndb.StringProperty()
-
-    def getKey(self):
-        return self.key
-
-    def getDict(self):
-        """Returns a dictionary representation of parts of this pin."""
-        return {'studentID': self.key.id(), 'full_name': self.full_name, 'class_list': self.class_list}
-
-    def remove(self):
-        self.key.delete()
-
 class classes(ndb.Model):
-	teacher = ndb.StringProperty()
-	school = ndb.StringProperty()
-	studentList = ndb.StringProperty(repeated=True)
-	name = ndb.StringProperty()
+    teacher = ndb.StringProperty()
+    school = ndb.StringProperty()
+    studentList = ndb.StringProperty(repeated=True)
+    name = ndb.StringProperty()
 
-	def id(self):
-		return self.key.id()
+    def id(self):
+        return self.key.id()
 
 class PrivateMessage(ndb.Model):
     sender = ndb.StringProperty(required=True)
@@ -161,7 +144,7 @@ class PrivateMessage(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
-    participants = ndb.StringProperty(required=True)
+    participants = ndb.StringProperty()
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
     def id(self):
