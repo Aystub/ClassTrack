@@ -231,7 +231,7 @@ class SignupPageHandler(MyHandler):
 
             self.display_message(msg.format(url=verification_url))
         else:
-            self.redirect('/addStudentData')
+            self.redirect('/childRegistration')
 
 class VerificationHandler(MyHandler):
     def get(self, *args, **kwargs):
@@ -483,7 +483,6 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_list = models.Conference.query()
-        # conference_list = [{'time':'12-25-2014 3:00 pm' ,'message':'1', 'participants':'Sarah, Hailey'},{'time':'12-25-2014 4:00 pm' ,'message':'2', 'participants':'Sarah, Daniel'}]
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
