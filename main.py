@@ -146,6 +146,8 @@ class MainPageHandler(MyHandler):
             self.templateValues['post'] = '/post'
             self.redirect('/home.html')
         else:
+            self.templateValues['login'] = "/login"
+            self.templateValues['signup'] = "/signup"
             self.render('index.html')
 
 class NotFoundPageHandler(MyHandler):
@@ -174,10 +176,10 @@ class SignupPageHandler(MyHandler):
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
         school = self.request.get('school')
-        school_code_for_teacher = self.request.get('school_code')
+        teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
         verified = False
-        if school_code_for_teacher:
+        if teacher_code:
             user_type = 1 #user is a teacher
         elif student_id:
             user_type = 3 #user is a student
@@ -187,7 +189,7 @@ class SignupPageHandler(MyHandler):
             user_type = 2 #user is a parent
         child = ['None']
 
-        meeting = ['empty']
+        meeting = ['None']
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -504,7 +506,11 @@ class AddConferencePageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
+        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        teachers = [teacher.to_dict() for teacher in teacher_query]
+        self.templateValues['teachers'] = teacher_query
         self.render('addConference.html')
+
     def post(self):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         post = models.Conference(
@@ -523,6 +529,7 @@ class ConferencePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         self.render('conference.html')
+
     def post(self):
         self.setupUser()
         self.navbarSetup()
@@ -645,6 +652,12 @@ class AddStudentDataHandler(MyHandler):
         self.templateValues['title'] = 'Add Student Data'
         self.render('addStudentData.html')
 
+class TeacherRegistrationHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['title'] = 'Teacher Registration'
+        self.render('teacherRegistration.html')
 
 config = {
   'webapp2_extras.auth': {
@@ -676,6 +689,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/about.html', AboutPageHandler, name='about'),
     webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+    webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
