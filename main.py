@@ -49,9 +49,9 @@ class MyHandler(webapp2.RequestHandler):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
         """
-        self.user = self.auth.get_user_by_session()
+        self.user2 = self.auth.get_user_by_session()
         self.templateValues = {}
-        if self.user:
+        if self.user2:
             self.templateValues['logout'] = '/logout'
             self.templateValues['username'] = self.user_info['auth_ids'][0]
         else:
@@ -267,7 +267,8 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        # self.templateValues['newsfeed_list'] = newsfeed_list
+        #self.templateValues['test'] = self.user.user_type
+        #self.templateValues['newsfeed_list'] = newsfeed_list
         qry = models.NFPost.query().order(-models.NFPost.time)
         self.templateValues['newsfeed_list'] = qry
         self.render('home.html')
