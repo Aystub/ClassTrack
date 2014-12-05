@@ -508,8 +508,9 @@ class AddConferencePageHandler(MyHandler):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
-        teachers = teachers[0]
-        participants = [self.user_info['auth_ids'][0], teachers]
+        #teachers = teachers[0]
+        #participants = [self.user_info['auth_ids'][0], teachers]
+        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
@@ -518,6 +519,12 @@ class AddConferencePageHandler(MyHandler):
         post.put()
         self.response.write("<h1> Conference Added </h1>")
 
+class DelConferenceHandler(MyHandler):
+    def post(self):
+        key = self.request.get('roomkey')
+        key2 = ndb.Key('Conference', int(key))
+        key2.delete()
+        self.redirect('conferenceSchedule.html')
 
 class ConferencePageHandler(MyHandler):
     def get(self):
@@ -709,6 +716,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conference.html',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
+    webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
