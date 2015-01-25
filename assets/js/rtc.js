@@ -92,7 +92,7 @@ var pcConfig=[{url:'stun:stun01.sipphone.com'},
     url: 'turn:numb.viagenie.ca',
     credential: '123',
     username: 'dvv297@gmail.com'
-}, 
+},
 {
     url: 'turn:numb.viagenie.ca',
     credential: 'muazkh',
