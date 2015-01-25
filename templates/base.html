@@ -16,9 +16,10 @@
 	<link href="/assets/css/simple-sidebar.css" rel="stylesheet">
 	<script src="/assets/js/jquery.js"></script>
 	<script src="/assets/js/bootstrap.min.js"></script>
+	<script src="/assets/js/script.js"></script>
 	<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 	<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
-   
+
 </head>
 
 <body>
@@ -42,17 +43,17 @@
 							<li><a href="#kids">My Kids</a></li>
 							<li><a href="#subjects">Subjects</a></li>
 						{% else %}
-							<li><a href="{{ index }}">Home</a></li>
-							<li><a href="{{ about }}">About</a></li>
-							<li><a href="{{ contact }}">Contact</a></li>
+							<li><a href="index.html">Home</a></li>
+							<li><a href="about.html">About</a></li>
+							<li><a href="contact.html">Contact</a></li>
 						{% endif %}
 					</ul>
 					<div class="nav navbar-nav navbar-right">
 						{% if username %}
 					    	<p style="display: inline;">Welcome, <b>{{ username }}</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a></p>
 						{% else %}
-							<a href="{{ login }}"><button type="button" class="btn btn-default navbar-btn">Login</button></a>
-							<a href="{{ signup }}"><button type="button" class="btn btn-default navbar-btn">Signup</button></a>
+							<a href="{{login}}"><button type="button" class="btn btn-default navbar-btn">Login</button></a>
+							<a href="{{signup}}"><button type="button" class="btn btn-default navbar-btn">Signup</button></a>
 						{% endif %}
 					</div>
 				</div><!--/.nav-collapse -->

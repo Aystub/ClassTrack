@@ -8,7 +8,7 @@
   <div class="spacer25"></div>
 
   <div class="col-md-4 col-md-offset-4">
-    <h1 style="margin-left:-15px;">Sign Up:</h1>
+    <h1 style="margin-left:-15px;">Teacher Registration:</h1>
     <br>
     <form role="form" action="/signup" method="POST">
       <div class="form-group">
@@ -20,8 +20,8 @@
         <input class="form-control" type="text" name="lname" placeholder="Last Name"></input>
       </div>
       <div class="form-group">
-          <label for="email">Email:</label>
-          <input class="form-control" type="text" name="email" placeholder="Email"></input>
+        <label for="email">Email:</label>
+        <input class="form-control" type="text" name="email" placeholder="Email"></input>
       </div>
       <div class="form-group">
         <label for="password">Password:</label>
@@ -29,8 +29,11 @@
       </div>
       <div class="form-group">
         <label for="school">School Name:</label>
-        <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="My Child's School"></input>
+        <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="School Name"></input>
         <div style="display: inline;" id="schoolSug"></div>
+      </div>
+      <div class="form-group">
+        <input id="teacher_code" class="form-control" type="hidden" name="teacher_code" value="47"></input>
       </div>
       <button type="submit" class="btn btn-default">Submit</button>
     </div>
