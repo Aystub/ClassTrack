@@ -96,14 +96,27 @@
 		$(document).ready(function(){
 			setup();
 		});
-		$(window).resize(function(){
-			setup();
-		});
+        var timer_id;
+        
+		$(window).resize(function() {
+            
+                clearTimeout(timer_id);
+
+                timer_id = setTimeout(function() {
+
+                    fixWidth();
+
+                }, 300);
+            });
+
+            
+
+
+        
 		function setup()
 		{
 			var path = window.location.pathname.substring(1, (window.location.pathname.length-5));
 			$("#"+path+"_li").addClass("side-nav-active");
-			findSizesForClassButtons();
 			newsfeedMinHeight();
 			fixHeights();
 			fixWidth();
@@ -167,7 +180,7 @@
 		function fixWidth()
 		{
 			$('#sidebar').width(150);
-			$('#content-right-of-sidebar').width($(document).width()-150);
+			$('#content-right-of-sidebar').width($(window).width()-150);
 		}
 		function collapseSideMenu()
 		{
