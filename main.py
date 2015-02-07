@@ -726,4 +726,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     # webapp2.Route('/.*', NotFoundPageHandler)
+    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
