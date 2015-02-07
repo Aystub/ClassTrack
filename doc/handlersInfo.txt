@@ -1,0 +1,37 @@
+This file documents our handlers and what the heck they are accomplishing
+
+MyHandler:
+
+The base that is connected to each of our handlers. Hold login info,
+child list, etc. Will probably be where we make queries to the database
+for things like lists classes, conferences, children, etc.
+Holds the navbar, info on the session, and login stuff
+
+MainPageHandler:
+
+if person is logged in, it shows the pages they can link to and their home page
+if not, it gives links to signup and login
+
+NotFoundPageHandler:
+
+our 404 page
+
+PostPageHandler:
+
+handles posts
+
+SchoolNameHandler:
+
+auto-fills the text for when people are looking for schools
+
+SignupPageHandler:
+
+Handles the signup pages (teacher, student, parent)
+
+-- assigns the given values to the the current users session
+-- determines the type of user
+-- adds empty child and meeting arrays
+-- not allowing duplicate emails
+-- sends verification email if it is not a student
+
+VerificationHandler:
