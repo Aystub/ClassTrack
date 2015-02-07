@@ -9,12 +9,46 @@
 
 
 	{% block content %}
-
+        <div class="row">
 			<div class="col-md-1"></div>
 			<div class="home_newsfeed col-md-8">
-				<h1>{{title}}</h1>
+				<center><h1>{{title}}</h1></center>
 			</div>
 			<div class="col-md-3"></div>
+        </div>
+        
+        <div class="alert alert-success col-md-11" role="alert">
+            <div class="row" style="text-align:center">
+                <div class="col-md-1"></div>
+                <div class="col-md-3">Johnny, Billy, Jenny</div>
+                <div class="col-md-3">Building Communiction App</div>
+                <div class="col-md-3">1-5-2015 3:00 pm</div>
+                <div class="col-md-2">
+                    <form method="POST" action="conference.html">
+                        <input type="hidden" name="key" value="">
+                        <input class="btn btn-default btn-block" type="submit" value="View">
+                    </form>	
+				</div>
+            </div>
+        </div>
+        
+        {% for MessageThread in message_list %}
+        <div class="alert alert-success col-md-11" role="alert">
+            <div class="row" style="text-align:center">
+                <div class="col-md-1"></div>
+                <div class="col-md-2">{{MessageThread['users']}}</div>
+                <div class="col-md-2">{{MessageThread['subject']}}</div>
+                <div class="col-md-2">{{MessageThread['time']}}</div>
+                <div class="col-md-2">
+                    <form method="POST" action="conference.html">
+                        <input type="hidden" name="key" value="">
+                        <input class="btn btn-default btn-block" type="submit" value="View">
+                    </form>	
+				</div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        {% endfor %}
 	{% endblock %}
 
 	{% block bottom %}{{ super() }}{% endblock %}

@@ -556,6 +556,9 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Contact | ClassTrack'
         self.login_check()
+        
+        message_list = models.MessageThread.query()
+        self.templateValues['message_list'] = message_list
         self.render('messaging.html')
 
 class ClassSelectPageHandler(MyHandler):

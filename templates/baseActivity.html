@@ -81,7 +81,7 @@
 					<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
 					<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
 					<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
-					<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Contact Teacher</a></li>
+					<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
 	 			</ul>
 	 		{%block sideNavWidget %}{% endblock %}
 			{%endblock%}
@@ -106,6 +106,7 @@
                 timer_id = setTimeout(function() {
 
                     fixWidth();
+                    fixHeights();
 
                 }, 300);
             });
