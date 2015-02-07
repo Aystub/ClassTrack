@@ -20,6 +20,11 @@ PostPageHandler:
 
 handles posts
 
+PostPageHandler:
+
+handles posts page (postHandler and jqueryPostHandler handle posts)
+
+
 SchoolNameHandler:
 
 auto-fills the text for when people are looking for schools
@@ -35,3 +40,38 @@ Handles the signup pages (teacher, student, parent)
 -- sends verification email if it is not a student
 
 VerificationHandler:
+
+Handles the page linked to when clicking a verification link.
+Verifies the user if not verified
+
+HomePageHandler:
+
+Handles the home page and things like the filter list, newsfeed, posts, etc
+as well as the sidebar
+This will  be changed as we move away from sidebar
+
+
+SetPasswordHandler:
+
+Initial account creation password handler. Also might be used for resetting
+
+
+ForgotPasswordHandler:
+
+Handles a lost password. Sends an email to the user if they can give an account
+email.
+
+
+LoginPageHandler:
+
+Self Explanatory. handles login errors and sends them to home on success
+
+
+LogoutPageHandler:
+
+Logs people out. Thats it. Its easy
+
+
+AuthenticatedHandler:
+
+???
