@@ -9,7 +9,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     first_name = ndb.StringProperty()
     last_name = ndb.StringProperty()
     user_type = ndb.IntegerProperty()
-    meetings = ndb.StringProperty()
+    meetings = ndb.StringProperty(repeated=True)
     children = ndb.StringProperty(repeated=True)
 
     def getKey(self):
@@ -144,7 +144,7 @@ class PrivateMessage(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
-    participants = ndb.StringProperty()
+    participants = ndb.StringProperty(repeated=True)
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
     def id(self):
