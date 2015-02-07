@@ -554,7 +554,7 @@ class ContactTeacherPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Contact | ClassTrack'
+        self.templateValues['title'] = 'Inbox'
         self.login_check()
         
         message_list = models.MessageThread.query()
