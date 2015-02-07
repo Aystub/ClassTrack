@@ -12,6 +12,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     meetings = ndb.StringProperty(repeated=True)
     children = ndb.StringProperty(repeated=True)
     messageThreads = ndb.StringProperty(repeated=True)
+    classList = ndb.StringProperty(repeated=True)
 
     def getKey(self):
         return self.key.get()
@@ -105,6 +106,8 @@ class NFPost(ndb.Model):
 
 class School(ndb.Model):
     school_name = ndb.StringProperty(required=True)
+    state = ndb.StringProperty(required=True)
+    county = nbd.StringProperty(required=True)
 
     def id(self):
         return self.key.id()
@@ -125,7 +128,7 @@ class School(ndb.Model):
     def remove(self):
         self.key.delete()
 
-class classes(ndb.Model):
+class Classes(ndb.Model):
     teacher = ndb.StringProperty()
     school = ndb.StringProperty()
     studentList = ndb.StringProperty(repeated=True)

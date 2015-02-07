@@ -204,6 +204,7 @@ class SignupPageHandler(MyHandler):
         child = ['None']
         meeting = ['None']
         messageThreads = ['None']
+        classList = ['None']
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -212,7 +213,9 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             children=child,
             school=school,
-            verified=verified)
+            verified=verified,
+            messageThreads=messageThreads,
+            classList=classList)
 
 
         if not user_data[0]: #user_data is a tuple
@@ -680,6 +683,42 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
 
+class CreateClassHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Create Class'
+        self.login_check()
+        #if (self.user.user_type == 1):
+        self.render('createClass.html')
+        #else:
+        #self.redirect("/")
+
+    def post(self):
+        newClass = models.Classes(
+                name = self.request.get("name")
+                teacher = self.user_info['auth_ids'][0]
+                school = self.user.school
+            )
+        newClass.put()
+
+class CreateSchoolHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Create School'
+        self.login_check()
+        self.render('createSchool.html')
+    def post(self):
+        newSchool = models.School(
+                school_name = self.request.get("name")
+                state = self.request.get("state")
+                county = self.request.get("county")
+        )
+        newSchool.put()
+
 
 config = {
   'webapp2_extras.auth': {
@@ -727,5 +766,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     # webapp2.Route('/.*', NotFoundPageHandler)
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/createClass', CreateClassHandler, name='createClass'),
+    webapp2.Route('/createSchool', CreateSchoolHandler, name='createSchool'),
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
