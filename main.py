@@ -404,33 +404,17 @@ class PostHandler(MyHandler):
 
 class PrivateMessageHandler(MyHandler):
     def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Child Registration'
-        self.render('childRegistration.html')
+        self.redirect('/')
 
-class PMAjaxHandler(MyHandler):
-    def get(self):
-        self.redirect('/')
-        
-    def post(self):
-        self.redirect('/')
-        
-class CreateMessageHandler(MyHandler):
-    def get(self):
-        self.redirect('/')
-        
     def post(self):
         the_message = self.request.get('the_message')
         the_sender = str(self.user_info['auth_ids'][0])
-        the_reciever = self.request.get('the_reciever')
-        the_subject = self.request.get('the_subject')
-        
-        theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, subject = the_subject,message=the_message)
+        the_reciever = self.request.get('reciever')
+
+        theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, message=the_message)
 
         future = theMessage.put()
-        
+
 class AboutPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -695,6 +679,7 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
+
 
 config = {
   'webapp2_extras.auth': {
