@@ -1,0 +1,82 @@
+-- Daniel Conner --
+-- 2/7/2015 --
+
+-- Database Information --
+
+USER MODEL:
+
+This is our implementation any user that could be on the site.
+
+first_name == first name of the user
+last_name == last name of the user
+user_type == Parent, Teacher, or Student?
+  -- this is implemented through one of the three signup pages
+  -- The user creation handler is used by one of three pages
+  -- With the only difference being the user code that is used
+meetings == list of meeting codes that the user could connect to
+children == if it is a parent, this wil be a list of children's ids (emails)
+key == email
+password == password
+
+
+POST MODEL:
+
+Our model for posts. Used exclusively for posts. Can possibly be used in
+the future to automate posts (like notifications, automated shcool stuff, etc.)
+
+SchoolID: which school this is attached to if its like an announcement
+classID: which class this is attached to.
+typeID: the filter we can apply
+caption: the text that shows atthe bottom of the post
+owner: who posted it (email)
+img: images attached if needed
+time: time we posted for sorting
+
+
+SCHOOL MODEL:
+
+Just a basic school model.
+
+name: school name
+
+things to add:
+location
+phone number/basic contact info
+an admin table? A teacher table?
+
+
+CLASSES MODEL:
+
+for classes within a school. not to be confused with an object oriented class.
+
+teacher: the teacher of the class
+school: id for which shool its attachd to
+studentList: list of students so we can create tables for contact
+name: class title to be shown to parents/top of page
+
+
+PRIVATE MESSAGES MODEL:
+
+sender: who sent it
+reciever: who recieved it
+message: text for the message
+time: time sent
+subject: subject of the message
+
+so the goal for this might be to do searches for:
+sender a, reciever b AND sender b, reciever a
+sorted by date, in the past x # of messages, then search later
+if they scroll
+
+
+CONFERENCE MODEL:
+
+for all of our conferences
+
+purpose: the purpose of the meeting
+participants: list of who is invited
+datetime: when they want it to be scheduled
+created: when it was created
+
+calling of conferences will be done through the user model, so indexing
+is not an issue at all
