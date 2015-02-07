@@ -15,6 +15,8 @@ from webapp2_extras import sessions
 
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
+from google.appengine.api import channel
+
 
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
@@ -58,6 +60,7 @@ class MyHandler(webapp2.RequestHandler):
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+            self.templateValues['id'] = self.user_info['user_id']
 
             #Children
             children_ids = self.user.children
@@ -526,28 +529,7 @@ class DelConferenceHandler(MyHandler):
         key2.delete()
         self.redirect('conferenceSchedule.html')
 
-class ConferencePageHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.login_check()
-        self.render('conference.html')
 
-    def post(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues = {}
-        purpose = self.request.get('purpose')
-        participants = self.request.get('participants')
-        datetime = self.request.get('datettime')
-        roomkey = self.request.get('roomkey')
-        self.templateValues['purpose'] = purpose
-        self.templateValues['participants'] = participants
-        self.templateValues['datetime'] = datetime
-        self.templateValues['roomkey'] = roomkey
-        self.render('conference.html')
 
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
@@ -681,6 +663,58 @@ class ChildRegistrationHandler(MyHandler):
         self.render('childRegistration.html')
 
 
+class ConferenceMessageChannelHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('ConferenceMessageChannel.html')
+
+    def post(self):
+        self.templateValues = {}
+        purpose = self.request.get('')
+        roomkey = self.request.get('roomkey')
+        self.templateValues['token'] = roomkey
+        channel.send_message("1", "Hello world!!!!!!!") # Hard coded ID
+        self.render('ConferenceMessageChannel.html')
+
+
+
+class ConferencePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.login_check()
+        self.render('conference.html')
+
+    def post(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues = {}
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        purpose = self.request.get('purpose')
+        participants = self.request.get('participants')
+        datetime = self.request.get('datettime')
+        roomkey = self.request.get('roomkey')
+
+        if purpose:
+            self.templateValues['purpose'] = purpose
+        if participants:
+            self.templateValues['participants'] = participants
+        if datetime:
+            self.templateValues['datetime'] = datetime
+        if roomkey:
+            self.templateValues['roomkey'] = roomkey
+
+        token = channel.create_channel(roomkey);
+        if token:
+            self.templateValues['token'] = token
+        message = self.request.get('message')
+        if message:
+            channel.send_message(1, message)
+        self.render('conference.html')
+
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -725,5 +759,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
+    webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel')
+
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
