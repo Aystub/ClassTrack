@@ -60,9 +60,9 @@ Code Analyst – Daniel Conner
 Conflict Resolution
 Team Member Issues
 1.	Bring up the issue with the team member individually with proper evidence, which may include
-a.	Time logs
-b.	Code
-c.	Messages
+	a.	Time logs
+	b.	Code
+	c.	Messages
 2.	Bring up the issue with the team captain
 3.	If issue still persists, hold a full-team meeting
 

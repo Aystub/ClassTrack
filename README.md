@@ -81,6 +81,6 @@ Mission
 To improve educational tools for students and parents and provide a consistent and balanced learning environment.
 Objectives
 -	Increase parental awareness and interactions with their children to improve the student’s learning environment
--	Foster parent and teacher relationships
+-	Foster parent, teacher relationships
 -	Facilitate teacher’s ease of access so that they can focus on the students rather than the tools
 
