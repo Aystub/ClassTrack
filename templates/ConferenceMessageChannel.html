@@ -1,40 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head><script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js" type="text/javascript"></script>
 
-    <title></title>
-</head>
-<body>
-
-<div id="messages">Messages so far:
-<ul>
-
-</ul></div>
-</body>
-        <script src="../assets/js/jquery.js"></script>
-        <script src="../assets/js/modernizr-latest.js"></script>
-        <!-- <script src="../assets/js/simplewebrtc/simplewebrtc.bundle.js"></script> -->
-        <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-        <script src="../assets/js/adapter.js"></script>
+<script src="../assets/js/jquery.js"></script>
+<script src="../assets/js/modernizr-latest.js"></script>
+<!-- <script src="../assets/js/simplewebrtc/simplewebrtc.bundle.js"></script> -->
+<script type="text/javascript" src="/_ah/channel/jsapi"></script>
+<script src="../assets/js/adapter.js"></script>
 <script>
-    onOpened = function() {
-        connected = true;
-       // sendMessage('opened');
-    };
-    onMessage = function(msg) {
-        alert(msg.data);
-        $("#messages ul").append($("<li></li>").html(msg.data));
-    };
-    onError = function(err) {
-    //    alert(err);
-    };
-    onClose = function() {
-       // alert("close");
-     //   connected = false;
-    };
-    // open new session
     channel = new goog.appengine.Channel({{token}});
    	openChannel("{{ token }}");
+
+
 
 
     function openChannel(channelToken) {
@@ -50,9 +24,40 @@
     }
 
   	function onChannelOpened(){console.log("Channel opened");}
-    function onChannelMessage(message){alert(message);}
+    function onChannelMessage(message){alert("Hello World?");}
     function onChannelError(err){console.log(err);}
     function onChannelClosed(){console.log("Channel Closed");}
-</script>
 
-</html>
+    function processSignalingMessage(message) {
+	var msg = JSON.parse(message);
+
+
+	function processSignalingMessage(message) {
+            var msg = JSON.parse(message);
+
+            if (msg.type === 'offer') 
+            {
+              console.log("MAKING OFFERS");
+              // Callee creates PeerConnection
+              if (!initiator && !started)
+                maybeStart();
+
+              pc.setRemoteDescription(new RTCSessionDescription(msg));
+              doAnswer();
+            } 
+            else if (msg.type === 'answer' && started) 
+            {
+              pc.setRemoteDescription(new RTCSessionDescription(msg));
+            } 
+            else if (msg.type === 'candidate' && started) 
+            {
+              var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label, candidate:msg.candidate});
+              pc.addIceCandidate(candidate);
+            } 
+            else if (msg.type === 'bye' && started) 
+            {
+              onRemoteHangup();
+            }
+          }
+}
+</script>

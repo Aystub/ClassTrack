@@ -673,8 +673,12 @@ class ConferenceMessageChannelHandler(MyHandler):
         purpose = self.request.get('')
         roomkey = self.request.get('roomkey')
         self.templateValues['token'] = roomkey
-        channel.send_message("1", "Hello world!!!!!!!") # Hard coded ID
+        channel.create_channel(roomkey);
+        message = self.request.body
+        channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
+        # channel.send_message(self.user_info['auth_ids'][0],roomkey)
+
 
 
 
@@ -697,6 +701,7 @@ class ConferencePageHandler(MyHandler):
         participants = self.request.get('participants')
         datetime = self.request.get('datettime')
         roomkey = self.request.get('roomkey')
+        user_id = self.user_info['auth_ids'][0]
 
         if purpose:
             self.templateValues['purpose'] = purpose
@@ -706,14 +711,28 @@ class ConferencePageHandler(MyHandler):
             self.templateValues['datetime'] = datetime
         if roomkey:
             self.templateValues['roomkey'] = roomkey
+        self.templateValues['user_id'] = user_id
 
-        token = channel.create_channel(roomkey);
+        token = channel.create_channel(self.user_info['auth_ids'][0]);
+
         if token:
             self.templateValues['token'] = token
         message = self.request.get('message')
         if message:
             channel.send_message(1, message)
         self.render('conference.html')
+
+class ChannelConnectionHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+
+
+class ChannelDisconnectionHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+
 
 config = {
   'webapp2_extras.auth': {
@@ -759,7 +778,9 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
-    webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel')
+    webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel'),
+    webapp2.Route('/_ah/channel/connected/', ChannelConnectionHandler, name='ConnectionHandler'),
+    webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler')
 
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

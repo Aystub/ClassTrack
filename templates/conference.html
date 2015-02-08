@@ -66,8 +66,8 @@
 
     <div class="row" id="conference_properties">
       <div class="alert alert-success col-md-12" role="alert">
-          <div class="col-md-4">{{datetime}} </div>
-          <div class="col-md-4">{{purpose}}</div>
+          <div class="col-md-4">{{token}} </div>
+          <div class="col-md-4">{{user_id}}</div>
           <div class="col-md-4">{{participants}}</div>
         </div>
 
@@ -115,11 +115,11 @@
               }
            );
            console.log("Initializing; room={{ token }}.");
-           openChannel("{{ token }}");
+           openChannel('{{ token }}');
            console.log("Create connection");
            createPeerConnection();
+           console.log("Do Call");
            doCall();
-
         } 
         else {
            console.log("getUserMedia not supported");
@@ -142,7 +142,12 @@
 
 
             function onChannelOpened(){console.log("Channel opened");}
-            function onChannelMessage(message){alert(message);}
+            function onChannelMessage(message){
+              console.log("Recieved Message");
+              console.log(message);
+              processSignalingMessage(message);
+
+            }
             function onChannelError(err){console.log(err);}
             function onChannelClosed(){console.log("Channel Closed");}
 
@@ -168,6 +173,7 @@
           }
 
           function onIceCandidate(event) {
+            alert("Ice Candidate triggered");
             if (event.candidate) {
               sendMessage({type: 'candidate',
                 label: event.candidate.sdpMLineIndex,
@@ -180,17 +186,33 @@
 
           function onSessionConnecting(){Console.log("Session Connecting...")};
           function onSessionOpened(){Console.log("Session Opened")};
-          function onRemoteStreamAdded(){Console.log("Remote Stream Added")};
+
+          function onRemoteStreamAdded(event) {
+            attachMediaStream(remoteVideo, event.stream);
+            remoteStream = event.stream;
+            // waitForRemoteVideo();
+          }          
+          
           function onRemoteStreamRemoved(){Console.log("Remote Sream Removed")};
 
           function doCall() {
             console.log("Sending offer to peer.");
-            var mediaConstraints = {'has_audio':true, 'has_video':true}; 
+            // var mediaConstraints = {'has_audio':true, 'has_video':true}; 
+
+            var mediaConstraints = {
+              optional: [],
+              mandatory: {
+                OfferToReceiveAudio: true,
+                OfferToReceiveVideo: true
+              }
+            },onError,mediaConstraints;
+
             pc.createOffer(setLocalAndSendMessage, null, mediaConstraints);
           }
 
           function setLocalAndSendMessage(sessionDescription) {
             // Set Opus as the preferred codec in SDP if Opus is present.
+            console.log("Local description set");
             sessionDescription.sdp = preferOpus(sessionDescription.sdp);
             pc.setLocalDescription(sessionDescription);
             sendMessage(sessionDescription);
@@ -209,7 +231,7 @@
 
           function sendMessage(message) {
             var msgString = JSON.stringify(message);
-            console.log('C->S: ' + msgString);
+            console.log('Client to Server: ' + msgString);
             path = '/ConferenceMessageChannel?roomkey={{token}}';
             var xhr = new XMLHttpRequest();
             xhr.open('POST', path, true);
@@ -219,22 +241,29 @@
 
 
           function processSignalingMessage(message) {
-            var msg = JSON.parse(message);
+            var msg = message;
 
-            if (msg.type === 'offer') {
+            if (msg.type === 'offer') 
+            {
+              console.log("MAKING OFFERS");
               // Callee creates PeerConnection
               if (!initiator && !started)
                 maybeStart();
 
               pc.setRemoteDescription(new RTCSessionDescription(msg));
               doAnswer();
-            } else if (msg.type === 'answer' && started) {
+            } 
+            else if (msg.type === 'answer' && started) 
+            {
               pc.setRemoteDescription(new RTCSessionDescription(msg));
-            } else if (msg.type === 'candidate' && started) {
-              var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label,
-                                                   candidate:msg.candidate});
+            } 
+            else if (msg.type === 'candidate' && started) 
+            {
+              var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label, candidate:msg.candidate});
               pc.addIceCandidate(candidate);
-            } else if (msg.type === 'bye' && started) {
+            } 
+            else if (msg.type === 'bye' && started) 
+            {
               onRemoteHangup();
             }
           }
