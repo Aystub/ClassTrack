@@ -508,15 +508,25 @@ class AddConferencePageHandler(MyHandler):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        participants = [self.user_info['auth_ids'][0],teachers]
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
                 datetime = extractedDateTime
             )
-        post.put()
+        key=post.put()
+
+        #adding the conference to the user who made it
+        this_user = self.user
+        if this_user.meetings == ['None']:
+            this_user.meetings = [key]
+        else:
+            this_user.meetings += [key]
+        this_user.put()
+
+        #in the future here we will make it invite the other person/add them in general
+
+
         self.response.write("<h1> Conference Added </h1>")
 
 class DelConferenceHandler(MyHandler):
@@ -556,7 +566,7 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Inbox'
         self.login_check()
-        
+
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
