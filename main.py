@@ -202,8 +202,8 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = 2 #user is a parent
         child = ['None']
-        meeting = ['None']
-        messageThreads = ['None']
+        meeting = []
+        messageThread = []
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -212,7 +212,9 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             children=child,
             school=school,
-            verified=verified)
+            verified=verified,
+            meetings=meeting,
+            messageThreads=messageThread)
 
 
         if not user_data[0]: #user_data is a tuple
@@ -518,7 +520,7 @@ class AddConferencePageHandler(MyHandler):
 
         #adding the conference to the user who made it
         this_user = self.user
-        if this_user.meetings == ['None']:
+        if not this_user.meetings:
             this_user.meetings = [key]
         else:
             this_user.meetings += [key]
