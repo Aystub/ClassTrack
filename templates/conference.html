@@ -66,7 +66,7 @@
 
     <div class="row" id="conference_properties">
       <div class="alert alert-success col-md-12" role="alert">
-          <div class="col-md-4">{{token}} </div>
+          <div class="col-md-4">{{roomkey}} </div>
           <div class="col-md-4">{{user_id}}</div>
           <div class="col-md-4">{{participants}}</div>
         </div>
@@ -87,9 +87,12 @@
         var initiator = 1;
         var mediaConstraints;
         var started = false;
+        var key = '{{roomkey}}{{user_id}}'
 
         function initialize()
         {
+          console.log("THIS IS THE KEY");
+          console.log(key);
           navigator.getUserMedia = ( navigator.getUserMedia ||
                        navigator.webkitGetUserMedia ||
                        navigator.mozGetUserMedia ||
@@ -118,8 +121,8 @@
                  console.log("The following error occured: " + err);
               }
            );
-           console.log("Initializing; room={{ token }}.");
-           openChannel('{{ token }}');
+           console.log("Initializing; room=" + key + ".");
+           openChannel(key);
            console.log("Create connection");
            createPeerConnection();
            console.log("Do Call");
@@ -239,7 +242,7 @@
           function sendMessage(message) {
             var msgString = JSON.stringify(message);
             console.log('Client to Server: ' + msgString);
-            path = '/ConferenceMessageChannel?user_id={{token}}';
+            path = '/ConferenceMessageChannel?user_id=' + key;
             var xhr = new XMLHttpRequest();
             xhr.open('POST', path, true);
             xhr.send(msgString);

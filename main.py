@@ -518,7 +518,8 @@ class AddConferencePageHandler(MyHandler):
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
-                datetime = extractedDateTime
+                datetime = extractedDateTime,
+                currentLoggedInUsers = ['hello', 'world']
             )
         post.put()
         self.response.write("<h1> Conference Added </h1>")
@@ -675,11 +676,11 @@ class ConferenceMessageChannelHandler(MyHandler):
         # channel.create_channel(user_id);
         message = self.request.body
         user_query = models.User.query()
-        for x in range(0,60):
-            time.sleep(1)
-            for user in user_query:
-                channel.create_channel(user.auth_ids[0]);
-                channel.send_message(user.auth_ids[0], message)  
+        # for x in range(0,60):
+        #     time.sleep(1)
+        #     for user in user_query:
+        #         channel.create_channel(user.auth_ids[0]);
+        #         channel.send_message(user.auth_ids[0], message)  
         # channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
 
@@ -702,7 +703,7 @@ class ConferencePageHandler(MyHandler):
         participants = self.request.get('participants')
         datetime = self.request.get('datettime')
         roomkey = self.request.get('roomkey')
-        user_id = self.user_info['auth_ids'][0]
+        user_id = str(self.user_info['user_id'])
 
         if purpose:
             self.templateValues['purpose'] = purpose
@@ -714,8 +715,15 @@ class ConferencePageHandler(MyHandler):
             self.templateValues['roomkey'] = roomkey
         self.templateValues['user_id'] = user_id
 
-        token = channel.create_channel(user_id);
-
+        token = channel.create_channel(roomkey + user_id);
+        room = models.Conference.get_by_id(int(roomkey))
+        channel.send_message(roomkey + user_id, "Hello World, from " + user_id)
+        # if len(room.currentLoggedInUsers) != 0:
+        #     send_to = room.currentLoggedInUsers[0]
+        #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # else:
+        #     send_to = user_id
+            # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
         if token:
             self.templateValues['token'] = token
         message = self.request.get('message')

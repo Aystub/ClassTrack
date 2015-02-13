@@ -147,5 +147,6 @@ class Conference(ndb.Model):
     participants = ndb.StringProperty()
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
+    currentLoggedInUsers = ndb.StringProperty(repeated=True)
     def id(self):
         return self.key.id()
