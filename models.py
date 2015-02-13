@@ -9,7 +9,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     first_name = ndb.StringProperty()
     last_name = ndb.StringProperty()
     user_type = ndb.IntegerProperty()
-    meetings = ndb.StringProperty(repeated=True)
+    meetings = ndb.KeyProperty(kind='Conference',repeated=True)
     children = ndb.StringProperty(repeated=True)
     messageThreads = ndb.StringProperty(repeated=True)
     classList = ndb.StringProperty(repeated=True)

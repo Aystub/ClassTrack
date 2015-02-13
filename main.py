@@ -202,9 +202,9 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = 2 #user is a parent
         child = ['None']
-        meeting = ['None']
-        messageThreads = ['None']
         classList = ['None']
+        meeting = []
+        messageThread = []
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -214,8 +214,10 @@ class SignupPageHandler(MyHandler):
             children=child,
             school=school,
             verified=verified,
-            messageThreads=messageThreads,
-            classList=classList)
+            classList=classList,
+            meetings=meeting,
+            messageThreads=messageThread)
+
 
 
         if not user_data[0]: #user_data is a tuple
@@ -511,15 +513,25 @@ class AddConferencePageHandler(MyHandler):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        participants = [self.user_info['auth_ids'][0],teachers]
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
                 datetime = extractedDateTime
             )
-        post.put()
+        key=post.put()
+
+        #adding the conference to the user who made it
+        this_user = self.user
+        if not this_user.meetings:
+            this_user.meetings = [key]
+        else:
+            this_user.meetings += [key]
+        this_user.put()
+
+        #in the future here we will make it invite the other person/add them in general
+
+
         self.response.write("<h1> Conference Added </h1>")
 
 class DelConferenceHandler(MyHandler):
@@ -557,8 +569,11 @@ class ContactTeacherPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Contact | ClassTrack'
+        self.templateValues['title'] = 'Inbox'
         self.login_check()
+
+        message_list = models.MessageThread.query()
+        self.templateValues['message_list'] = message_list
         self.render('messaging.html')
 
 class ClassSelectPageHandler(MyHandler):
