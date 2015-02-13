@@ -84,6 +84,10 @@
         <script type="text/javascript" src="/_ah/channel/jsapi"></script>
         <script src="../assets/js/adapter.js"></script>
         <script>
+        var initiator = 1;
+        var mediaConstraints;
+        var started = false;
+
         function initialize()
         {
           navigator.getUserMedia = ( navigator.getUserMedia ||
@@ -197,18 +201,20 @@
 
           function doCall() {
             console.log("Sending offer to peer.");
-            // var mediaConstraints = {'has_audio':true, 'has_video':true}; 
+            // mediaConstraints = {'has_audio':true, 'has_video':true}; 
 
-            var mediaConstraints = {
+            mediaConstraints = {
               optional: [],
               mandatory: {
                 OfferToReceiveAudio: true,
                 OfferToReceiveVideo: true
               }
-            },onError,mediaConstraints;
+            },onMediaError,mediaConstraints;
 
             pc.createOffer(setLocalAndSendMessage, null, mediaConstraints);
           }
+
+          function onMediaError(){console.log("Media Error");}
 
           function setLocalAndSendMessage(sessionDescription) {
             // Set Opus as the preferred codec in SDP if Opus is present.
@@ -216,6 +222,7 @@
             sessionDescription.sdp = preferOpus(sessionDescription.sdp);
             pc.setLocalDescription(sessionDescription);
             sendMessage(sessionDescription);
+            console.log(sessionDescription);
           }
 
           var preferOpus = function(sdp) {
@@ -232,7 +239,7 @@
           function sendMessage(message) {
             var msgString = JSON.stringify(message);
             console.log('Client to Server: ' + msgString);
-            path = '/ConferenceMessageChannel?roomkey={{token}}';
+            path = '/ConferenceMessageChannel?user_id={{token}}';
             var xhr = new XMLHttpRequest();
             xhr.open('POST', path, true);
             xhr.send(msgString);
@@ -241,11 +248,10 @@
 
 
           function processSignalingMessage(message) {
-            var msg = message;
-
+            var msg = JSON.parse(message.data);
             if (msg.type === 'offer') 
             {
-              console.log("MAKING OFFERS");
+              console.log("Recieved Offer");
               // Callee creates PeerConnection
               if (!initiator && !started)
                 maybeStart();
@@ -255,15 +261,18 @@
             } 
             else if (msg.type === 'answer' && started) 
             {
+              console.log("Recieved Answer");
               pc.setRemoteDescription(new RTCSessionDescription(msg));
             } 
             else if (msg.type === 'candidate' && started) 
             {
+              console.log("Recieved Candidate");
               var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label, candidate:msg.candidate});
               pc.addIceCandidate(candidate);
             } 
             else if (msg.type === 'bye' && started) 
             {
+              console.log("Recieved Bye");
               onRemoteHangup();
             }
           }

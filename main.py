@@ -9,6 +9,7 @@ from datetime import datetime
 import models
 import json
 import re
+import time
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -670,17 +671,17 @@ class ConferenceMessageChannelHandler(MyHandler):
 
     def post(self):
         self.templateValues = {}
-        purpose = self.request.get('')
-        roomkey = self.request.get('roomkey')
-        self.templateValues['token'] = roomkey
-        channel.create_channel(roomkey);
+        user_id = self.request.get('user_id')
+        # channel.create_channel(user_id);
         message = self.request.body
-        channel.send_message(self.user_info['auth_ids'][0], message)
+        user_query = models.User.query()
+        for x in range(0,60):
+            time.sleep(1)
+            for user in user_query:
+                channel.create_channel(user.auth_ids[0]);
+                channel.send_message(user.auth_ids[0], message)  
+        # channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
-        # channel.send_message(self.user_info['auth_ids'][0],roomkey)
-
-
-
 
 class ConferencePageHandler(MyHandler):
     def get(self):
@@ -713,7 +714,7 @@ class ConferencePageHandler(MyHandler):
             self.templateValues['roomkey'] = roomkey
         self.templateValues['user_id'] = user_id
 
-        token = channel.create_channel(self.user_info['auth_ids'][0]);
+        token = channel.create_channel(user_id);
 
         if token:
             self.templateValues['token'] = token
