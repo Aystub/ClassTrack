@@ -202,8 +202,8 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = 2 #user is a parent
         child = ['None']
-
         meeting = ['None']
+        messageThreads = ['None']
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -409,9 +409,9 @@ class PrivateMessageHandler(MyHandler):
     def post(self):
         the_message = self.request.get('the_message')
         the_sender = str(self.user_info['auth_ids'][0])
-        the_reciever = self.request.get('reciever')
+        the_thread = self.request.get('messageThread')
 
-        theMessage = models.PrivateMessage(sender=the_sender, reciever=the_reciever, message=the_message)
+        theMessage = models.PrivateMessage(sender=the_sender, messageThread=the_thread, message=the_message)
 
         future = theMessage.put()
 
@@ -554,8 +554,11 @@ class ContactTeacherPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Contact | ClassTrack'
+        self.templateValues['title'] = 'Inbox'
         self.login_check()
+        
+        message_list = models.MessageThread.query()
+        self.templateValues['message_list'] = message_list
         self.render('messaging.html')
 
 class ClassSelectPageHandler(MyHandler):
