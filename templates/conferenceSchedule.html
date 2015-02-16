@@ -1,7 +1,7 @@
 	{% extends "baseActivity.html" %}
 	{% block title %}{{ title }}{% endblock %}
 	{% block top %}{{ super() }}{% endblock %}
- 		
+
 
  	{% block sideNavWidget %}
 
@@ -20,7 +20,7 @@
 			<div class="col-md-1"></div>
 			<div class="col-md-9" role="alert">
 			    <center><button href="addConference.html" id="add_button" class="custom_button fancybox fancybox.iframe">Add a Conference</button></center>
-				    
+
 				    <script>
 				        $(document).ready(function() {
 				            $('.fancybox').fancybox({
@@ -52,8 +52,8 @@
 						<div class="col-md-4">
 							<form method="POST" action="conference.html">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
-								<input id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Enter">
-							</form>	
+								<input name=SeleniumTestEnter id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Enter">
+							</form>
 						</div>
 						<div class="col-md-4">
 							<a href="#" class="btn btn-default btn-block">Edit</a>
@@ -61,11 +61,11 @@
 						<div class="col-md-4">
 							<form method="POST" action="delConference.html">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
-								<input id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Delete">
+								<input name=SeleniumTestDelete id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Delete">
 							</form>
 						</div>
 				</div>
-			</div>name=SeleniumTest
+			</div>
 		</div>
 		{% endfor %}
 
@@ -115,4 +115,3 @@
 	{% endblock %}
 
 	{% block bottom %}{{ super() }}{% endblock %}
-
