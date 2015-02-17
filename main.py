@@ -560,6 +560,18 @@ class ContactTeacherPageHandler(MyHandler):
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
+        
+class AddMessagePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Inbox'
+        self.login_check()
+        
+        message_list = models.MessageThread.query()
+        self.templateValues['message_list'] = message_list
+        self.render('addMessage.html')
 
 class ClassSelectPageHandler(MyHandler):
     def get(self):
@@ -721,6 +733,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/addMessage.html',AddMessagePageHandler, name='addMessaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
