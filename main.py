@@ -22,6 +22,31 @@ from google.appengine.api import channel
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
+
+def maybe_add_constraint(constraints, param, constraint):
+    if (param.lower() == 'true'):
+        constraints['optional'].append({constraint: True})
+    elif (param.lower() == 'false'):
+        constraints['optional'].append({constraint: False})
+    return constraints
+
+def make_pc_constraints(dtls, dscp, ipv6):
+    constraints = { 'optional': [] }
+    maybe_add_constraint(constraints, dtls, 'DtlsSrtpKeyAgreement')
+    maybe_add_constraint(constraints, dscp, 'googDscp')
+    maybe_add_constraint(constraints, ipv6, 'googIPv6')
+
+def get_preferred_audio_send_codec(user_agent):
+    # Empty string means no preference.
+    preferred_audio_send_codec = ''
+    # Prefer to send ISAC on Chrome for Android.
+    if 'Android' in user_agent and 'Chrome' in user_agent:
+        preferred_audio_send_codec = 'ISAC/16000'
+    return preferred_audio_send_codec
+    
+def get_preferred_audio_receive_codec():
+    return 'opus/48000'
+
 #JSON Serialization issues
 def default(obj):
     """Default JSON serializer."""
@@ -519,7 +544,7 @@ class AddConferencePageHandler(MyHandler):
                 purpose = self.request.get('purpose'),
                 participants = participants,
                 datetime = extractedDateTime,
-                currentLoggedInUsers = ['hello', 'world']
+                currentLoggedInUsers = []
             )
         post.put()
         self.response.write("<h1> Conference Added </h1>")
@@ -676,6 +701,7 @@ class ConferenceMessageChannelHandler(MyHandler):
         # channel.create_channel(user_id);
         message = self.request.body
         user_query = models.User.query()
+        channel.send_message(identifier, "Hello World, from " + user_id)
         # for x in range(0,60):
         #     time.sleep(1)
         #     for user in user_query:
@@ -685,62 +711,122 @@ class ConferenceMessageChannelHandler(MyHandler):
         self.render('ConferenceMessageChannel.html')
 
 class ConferencePageHandler(MyHandler):
+
+
     def get(self):
         self.setupUser()
         self.navbarSetup()
+        self.login_check()
+
+        dtls = self.request.get('dtls')
+        dscp = self.request.get('dscp')
+        ipv6 = self.request.get('ipv6')
+
+        roomkey = self.request.get('roomkey')
+        purpose = models.Conference.get_by_id(int(roomkey)).purpose
+        participants = models.Conference.get_by_id(int(roomkey)).participants
+        datetime = models.Conference.get_by_id(int(roomkey)).datetime
+        user_id = str(self.user_info['user_id'])
+        pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
+
+        initiator = 1;
+        conference = models.Conference.get_by_id(int(roomkey))
+        if len(conference.currentLoggedInUsers) != 0:
+            initiator = 0;
+
+        identifier = roomkey + user_id
+        token = channel.create_channel(identifier)
+        self.templateValues['token'] = token
+
+        audio_receive_codec = self.request.get('arc')
+        if not audio_receive_codec:
+            audio_receive_codec = get_preferred_audio_receive_codec()
+
+        user_agent = self.request.headers['User-Agent']
+        audio_send_codec = self.request.get('asc')
+        if not audio_send_codec:
+            audio_send_codec = get_preferred_audio_send_codec(user_agent)
+
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.login_check()
+        self.templateValues['purpose'] = purpose
+        self.templateValues['participants'] = participants
+        self.templateValues['datetime'] = datetime
+        self.templateValues['roomkey'] = roomkey
+        self.templateValues['user_id'] = user_id
+        self.templateValues['audio_send_codec'] = audio_send_codec
+        self.templateValues['audio_receive_codec'] = audio_receive_codec
+        self.templateValues['pc_constraints'] = pc_constraints
+        self.templateValues['initiator'] = initiator
         self.render('conference.html')
 
     def post(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues = {}
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        purpose = self.request.get('purpose')
-        participants = self.request.get('participants')
-        datetime = self.request.get('datettime')
         roomkey = self.request.get('roomkey')
-        user_id = str(self.user_info['user_id'])
+        user_id = self.request.get('user_id')
+        # logging.info("value of my roomkey is %s", str(roomkey))
+        conference = models.Conference.get_by_id(int(roomkey))
+        # logging.warning("User " + user_id + " has logged in")
+        # conference.currentLoggedInUsers.append(user_id)
+        # conference.put()
+        message = self.request.body
+        # logging.info("Message is %s", str(message))
+        for u_id in conference.currentLoggedInUsers:
+            if u_id != user_id:
+                channel.send_message(roomkey+u_id, message)
+            # channel.send_message(roomkey+user_id, message)
+            # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
 
-        if purpose:
-            self.templateValues['purpose'] = purpose
-        if participants:
-            self.templateValues['participants'] = participants
-        if datetime:
-            self.templateValues['datetime'] = datetime
-        if roomkey:
-            self.templateValues['roomkey'] = roomkey
-        self.templateValues['user_id'] = user_id
 
-        token = channel.create_channel(roomkey + user_id);
-        room = models.Conference.get_by_id(int(roomkey))
-        channel.send_message(roomkey + user_id, "Hello World, from " + user_id)
+        # logging.warning("================ HELLO WORLD =================")
+
+
+
+        # token = channel.create_channel(identifier)
+        # self.templateValues['token'] = token
+
+        # channel.send_message(identifier, "Hello World, from " + user_id)
         # if len(room.currentLoggedInUsers) != 0:
         #     send_to = room.currentLoggedInUsers[0]
         #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
         # else:
         #     send_to = user_id
             # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
-        if token:
-            self.templateValues['token'] = token
-        message = self.request.get('message')
-        if message:
-            channel.send_message(1, message)
-        self.render('conference.html')
+        # message = self.request.get('message')
+        # if message:
+        #     channel.send_message(1, message)
+        # self.render('conference.html')
+
+
+
+
 
 class ChannelConnectionHandler(MyHandler):
     def post(self):
         self.setupUser()
         logging.warning(self.request.get('from'))
 
-
-class ChannelDisconnectionHandler(MyHandler):
-    def post(self):
+    def get(self):
         self.setupUser()
         logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        conference = models.Conference.get_by_id(int(roomkey))
+        if user_id not in conference.currentLoggedInUsers:
+            conference.currentLoggedInUsers.append(user_id)
+            conference.put()
+
+
+class ChannelDisconnectionHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        logging.warning("THIS IS THE ROOMKEY")
+        logging.warning(roomkey)
+        conference = models.Conference.get_by_id(int(roomkey))
+        conference.currentLoggedInUsers.remove(user_id)
+        conference.put()
 
 
 config = {
@@ -775,7 +861,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
     webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
-    webapp2.Route('/conference.html',ConferencePageHandler, name='chatroom'),
+    webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
