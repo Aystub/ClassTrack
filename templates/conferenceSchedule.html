@@ -53,7 +53,7 @@
 						<div class="col-md-4">
 							<form method="POST" action="conference.html">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
-								<input class="btn btn-default btn-block" type="submit" value="Enter">
+								<input name=SeleniumTestEnter id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Enter">
 							</form>
 						</div>
 						<div class="col-md-4">
@@ -62,7 +62,7 @@
 						<div class="col-md-4">
 							<form method="POST" action="delConference.html">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
-								<input class="btn btn-default btn-block" type="submit" value="Delete">
+								<input name=SeleniumTestDelete id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Delete">
 							</form>
 						</div>
 				</div>
@@ -72,9 +72,11 @@
 
 
 		<div class="row">
-			<div class="col-md-12" style="text-align:center">
-			<h1>Invitations</h1>
+			<div class="col-md-1"></div>
+			<div class="col-md-9" role="alert">
+				<center><h1>Invitations</h1></center>
 			</div>
+			<div class="col-md-2"></div>
 		</div>
 		{% for invitation in conference_invitation_list %}
 		<div class="row">

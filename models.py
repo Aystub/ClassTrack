@@ -11,8 +11,8 @@ class User(webapp2_extras.appengine.auth.models.User):
     user_type = ndb.IntegerProperty()
     meetings = ndb.KeyProperty(kind='Conference',repeated=True)
     children = ndb.StringProperty(repeated=True)
-    messageThreads = ndb.KeyProperty(kind ='MessageThread', repeated=True)
-    classList = ndb.KeyProperty(kind='Classes', repeated=True)
+    messageThreads = ndb.StringProperty(repeated=True)
+    classList = ndb.StringProperty(repeated=True)
 
     def id(self):
         return self.key.id()
@@ -90,11 +90,6 @@ class School(ndb.Model):
     school_name = ndb.StringProperty(required=True)
     state = ndb.StringProperty(required=True)
     county = ndb.StringProperty(required=True)
-    student_list = ndb.KeyProperty(kind='User', repeated=True)
-    teacher_list = ndb.KeyProperty(kind='User', repeated=True)
-    class_list = ndb.KeyProperty(kind='Classes', repeated=True)
-    #possibly no need
-    admin_list = ndb.KeyProperty(kind='User', repeated=True)
 
     def id(self):
         return self.key.id()
@@ -125,8 +120,8 @@ class Classes(ndb.Model):
         return self.key.id()
 
 class PrivateMessage(ndb.Model):
-    sender = ndb.KeyProperty(kind='MessageThread',required=True)
-    # messageThread = ndb.StringProperty(required=True)
+    sender = ndb.StringProperty(required=True)
+    messageThread = ndb.StringProperty(required=True)
     message = ndb.TextProperty()
     time = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -136,8 +131,8 @@ class PrivateMessage(ndb.Model):
 class MessageThread(ndb.Model):
     time = ndb.DateTimeProperty(required=True)
     subject = ndb.StringProperty(required=True)
-    users = ndb.KeyProperty(kind='Users', repeated=True)
-    messageList = ndb.KeyProperty(kind='PrivateMessage', repeated=True)
+    users = ndb.StringProperty(repeated=True)
+    messageList = ndb.StringProperty(repeated=True)
 
     def id(self):
         return self.key.id()
@@ -147,5 +142,6 @@ class Conference(ndb.Model):
     participants = ndb.StringProperty(repeated=True)
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
+    partString = ndb.StringProperty()
     def id(self):
         return self.key.id()
