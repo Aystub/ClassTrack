@@ -570,6 +570,41 @@ class ContactTeacherPageHandler(MyHandler):
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
+        
+class AddMessagePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Inbox'
+        self.login_check()
+
+        message_list = models.MessageThread.query()
+        self.templateValues['message_list'] = message_list
+        self.render('addMessage.html')
+
+    def post(self):
+        self.setupUser()
+        teachers = self.request.get('participants')
+        theSubject = self.request.get('purpose')
+        theMessage = self.request.get('participants')
+        #teachers = teachers[0]
+        #participants = [self.user_info['auth_ids'][0], teachers]
+        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        
+        message = models.PrivateMessage(
+                message = theMessage
+        )
+        messageID = message.put()
+        
+        thread = models.MessageThread(
+                time = messageID.get().time,
+                subject = theSubject,
+                users = [self.user.key],
+                messageList = [messageID]
+            )
+        thread.put()
+        self.response.write("<h1> Conference Added </h1>")
 
 class ClassSelectPageHandler(MyHandler):
     def get(self):
@@ -745,6 +780,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/addMessage.html',AddMessagePageHandler, name='addMessaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
