@@ -61,9 +61,9 @@
         <div class="alert alert-success col-md-11" role="alert">
             <div class="row" style="text-align:center">
                 <div class="col-md-1"></div>
-                <div class="col-md-2">{{MessageThread['users']}}</div>
-                <div class="col-md-2">{{MessageThread['subject']}}</div>
-                <div class="col-md-2">{{MessageThread['time']}}</div>
+                <div class="col-md-3">{{MessageThread['users'][0].get().first_name}}</div>
+                <div class="col-md-3">{{MessageThread['subject']}}</div>
+                <div class="col-md-3">{{MessageThread['time']}}</div>
                 <div class="col-md-2">
                     <form method="POST" action="conference.html">
                         <input type="hidden" name="key" value="">
