@@ -774,7 +774,7 @@ class CreateAdminHandler(MyHandler):
             last_name='AdminLastName',
             user_type=admin_user,
             children=[],
-            school=['None'],
+            school='None',
             verified=False)
         self.redirect('/')
 
