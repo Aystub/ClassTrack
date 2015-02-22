@@ -1,21 +1,40 @@
 	{% extends "baseActivity.html" %}
 	{% block title %}{{ title }}{% endblock %}
 	{% block top %}{{ super() }}{% endblock %}
- 		
+
 
  	{% block sideNavWidget %}
 
 	{% endblock %}
 
 
-	{% block content %}
+{% block content %}
+		<div class="col-md-1"></div>
+		<div class="home_newsfeed col-md-8">
+			<h1>{{title}}</h1>
+		</div>
+		<br><br><br>
 
-			<div class="col-md-1"></div>
-			<div class="home_newsfeed col-md-8">
-				<h1>{{title}}</h1>
-			</div>
-			<div class="col-md-3"></div>
-	{% endblock %}
+	{% if usertype == 0 %} {#admin#}
+				<h2>Im a Admin</h2>
+
+	{% elif usertype == 1 %} {#teacher#}
+				<h2>Im a Teacher</h2>
+
+	{% elif usertype == 2 %} {#parent#}
+				<h2>Im a Parent</h2>
+
+	{% elif usertype == 3 %} {#student#}
+				<h2>Im a Student</h2>
+
+	{% else %}  {#error no login#}
+				<h2>Not Logged in</h2>
+
+	{% endif %}
+
+<div class="col-md-3"></div>
+{% endblock %}
+
+
 
 	{% block bottom %}{{ super() }}{% endblock %}
-

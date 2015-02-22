@@ -19,6 +19,16 @@ from webapp2_extras.auth import InvalidPasswordError
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
+#CONSTANTS for user type
+admin_user = 0   #user is a admin
+teacher_user = 1 #user is a teacher
+parent_user = 2  #user is a parent
+student_user = 3 #user is a student
+#END CONSTANTS
+
+
+
+
 #JSON Serialization issues
 def default(obj):
     """Default JSON serializer."""
@@ -194,13 +204,13 @@ class SignupPageHandler(MyHandler):
         student_id = self.request.get('student_id')
         verified = False
         if teacher_code:
-            user_type = 1 #user is a teacher
+            user_type = teacher_user
         elif student_id:
-            user_type = 3 #user is a student
+            user_type = student_user
             verified = True
             email = student_id #Make student_id the auth_id for students
         else:
-            user_type = 2 #user is a parent
+            user_type = parent_user
         child = ['None']
         classList = ['None']
         meeting = []
@@ -597,6 +607,41 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
 
+class AddMessagePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Inbox'
+        self.login_check()
+
+        message_list = models.MessageThread.query()
+        self.templateValues['message_list'] = message_list
+        self.render('addMessage.html')
+
+    def post(self):
+        self.setupUser()
+        teachers = self.request.get('participants')
+        theSubject = self.request.get('purpose')
+        theMessage = self.request.get('participants')
+        #teachers = teachers[0]
+        #participants = [self.user_info['auth_ids'][0], teachers]
+        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+
+        message = models.PrivateMessage(
+                message = theMessage
+        )
+        messageID = message.put()
+
+        thread = models.MessageThread(
+                time = messageID.get().time,
+                subject = theSubject,
+                users = [self.user.key],
+                messageList = [messageID]
+            )
+        thread.put()
+        self.response.write("<h1> Conference Added </h1>")
+
 class ClassSelectPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -719,6 +764,20 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
 
+
+class CreateAdminHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        user_data = self.user_model.create_user('admin@classtrack.com',
+            first_name='Admin',
+            password_raw='admin',
+            last_name='AdminLastName',
+            user_type=admin_user,
+            children=['None'],
+            school=['None'],
+            verified=False)
+        self.redirect('/')
+
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -756,6 +815,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/addMessage.html',AddMessagePageHandler, name='addMessaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
@@ -765,4 +825,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/.*', NotFoundPageHandler, name='notFound')
+    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin')
+    # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

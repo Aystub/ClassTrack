@@ -77,12 +77,51 @@
 				            });
 				        });
 				    </script>
-					<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
-					<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
-					<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
-					<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
-					<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
-	 			</ul>
+
+
+						{% if usertype == 0 %} {#admin#}
+							<li id="schoolSetup_li"><a class="side-nav-link" href="schoolSetup.html">Set up School</a></li>
+							<li id="childRegistration_li"><a class="side-nav-link" href="childRegistration">Add a Child</a></li>
+							<li id="teacherRegistration_li"><a class="side-nav-link" href="teacherRegistration">Documents</a></li>
+
+
+						{% elif usertype == 1 %} {#teacher#}
+							<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
+							<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
+							<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
+							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
+							<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
+
+
+						{% elif usertype == 2 %} {#parent#}
+							<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
+							<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
+							<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
+							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
+							<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
+
+
+						{% elif usertype == 3 %} {#student#}
+							<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
+							<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
+							<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
+							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
+							<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
+
+
+						{% else %}  {#error no login#}
+								<script>
+								window.onload = function (){
+									window.location.href = '/';
+								}
+								</script>
+
+
+
+						{% endif %}
+
+
+				</ul>
 	 		{%block sideNavWidget %}{% endblock %}
 			{%endblock%}
 			</div>
@@ -96,11 +135,11 @@
 		$(document).ready(function(){
 			setup();
 		});
-        
+
         var timer_id;
-        
+
 		$(window).resize(function() {
-            
+
                 clearTimeout(timer_id);
 
                 timer_id = setTimeout(function() {
@@ -111,10 +150,10 @@
                 }, 300);
             });
 
-            
 
 
-        
+
+
 		function setup()
 		{
 			var path = window.location.pathname.substring(1, (window.location.pathname.length-5));

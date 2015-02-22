@@ -140,6 +140,7 @@ class MessageThread(ndb.Model):
     users = ndb.KeyProperty(kind='Users', repeated=True)
     messageList = ndb.KeyProperty(kind='PrivateMessage', repeated=True)
 
+
     def id(self):
         return self.key.id()
 
