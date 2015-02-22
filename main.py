@@ -526,8 +526,10 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
-        teacher_query = models.User.query().filter(models.User.auth_ids==teachers)
-        teacher = [teacher.to_dict() for teacher in teacher_query]
+        teacher = models.User.query(models.User.auth_ids==teachers).get()
+        #teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        self.response.write(teacher)
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),
@@ -542,16 +544,19 @@ class AddConferencePageHandler(MyHandler):
             this_user.meetings = [key]
         else:
             this_user.meetings += [key]
-        this_user.put()
+
 
         #in the future here we will make it invite the other person/add them in general
-        if not teacher[0]['meetings']:
-            teacher[0]['meetings'] = [key]
+        if not teacher.meetings:
+            teacher.meetings = [key]
         else:
-            teacher[0]['meetings'] += [key]
-        teacher[0].put()
+            teacher.meetings += [key]
+
+        teacher.put()
+        this_user.put()
 
         self.response.write("<h1> Conference Added </h1>")
+
 
 class DelConferenceHandler(MyHandler):
     def post(self):
