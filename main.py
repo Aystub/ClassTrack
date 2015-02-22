@@ -537,6 +537,9 @@ class AddConferencePageHandler(MyHandler):
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
         teacher = models.User.query(models.User.auth_ids==teachers).get()
+        #teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        #self.response.write(teacher)
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),
