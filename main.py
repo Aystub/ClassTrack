@@ -729,11 +729,11 @@ class ConferencePageHandler(MyHandler):
         user_id = str(self.user_info['user_id'])
         pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
 
-        initiator = 1;
+        initiator = 'true';
         conference = models.Conference.get_by_id(int(roomkey))
         # if len(conference.currentLoggedInUsers) != 0:
         if conference.currentLoggedInUsers[0] != user_id:
-            initiator = 0;
+            initiator = 'false';
 
         identifier = roomkey + user_id
         token = channel.create_channel(identifier)

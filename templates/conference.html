@@ -113,7 +113,7 @@
         var key = '{{token}}';
         var roomkey = '{{roomkey}}'
         // var initiator = {{ initiator }};
-        var initiator = 1;
+        var initiator = {{initiator}};
 
         // setTimeout(initialize, 1);
       </script>
@@ -130,6 +130,7 @@
         var hasLocalStream;
         var channelReady = false;
         var signalingReady = false;
+        var multipleParticipants = false;
 
 
 
@@ -208,7 +209,7 @@
            // Do something with the video here, e.g. video.play()
            $('#localVideo').attr('src', window.URL.createObjectURL(localMediaStream));
            localStream = localMediaStream;
-           maybeStart();
+           // maybeStart();
         }
 
         function onUserMediaError(err)
@@ -233,12 +234,18 @@
             function onChannelOpened(){
               console.log("Channel opened");
               channelReady = true;
+              sendMessage({type: 'joined'})
               // maybeStart();
             }
 
             function onChannelMessage(message) {
-              console.log('S->C: ' + message.data);
+              console.log('Server->Client: ' + message.data);
               var msg = JSON.parse(message.data);
+              if(msg.type === 'joined')
+              {
+                multipleParticipants = true;
+                maybeStart();
+              }
               // Since the turn response is async and also GAE might disorder the
               // Message delivery due to possible datastore query at server side,
               // So callee needs to cache messages before peerConnection is created.
