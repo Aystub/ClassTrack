@@ -44,10 +44,10 @@
 		{% for conference in conference_list %}
 		<div class="row">
 			<div class="alert alert-success col-md-12" role="alert">
-				<div class="col-md-2">{{conference['datetime']	}} </div>
+				<div class="col-md-2">{{conference['datetime']}} </div>
 				<div class="col-md-2">{{conference['purpose']}}</div>
 				<!-- Put for loop here for particiapntsawjhflabdfkljd names-->
-				<div class="col-md-2">{{conference['participants']}}</div>
+				<div class="col-md-2">{{part_list[loop.index0]}}</div>
 				<div class="col-md-6">
 
 						<div class="col-md-4">

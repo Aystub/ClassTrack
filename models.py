@@ -107,7 +107,7 @@ class NFPost(ndb.Model):
 class School(ndb.Model):
     school_name = ndb.StringProperty(required=True)
     state = ndb.StringProperty(required=True)
-    county = nbd.StringProperty(required=True)
+    county = ndb.StringProperty(required=True)
 
     def id(self):
         return self.key.id()
@@ -160,5 +160,6 @@ class Conference(ndb.Model):
     participants = ndb.StringProperty(repeated=True)
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
+    partString = ndb.StringProperty()
     def id(self):
         return self.key.id()

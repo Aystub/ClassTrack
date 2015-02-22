@@ -488,11 +488,23 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_list = models.Conference.query()
+        part_list = [];
+        for conf in conference_list:
+            names=''
+            small_list = conf.participants
+            for part in small_list:
+                person_query = models.User.query().filter(models.User.auth_ids==part)
+                person = [person.to_dict() for person in person_query]
+                names += person[0]['first_name']
+                names += person[0]['last_name']
+                names += ', '
+            part_list.append(names)
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
         self.templateValues['conference_invitation_list'] = conference_invitation_list
+        self.templateValues['part_list'] = part_list
         self.login_check()
         self.render('conferenceSchedule.html')
 
@@ -514,6 +526,9 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
+        teacher_query = models.User.query().filter(models.User.auth_ids==teachers)
+        teacher = [teacher.to_dict() for teacher in teacher_query]
+
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
@@ -530,7 +545,11 @@ class AddConferencePageHandler(MyHandler):
         this_user.put()
 
         #in the future here we will make it invite the other person/add them in general
-
+        if not teacher[0]['meetings']:
+            teacher[0]['meetings'] = [key]
+        else:
+            teacher[0]['meetings'] += [key]
+        teacher[0].put()
 
         self.response.write("<h1> Conference Added </h1>")
 
@@ -697,7 +716,7 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
-
+'''
 class CreateClassHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -713,7 +732,7 @@ class CreateClassHandler(MyHandler):
     def post(self):
         newClass = models.Classes(
                 name = self.request.get("name")
-                teacher = self.user_info['auth_ids'][0]
+            #    teacher = self.user_info['auth_ids'][0]
                 school = self.user.school
             )
         newClass.put()
@@ -734,7 +753,7 @@ class CreateSchoolHandler(MyHandler):
         )
         newSchool.put()
 
-
+'''
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -781,7 +800,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     # webapp2.Route('/.*', NotFoundPageHandler)
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/createClass', CreateClassHandler, name='createClass'),
-    webapp2.Route('/createSchool', CreateSchoolHandler, name='createSchool'),
-    webapp2.Route('/.*', NotFoundPageHandler)
+    #webapp2.Route('/createClass', CreateClassHandler, name='createClass'),
+    #webapp2.Route('/createSchool', CreateSchoolHandler, name='createSchool'),
+    webapp2.Route('/.*', NotFoundPageHandler, name='notFound')
 ], debug=True, config=config)
