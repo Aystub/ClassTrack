@@ -27,7 +27,7 @@
 
         {% if usertype == 1%}
             <center><button href="addPost.html" id="add_button" class="custom_button fancybox fancybox.iframe">Add Post</button></center>
-            
+
             <script>
                 $(document).ready(function() {
                     $('.fancybox').fancybox({
@@ -42,7 +42,7 @@
           {% endif %}
 
 
-        <div id = "NewsFeed"> 
+        <div id = "NewsFeed">
 				{% for news in newsfeed_list %}
 				<div class="alert alert-warning" role="alert">
 					<span class="glyphicon glyphicon-th" aria-hidden="true"></span>
@@ -55,13 +55,13 @@
                 </div>
 			</div>
 			<div class="col-md-1"></div>
-            
+
             <!-- Quick and Dirty. Move to Js File later-->
             <script>
                 $("input").click(function(){
-                    
+
                     var filterData = '{"typeIds":[';
-                  
+
                     for(var i=0;i<$("input:checked").length;i++){
                         filterData += '"';
                         filterData  += $("input:checked")[i].value;
@@ -69,11 +69,11 @@
                         if(i < $("input:checked").length - 1)
                             filterData  += ","
                     }
-                    
+
                     filterData += ']}';
 
                     console.log(filterData);
-                    
+
                     $.ajax({
                       url: "/jqNFpost",
                       type: "POST",
@@ -81,23 +81,23 @@
                       datatype: 'json',
                       success: function(data){
                         $("#NewsFeed").html("");
-                        var posts = JSON.parse(data) 
+                        var posts = JSON.parse(data)
                         console.log(posts);
                         for(var i = 0; i<posts.length; i++)
-                        {    
+                        {
                             $("#NewsFeed").append('<div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-th" aria-hidden="true"></span><br/>' + posts[i] + '<br/><a href="#">Read More</a></div>');
                         }
                         fixHeights();
-                        
+
                       },
                       error: function(e){
                         console.log(e);
                       }
                    });
-                   
+
                 });
-                
-                
+
+
                 //Fixed Silly Firefox Checkbox bug
                 $('document').ready(function(){
                     $('input').prop('checked', true);

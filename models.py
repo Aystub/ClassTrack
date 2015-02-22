@@ -10,11 +10,12 @@ class User(webapp2_extras.appengine.auth.models.User):
     last_name = ndb.StringProperty()
     user_type = ndb.IntegerProperty()
     meetings = ndb.KeyProperty(kind='Conference',repeated=True)
-    children = ndb.StringProperty(repeated=True)
+    children = ndb.KeyProperty(kind='User', repeated=True)
     messageThreads = ndb.KeyProperty(kind ='MessageThread', repeated=True)
     classList = ndb.KeyProperty(kind='Classes', repeated=True)
     #school = ndb.KeyProperty(kind="School", repeated=True)
     school = ndb.StringProperty()
+
     def id(self):
         return self.key.id()
 

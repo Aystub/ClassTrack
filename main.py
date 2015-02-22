@@ -84,7 +84,7 @@ class MyHandler(webapp2.RequestHandler):
 
 
     def render(self, afile):
-        "Render the given file"
+        """Render the given file"""
         template = jinja_environment.get_template(afile)
         self.response.out.write(template.render(self.templateValues))
 
@@ -773,7 +773,7 @@ class CreateAdminHandler(MyHandler):
             password_raw='admin',
             last_name='AdminLastName',
             user_type=admin_user,
-            children=['None'],
+            children=[],
             school=['None'],
             verified=False)
         self.redirect('/')
