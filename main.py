@@ -71,7 +71,7 @@ class MyHandler(webapp2.RequestHandler):
 
             #Children
             children_ids = self.user.children
-            if not children_ids[0] == "None": #list is not empty
+            if not children_ids: #list is not empty
                 children_query = models.User.query(models.User.auth_ids.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
@@ -211,8 +211,8 @@ class SignupPageHandler(MyHandler):
             email = student_id #Make student_id the auth_id for students
         else:
             user_type = parent_user
-        child = ['None']
-        classList = ['None']
+        child = []
+        classList = []
         meeting = []
         messageThread = []
 
@@ -824,7 +824,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/.*', NotFoundPageHandler, name='notFound')
+    webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
     webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin')
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
