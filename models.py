@@ -13,6 +13,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     children = ndb.StringProperty(repeated=True)
     messageThreads = ndb.KeyProperty(kind ='MessageThread', repeated=True)
     classList = ndb.KeyProperty(kind='Classes', repeated=True)
+    school = ndb.KeyProperty(kind="School", repeated=True)
 
     def id(self):
         return self.key.id()
