@@ -11,6 +11,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     user_type = ndb.IntegerProperty()
     meetings = ndb.KeyProperty(kind='Conference',repeated=True)
 <<<<<<< HEAD
+<<<<<<< HEAD
     children = ndb.KeyProperty(kind='User', repeated=True)
     messageThreads = ndb.KeyProperty(kind ='MessageThread', repeated=True)
     classList = ndb.KeyProperty(kind='Classes', repeated=True)
@@ -19,6 +20,11 @@ class User(webapp2_extras.appengine.auth.models.User):
 
     def id(self):
         return self.key.id()
+=======
+    children = ndb.StringProperty(repeated=True)
+    messageThreads = ndb.StringProperty(repeated=True)
+    classList = ndb.StringProperty(repeated=True)
+>>>>>>> parent of 77e265e... models changes
 =======
     children = ndb.StringProperty(repeated=True)
     messageThreads = ndb.StringProperty(repeated=True)
@@ -141,7 +147,10 @@ class MessageThread(ndb.Model):
     subject = ndb.StringProperty(required=True)
     users = ndb.StringProperty(repeated=True)
     messageList = ndb.StringProperty(repeated=True)
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 77e265e... models changes
 
     def id(self):
         return self.key.id()
