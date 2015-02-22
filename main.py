@@ -74,6 +74,33 @@ def user_required(handler):
 
 class MyHandler(webapp2.RequestHandler):
     "Setup self.user and self.templateValues values."
+    # def setupUser(self):
+    #     """Returns the implementation of the user model.
+    #        It is consistent with config['webapp2_extras.auth']['user_model'], if set.
+    #     """
+    #     self.user_exists = self.auth.get_user_by_session()
+    #     self.templateValues = {}
+    #     if self.user_exists:
+    #         children_name_list = []
+    #         self.templateValues['logout'] = '/logout'
+    #         self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
+    #         self.templateValues['username'] = self.user_info['auth_ids'][0]
+    #         self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+    #         self.templateValues['id'] = self.user_info['user_id']
+
+    #         #Children
+    #         children_ids = self.user.children
+    #         if not children_ids[0] == "None": #list is not empty
+    #             children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+    #             self.templateValues['children_list'] = children_query
+
+    #         #Classes
+    #         class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+    #         self.templateValues['selected_class'] = class_list[len(class_list)-1]
+    #     else:
+    #         self.templateValues['login'] = '/login'
+    #         self.templateValues['signup'] = '/signup'
+
     def setupUser(self):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
@@ -86,7 +113,6 @@ class MyHandler(webapp2.RequestHandler):
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
-            self.templateValues['id'] = self.user_info['user_id']
 
             #Children
             children_ids = self.user.children
@@ -522,6 +548,33 @@ class ConferenceSchedulerPageHandler(MyHandler):
 
 
 class AddConferencePageHandler(MyHandler):
+    # def get(self):
+    #     self.setupUser()
+    #     self.navbarSetup()
+    #     self.templateValues['user'] = self.user
+    #     self.templateValues['title'] = 'Conferencing | ClassTrack'
+    #     teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+    #     teachers = [teacher.to_dict() for teacher in teacher_query]
+    #     self.templateValues['teachers'] = teacher_query
+    #     self.login_check()
+    #     self.render('addConference.html')
+
+    # def post(self):
+    #     self.setupUser()
+    #     extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
+    #     teachers = self.request.get('participants')
+    #     #teachers = teachers[0]
+    #     #participants = [self.user_info['auth_ids'][0], teachers]
+    #     participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+    #     post = models.Conference(
+    #             purpose = self.request.get('purpose'),
+    #             participants = participants,
+    #             datetime = extractedDateTime,
+    #             currentLoggedInUsers = []
+    #         )
+    #     post.put()
+    #     self.response.write("<h1> Conference Added </h1>")
+
     def get(self):
         self.setupUser()
         self.navbarSetup()
@@ -532,22 +585,49 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
-
+   
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        participants = [self.user_info['auth_ids'][0],teachers]
+        participant_id = []
+        for auth_id in participants:
+            model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
+            # model = [model.to_dict() for model in model_query]
+            participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+        teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        self.response.write(teacher)
+
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
-                datetime = extractedDateTime,
-                currentLoggedInUsers = []
+                participant_ids = participant_id,
+                datetime = extractedDateTime
             )
-        post.put()
+        key=post.put()
+
+        #adding the conference to the user who made it
+        this_user = self.user
+        if not this_user.meetings:
+            this_user.meetings = [key]
+        else:
+            this_user.meetings += [key]
+
+
+        #in the future here we will make it invite the other person/add them in general
+        if not teacher.meetings:
+            teacher.meetings = [key]
+        else:
+            teacher.meetings += [key]
+
+        teacher.put()
+        this_user.put()
+
         self.response.write("<h1> Conference Added </h1>")
+
 
 class DelConferenceHandler(MyHandler):
     def post(self):
@@ -732,7 +812,14 @@ class ConferencePageHandler(MyHandler):
         initiator = 'true';
         conference = models.Conference.get_by_id(int(roomkey))
         # if len(conference.currentLoggedInUsers) != 0:
-        if conference.currentLoggedInUsers[0] != user_id:
+        # if conference.currentLoggedInUsers[0] != user_id:
+        # logging.warning("THIS IS THE INITIATOR")
+        # logging.warning(conference.participant_ids[0])
+        # logging.warning("THIS IS THE CURRENT USER")
+        # logging.warning(user_id)
+        # logging.warning()
+
+        if int(user_id) == int(conference.participant_ids[0]):
             initiator = 'false';
 
         identifier = roomkey + user_id

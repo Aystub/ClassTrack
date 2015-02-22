@@ -449,7 +449,6 @@ function setRemote(message) {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', path, true);
             xhr.send(msgString);
-
           }
 
           function processSignalingMessage(msg) {
@@ -556,6 +555,13 @@ function setRemote(message) {
 
           function doAnswer() {
             console.log("Sending answer to peer.");
+            mediaConstraints = {
+              optional: [],
+              mandatory: {
+                OfferToReceiveAudio: true,
+                OfferToReceiveVideo: true
+              }
+            },onMediaError,mediaConstraints;
             pc.createAnswer(setLocalAndSendMessage, onCreateSessionDescriptionError, mediaConstraints);
           }
 
@@ -584,6 +590,7 @@ function setRemote(message) {
 
               if(localStream != null)
               {
+                alert("This is called");
                 console.log('Adding local stream.');
                 pc.addStream(localStream);
               }
