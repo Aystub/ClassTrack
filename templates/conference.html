@@ -100,10 +100,20 @@
         // var stereo = {{ stereo }};
         var audio_send_codec = '{{ audio_send_codec }}';
         var audio_receive_codec = '{{ audio_receive_codec }}';
-        var pcConstraints = '{{pc_constraints}}'
+        // var pcConstraints = '{{pc_constraints}}'
+
+        var pcConstraints = {
+            optional: [{DtlsSrtpKeyAgreement: true}],
+             // DtlsSrtpKeyAgreement: true,
+            mandatory: {
+                OfferToReceiveAudio: true,
+                OfferToReceiveVideo: true
+            }
+        };
         var key = '{{token}}';
         var roomkey = '{{roomkey}}'
-        var initiator = {{ initiator }};
+        // var initiator = {{ initiator }};
+        var initiator = 1;
 
         // setTimeout(initialize, 1);
       </script>
@@ -118,6 +128,8 @@
         var remoteStream;
         var msgQueue = [];
         var hasLocalStream;
+        var channelReady = false;
+        var signalingReady = false;
 
 
 
@@ -133,10 +145,10 @@
           // console.log("THIS IS THE KEY");
           // console.log(key);
           addSelfToParticipantList();
-          navigator.getUserMedia = ( navigator.getUserMedia ||
-                       navigator.webkitGetUserMedia ||
-                       navigator.mozGetUserMedia ||
-                       navigator.msGetUserMedia);
+          // navigator.getUserMedia = ( navigator.getUserMedia ||
+          //              navigator.webkitGetUserMedia ||
+          //              navigator.mozGetUserMedia ||
+          //              navigator.msGetUserMedia);
 
           mediaConstraints =               
           {
@@ -148,7 +160,7 @@
 
 
 
-
+          signalingReady = initiator;
 
         if (navigator.getUserMedia) 
         {
@@ -164,16 +176,16 @@
            console.log("getUserMedia not supported");
           }
 
-          if (mediaConstraints.audio === false && mediaConstraints.video === false) 
-          {
-            hasLocalStream = false;
-            maybeStart();
-          }
-          else 
-          {
-            hasLocalStream = true;
-            doGetUserMedia();
-          }
+          // if (mediaConstraints.audio === false && mediaConstraints.video === false) 
+          // {
+          //   hasLocalStream = false;
+          //   maybeStart();
+          // // }
+          // else 
+          // {
+          hasLocalStream = true;
+          doGetUserMedia();
+          // }
 
        } 
 
@@ -220,7 +232,8 @@
 
             function onChannelOpened(){
               console.log("Channel opened");
-              maybeStart();
+              channelReady = true;
+              // maybeStart();
             }
 
             function onChannelMessage(message) {
@@ -398,10 +411,12 @@ function setRemote(message) {
   // if (stereo)
   //   message.sdp = addStereo(message.sdp);
   message.sdp = maybePreferAudioSendCodec(message.sdp);
-  pc.setRemoteDescription(new RTCSessionDescription(message),
-       onSetRemoteDescriptionSuccess, onSetSessionDescriptionError);
+  pc.setRemoteDescription(new RTCSessionDescription(message), onSetRemoteDescriptionSuccess, onSetRemoteDescriptionError);
 
-  function onSetRemoteDescriptionSuccess() {
+  }
+
+  function onSetRemoteDescriptionSuccess() 
+  {
     console.log("Set remote session description success.");
     // By now all addstream events for the setRemoteDescription have fired.
     // So we can know if the peer is sending any stream or is only receiving.
@@ -412,7 +427,11 @@ function setRemote(message) {
       // transitionToActive();
     }
   }
-}
+
+  function onSetRemoteDescriptionError(err)
+  {
+    console.log("Set remote session description error: " + err);
+  }
 
 
           function sendMessage(message) {
@@ -428,23 +447,22 @@ function setRemote(message) {
 
           function processSignalingMessage(msg) {
             // var message = JSON.parse(msg.data);
-            var message = msg;
             if (!started) {
-              messageError('peerConnection has not been created yet!');
+              console.log('peerConnection has not been created yet!');
               return;
             }
 
-            if (message.type === 'offer') {
-              setRemote(message);
+            if (msg.type === 'offer') {
+              setRemote(msg);
               doAnswer();
-            } else if (message.type === 'answer') {
-              setRemote(message);
-            } else if (message.type === 'candidate') {
+            } else if (msg.type === 'answer') {
+              setRemote(msg);
+            } else if (msg.type === 'candidate') {
               var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label, candidate:msg.candidate});
               // noteIceCandidate("Remote", iceCandidateType(message.candidate));
               pc.addIceCandidate(candidate,
                                  onAddIceCandidateSuccess, onAddIceCandidateError);
-            } else if (message.type === 'bye') {
+            } else if (msg.type === 'bye') {
               onRemoteHangup();
             }
           }
@@ -552,7 +570,7 @@ function setRemote(message) {
           function maybeStart() 
           {
             // if (!started && signalingReady && channelReady && turnDone && (localStream || !hasLocalStream)) 
-            if (!started) 
+            if (!started && channelReady && signalingReady) 
             {
               console.log('Creating PeerConnection.');
               createPeerConnection();

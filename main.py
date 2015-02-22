@@ -731,7 +731,8 @@ class ConferencePageHandler(MyHandler):
 
         initiator = 1;
         conference = models.Conference.get_by_id(int(roomkey))
-        if len(conference.currentLoggedInUsers) != 0:
+        # if len(conference.currentLoggedInUsers) != 0:
+        if conference.currentLoggedInUsers[0] != user_id:
             initiator = 0;
 
         identifier = roomkey + user_id
