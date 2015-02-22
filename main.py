@@ -19,6 +19,16 @@ from webapp2_extras.auth import InvalidPasswordError
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
+#CONSTANTS for user type
+admin_user = 0   #user is a admin
+teacher_user = 1 #user is a teacher
+parent_user = 2  #user is a parent
+student_user = 3 #user is a student
+#END CONSTANTS
+
+
+
+
 #JSON Serialization issues
 def default(obj):
     """Default JSON serializer."""
@@ -194,13 +204,13 @@ class SignupPageHandler(MyHandler):
         student_id = self.request.get('student_id')
         verified = False
         if teacher_code:
-            user_type = 1 #user is a teacher
+            user_type = teacher_user
         elif student_id:
-            user_type = 3 #user is a student
+            user_type = student_user
             verified = True
             email = student_id #Make student_id the auth_id for students
         else:
-            user_type = 2 #user is a parent
+            user_type = parent_user
         child = ['None']
         meeting = ['None']
         messageThreads = ['None']
@@ -556,7 +566,7 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Inbox'
         self.login_check()
-        
+
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
@@ -683,6 +693,20 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
 
+class CreateAdminHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        user_data = self.user_model.create_user('admin@classtrack.com',
+            first_name='Admin',
+            password_raw='admin',
+            last_name='AdminLastName',
+            user_type=admin_user,
+            children=['None'],
+            school=['None'],
+            verified=False)
+        self.redirect('/')
+
+
 
 config = {
   'webapp2_extras.auth': {
@@ -728,5 +752,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
+    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin')
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
