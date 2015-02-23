@@ -47,12 +47,9 @@
                 <div class="col-md-1"></div>
                 <div class="col-md-3">Johnny, Billy, Jenny</div>
                 <div class="col-md-3">Building Communiction App</div>
-                <div class="col-md-3">1-5-2015 3:00 pm</div>
+                <div class="col-md-3">Sunday, February 22 - 11:05 PM</div>
                 <div class="col-md-2">
-                    <form method="POST" action="conference.html">
-                        <input type="hidden" name="key" value="">
-                        <input class="btn btn-default btn-block" type="submit" value="View">
-                    </form>	
+                    <button href="/showMessage" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
 				</div>
             </div>
         </div>
@@ -63,12 +60,9 @@
                 <div class="col-md-1"></div>
                 <div class="col-md-3">{{MessageThread['users'][0].get().first_name}}</div>
                 <div class="col-md-3">{{MessageThread['subject']}}</div>
-                <div class="col-md-3">{{MessageThread['time']}}</div>
+                <div class="col-md-3">{{MessageThread['time'].strftime("%A, %B %d - %I:%M %p")}}</div>
                 <div class="col-md-2">
-                    <form method="POST" action="conference.html">
-                        <input type="hidden" name="key" value="">
-                        <input class="btn btn-default btn-block" type="submit" value="View">
-                    </form>	
+                    <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
 				</div>
                 <div class="col-md-2"></div>
             </div>

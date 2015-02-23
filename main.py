@@ -26,9 +26,6 @@ parent_user = 2  #user is a parent
 student_user = 3 #user is a student
 #END CONSTANTS
 
-
-
-
 #JSON Serialization issues
 def default(obj):
     """Default JSON serializer."""
@@ -585,12 +582,10 @@ class AddMessagePageHandler(MyHandler):
 
     def post(self):
         self.setupUser()
-        teachers = self.request.get('participants')
         theSubject = self.request.get('purpose')
-        theMessage = self.request.get('participants')
+        theMessage = self.request.get('message')
         #teachers = teachers[0]
         #participants = [self.user_info['auth_ids'][0], teachers]
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
         
         message = models.PrivateMessage(
                 message = theMessage
@@ -604,8 +599,20 @@ class AddMessagePageHandler(MyHandler):
                 messageList = [messageID]
             )
         thread.put()
-        self.response.write("<h1> Conference Added </h1>")
+        self.response.write("<h1> Message Added </h1>")
 
+class ShowMessagePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Inbox'
+        id = self.request.get("messageId")
+        MessageList = ndb.Key('MessageThread', int(id)).get().messageList
+        self.templateValues['MessageList'] = MessageList
+        self.login_check()
+        self.render('showMessage.html')
+        
 class ClassSelectPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -781,6 +788,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/addMessage.html',AddMessagePageHandler, name='addMessaging'),
+    webapp2.Route('/showMessage',ShowMessagePageHandler, name='addMessaging'),
     webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
     webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),

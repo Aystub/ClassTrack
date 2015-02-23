@@ -142,7 +142,7 @@ class PrivateMessage(ndb.Model):
         return self.key.id()
 
 class MessageThread(ndb.Model):
-    time = ndb.DateTimeProperty(required=True)
+    time = ndb.DateTimeProperty(required=True,indexed=True)
     subject = ndb.StringProperty(required=True)
     users = ndb.KeyProperty(repeated=True, kind="User")
     messageList = ndb.KeyProperty(repeated=True, kind="PrivateMessage") 
