@@ -158,7 +158,7 @@ class MainPageHandler(MyHandler):
             self.templateValues['user'] = self.user_info
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['post'] = '/post'
-            self.redirect('/home.html')
+            self.redirect('/home')
         else:
             self.templateValues['login'] = "/login"
             self.templateValues['signup'] = "/signup"
@@ -595,14 +595,6 @@ class LookupChildHandler(MyHandler):
         student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
-class MakeSchoolHandler(MyHandler):
-    def get(self):
-        newschool = models.School(
-                school_name = 'Seneca Middle School'
-            )
-        newschool.put()
-        self.redirect('/')
-
 class AddPostHandler(MyHandler):
     def get(self):
         self.templateValues = {}
@@ -616,9 +608,9 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
-
 class InitNDBHandler(MyHandler):
     def get(self):
+        #********Posts***********
         nfpost = models.NFPost(
                 caption = 'Last Element',
                 typeID = 0,
@@ -663,6 +655,39 @@ class InitNDBHandler(MyHandler):
                 owner = str(self.user_info['auth_ids'][0])
             )
         nfpost.put()
+
+        #******SCHOOLS*******
+        newschool = models.School(
+                school_name = 'Seneca Middle School'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Hogwarts School of Witchcraft and Wizardry'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Ashford Academy'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Naoetsu Private High School'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Fumizuki Academy'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Private Magic University Affiliated High School'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Karakura High School'
+            )
+        newschool.put()
+
+
+
         self.redirect('/')
 
 class TeacherRegistrationHandler(MyHandler):
@@ -680,6 +705,13 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
 
+class SchoolSetupHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'School Setup'
+        self.render('schoolSetup.html')
 
 config = {
   'webapp2_extras.auth': {
@@ -693,7 +725,7 @@ config = {
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainPageHandler, name='home'),
-    webapp2.Route('/index.html', MainPageHandler, name='index'),
+    webapp2.Route('/index', MainPageHandler, name='index'),
     webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
@@ -705,22 +737,22 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/post', PostHandler, name='post'),
     webapp2.Route('/jqNFpost', jqueryPostHandler, name='post'),
     webapp2.Route('/message', PrivateMessageHandler, name='post'),
-    webapp2.Route('/home.html', HomePageHandler, name='home'),
+    webapp2.Route('/home', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
-    webapp2.Route('/about.html', AboutPageHandler, name='about'),
-    webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
+    webapp2.Route('/about', AboutPageHandler, name='about'),
+    webapp2.Route('/contact', ContactPageHandler, name='contact'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
-    webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
-    webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
-    webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
-    webapp2.Route('/conference.html',ConferencePageHandler, name='chatroom'),
-    webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
-    webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
-    webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
-    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
-    webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
+    webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
+    webapp2.Route('/grades',GradesPageHandler, name='grades'),
+    webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
+    webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+    webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
+    webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
+    webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
+    webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),

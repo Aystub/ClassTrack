@@ -34,7 +34,7 @@ function schoolSuggestions(jsonObj, activeField, sugDivID){
         if(enteredVal != ""){
           for(var i = 0; i < jsonObj.length; i++){
               if(jsonObj[i].school_name.indexOf(enteredVal) >= 0){
-                  $(sugDivID).html( $(sugDivID).html() + '<div onclick="addSugToField(this, '+"'"+activeField+"', "+"'"+sugDivID+"'"+');" class="suggestion">'+ jsonObj[i].school_name + '</div><br>');
+                  $(sugDivID).html( $(sugDivID).html() + '<div onclick="addSugToField(this, '+"'"+activeField+"', "+"'"+sugDivID+"'"+');" class="suggestion">'+ jsonObj[i].school_name + ', State: ' + jsonObj[i].state + ', County: ' + jsonObj[i].county + '</div><br>');
               }
           }
         }
