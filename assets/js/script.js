@@ -79,3 +79,29 @@ function addChild(student_id){
     }
   });
 }
+
+//For Classes
+function studentLookupForClasses(jsonObj, sugDivID){
+  $(sugDivID).html('<table id="studentTable" class="table"><tr><th>Full Name</th><th>Add</th></tr>');
+
+  for(var i = 0; i < jsonObj.length; i++){
+    $("#studentTable tr:last").after('<tr><td>'+ jsonObj[i].first_name + " " + jsonObj[i].last_name + '</td><td><button onclick="addChild('+"'"+jsonObj[i].auth_ids[i]+"'"+')" class="btn btn-default">Add</button></td></tr>');
+  }
+}
+
+function lookupChildForClasses(){
+  var child = $("#childIDField").val()
+
+  $.ajax({
+    url: '/lookupChild',
+    type: 'POST',
+    data: { childID: child },
+    success: function(data){
+      var jsonObj = $.parseJSON(data);
+      studentLookupForClasses(jsonObj, "#childResults");
+    },
+    error: function(){
+      console.log("NOPE!");
+    }
+  });
+}

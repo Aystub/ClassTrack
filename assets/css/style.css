@@ -270,8 +270,10 @@ body {
 .front_page_jumbotron
 {
   height: 480px;
+  background-color: #FFF;
   background-image: url("/assets/images/children.jpg");
-  background-size: 100% 100%;
+  background-size: contain;
+  background-position: 50% 50%;
 }
 
 @media screen-size min-width

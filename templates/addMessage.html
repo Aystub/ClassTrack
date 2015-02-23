@@ -28,28 +28,25 @@
 
 	<body>
 
-		<form role="form" action="/addConference" method="POST" onSubmit="return window.checkValidity();">
+		<form role="form" action="/addMessage" method="POST" onSubmit="return window.checkValidity();">
 		  <div class="form-group">
-		    <label for="purpose">Purpose of Meeting:</label>
-		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting" id="purpose-input"></input>
+		    <label for="purpose">Subject:</label>
+		    <input class="form-control" type="text" name="purpose" placeholder="Subject" id="purpose-input"></input>
 		  </div>
 		  <div class="form-group">
 		    <label for="participants">Select a Teacher:</label>
 				<select id ="participant-select" name="participants">
 					{% for teacher in teachers %}
-						<option value="{{teacher.auth_ids[0]}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
+						<!-- <option value="{{teacher.auth_ids[0]}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>-->
+						<option value="{{teacher.first_name}} {{teacher.last_name}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
 					{% endfor %}
 				</select>
 
 		  </div>
 		  <div class="form-group">
-		      <label for="date">Date:</label>
-		      <input id ="datePicker" class="form-control" size="16" type="text" name="date" readonly="readonly">
-		</div>
-  		  <div class="form-group">
-		      <label for="time">Time:</label>
-		      <input id="timePicker" type="text" class="form-control" name="time"></input>
-		  </div>
+		      <label for="Message">Message:</label>
+		      <textarea class="form-control" placeholder="Message" id ="Message" name = "message"></textarea>
+          </div>
 
 		  <button type="submit" class="btn btn-default">Submit</button>
 		</div>
