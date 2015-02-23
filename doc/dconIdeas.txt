@@ -1,0 +1,16 @@
+Linking Accounts:
+
+Child <---> Parent
+Child <---> class
+Class <---> Teacher
+Parent - Child - Class - Teacher
+
+
+create Class:
+  -- has teacher, school, name
+
+add student to class page:
+  -- only viewable by teachers
+  -- bang the datastore for list of classes
+  -- teacher picks one of those
+  -- write a new method to add the child to a class

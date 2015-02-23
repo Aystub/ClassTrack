@@ -26,9 +26,6 @@ parent_user = 2  #user is a parent
 student_user = 3 #user is a student
 #END CONSTANTS
 
-
-
-
 #JSON Serialization issues
 def default(obj):
     """Default JSON serializer."""
@@ -71,7 +68,7 @@ class MyHandler(webapp2.RequestHandler):
 
             #Children
             children_ids = self.user.children
-            if not children_ids[0] == "None": #list is not empty
+            if children_ids: #list is not empty
                 children_query = models.User.query(models.User.auth_ids.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
@@ -84,7 +81,7 @@ class MyHandler(webapp2.RequestHandler):
 
 
     def render(self, afile):
-        "Render the given file"
+        """Render the given file"""
         template = jinja_environment.get_template(afile)
         self.response.out.write(template.render(self.templateValues))
 
@@ -168,7 +165,7 @@ class MainPageHandler(MyHandler):
             self.templateValues['user'] = self.user_info
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['post'] = '/post'
-            self.redirect('/home.html')
+            self.redirect('/home')
         else:
             self.templateValues['login'] = "/login"
             self.templateValues['signup'] = "/signup"
@@ -211,9 +208,11 @@ class SignupPageHandler(MyHandler):
             email = student_id #Make student_id the auth_id for students
         else:
             user_type = parent_user
-        child = ['None']
-        meeting = ['None']
-        messageThreads = ['None']
+
+        child = []
+        classList = []
+        meeting = []
+        messageThread = []
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -222,7 +221,11 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             children=child,
             school=school,
-            verified=verified)
+            verified=verified,
+            classList=classList,
+            meetings=meeting,
+            messageThreads=messageThread)
+
 
 
         if not user_data[0]: #user_data is a tuple
@@ -494,11 +497,23 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_list = models.Conference.query()
+        part_list = [];
+        for conf in conference_list:
+            names=''
+            small_list = conf.participants
+            for part in small_list:
+                person_query = models.User.query().filter(models.User.auth_ids==part)
+                person = [person.to_dict() for person in person_query]
+                names += person[0]['first_name']
+                names += person[0]['last_name']
+                names += ', '
+            part_list.append(names)
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
         self.templateValues['conference_invitation_list'] = conference_invitation_list
+        self.templateValues['part_list'] = part_list
         self.login_check()
         self.render('conferenceSchedule.html')
 
@@ -519,23 +534,45 @@ class AddConferencePageHandler(MyHandler):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        participants = [self.user_info['auth_ids'][0],teachers]
+        teacher = models.User.query(models.User.auth_ids==teachers).get()
+        #teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        #self.response.write(teacher)
+
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
                 datetime = extractedDateTime
             )
-        post.put()
+        key=post.put()
+
+        #adding the conference to the user who made it
+        this_user = self.user
+        if not this_user.meetings:
+            this_user.meetings = [key]
+        else:
+            this_user.meetings += [key]
+
+
+        #in the future here we will make it invite the other person/add them in general
+        if not teacher.meetings:
+            teacher.meetings = [key]
+        else:
+            teacher.meetings += [key]
+
+        teacher.put()
+        this_user.put()
+
         self.response.write("<h1> Conference Added </h1>")
+
 
 class DelConferenceHandler(MyHandler):
     def post(self):
         key = self.request.get('roomkey')
         key2 = ndb.Key('Conference', int(key))
         key2.delete()
-        self.redirect('conferenceSchedule.html')
+        self.redirect('conferenceSchedule')
 
 class ConferencePageHandler(MyHandler):
     def get(self):
@@ -568,7 +605,7 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-        message_list = models.MessageThread.query()
+        message_list = models.MessageThread.query().order(-models.MessageThread.time)
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
 
@@ -586,14 +623,15 @@ class AddMessagePageHandler(MyHandler):
 
     def post(self):
         self.setupUser()
-        teachers = self.request.get('participants')
         theSubject = self.request.get('purpose')
-        theMessage = self.request.get('participants')
+        theMessage = self.request.get('message')
         #teachers = teachers[0]
         #participants = [self.user_info['auth_ids'][0], teachers]
+
         participants = self.user.first_name+' '+self.user.last_name+', '+teachers
 
         message = models.PrivateMessage(
+                sender = self.user.key,
                 message = theMessage
         )
         messageID = message.put()
@@ -605,7 +643,19 @@ class AddMessagePageHandler(MyHandler):
                 messageList = [messageID]
             )
         thread.put()
-        self.response.write("<h1> Conference Added </h1>")
+        self.response.write("<h1> Message Added </h1>")
+
+class ShowMessagePageHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Inbox'
+        id = self.request.get("messageId")
+        MessageList = ndb.Key('MessageThread', int(id)).get().messageList
+        self.templateValues['MessageList'] = MessageList
+        self.login_check()
+        self.render('showMessage.html')
 
 class ClassSelectPageHandler(MyHandler):
     def get(self):
@@ -644,14 +694,6 @@ class LookupChildHandler(MyHandler):
         student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
-class MakeSchoolHandler(MyHandler):
-    def get(self):
-        newschool = models.School(
-                school_name = 'Seneca Middle School'
-            )
-        newschool.put()
-        self.redirect('/')
-
 class AddPostHandler(MyHandler):
     def get(self):
         self.templateValues = {}
@@ -665,9 +707,9 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
-
 class InitNDBHandler(MyHandler):
     def get(self):
+        #********Posts***********
         nfpost = models.NFPost(
                 caption = 'Last Element',
                 typeID = 0,
@@ -712,6 +754,39 @@ class InitNDBHandler(MyHandler):
                 owner = str(self.user_info['auth_ids'][0])
             )
         nfpost.put()
+
+        #******SCHOOLS*******
+        newschool = models.School(
+                school_name = 'Seneca Middle School'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Hogwarts School of Witchcraft and Wizardry'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Ashford Academy'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Naoetsu Private High School'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Fumizuki Academy'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Private Magic University Affiliated High School'
+            )
+        newschool.put()
+        newschool = models.School(
+                school_name = 'Karakura High School'
+            )
+        newschool.put()
+
+
+
         self.redirect('/')
 
 class TeacherRegistrationHandler(MyHandler):
@@ -729,6 +804,14 @@ class ChildRegistrationHandler(MyHandler):
         self.templateValues['title'] = 'Child Registration'
         self.render('childRegistration.html')
 
+class SchoolSetupHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'School Setup'
+        self.render('schoolSetup.html')
+
 class CreateAdminHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -737,8 +820,8 @@ class CreateAdminHandler(MyHandler):
             password_raw='admin',
             last_name='AdminLastName',
             user_type=admin_user,
-            children=['None'],
-            school=['None'],
+            children=[],
+            school='None',
             verified=False)
         self.redirect('/')
 
@@ -755,7 +838,6 @@ class EditProfileHandler(MyHandler):
         self.render('profileEdit.html')
 
 
-
 config = {
   'webapp2_extras.auth': {
     'user_model': 'models.User',
@@ -768,7 +850,7 @@ config = {
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainPageHandler, name='home'),
-    webapp2.Route('/index.html', MainPageHandler, name='index'),
+    webapp2.Route('/index', MainPageHandler, name='index'),
     webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/signup', SignupPageHandler),
     webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
@@ -780,29 +862,30 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/post', PostHandler, name='post'),
     webapp2.Route('/jqNFpost', jqueryPostHandler, name='post'),
     webapp2.Route('/message', PrivateMessageHandler, name='post'),
-    webapp2.Route('/home.html', HomePageHandler, name='home'),
+    webapp2.Route('/home', HomePageHandler, name='home'),
     webapp2.Route('/portal/', PortalPageHandler, name='portal'),
-    webapp2.Route('/about.html', AboutPageHandler, name='about'),
-    webapp2.Route('/contact.html', ContactPageHandler, name='contact'),
+    webapp2.Route('/about', AboutPageHandler, name='about'),
+    webapp2.Route('/contact', ContactPageHandler, name='contact'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
-    webapp2.Route('/calendar.html',CalendarPageHandler, name='calendar'),
-    webapp2.Route('/grades.html',GradesPageHandler, name='grades'),
-    webapp2.Route('/documents.html',DocumentsPageHandler, name='documents'),
-    webapp2.Route('/conference.html',ConferencePageHandler, name='chatroom'),
-    webapp2.Route('/conferenceSchedule.html',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
-    webapp2.Route('/addConference.html',AddConferencePageHandler, name='addConference'),
-    webapp2.Route('/delConference.html',DelConferenceHandler, name='delConference'),
-    webapp2.Route('/messaging.html',ContactTeacherPageHandler, name='messaging'),
-    webapp2.Route('/addMessage.html',AddMessagePageHandler, name='addMessaging'),
-    webapp2.Route('/classSelect.html',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/makeSchool.html',MakeSchoolHandler, name='makeSchool'),
-    webapp2.Route('/makeNDB.html',InitNDBHandler, name='makeSchool'),
+    webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
+    webapp2.Route('/grades',GradesPageHandler, name='grades'),
+    webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
+    webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+    webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
+    webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
+    webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
+    webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
-    webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
+    webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
-    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
     webapp2.Route('/profile', ProfileHandler, name='profile'),
-    webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit')
+    webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
+    webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
+    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin')
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

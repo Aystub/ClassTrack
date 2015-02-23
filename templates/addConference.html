@@ -28,7 +28,7 @@
 
 	<body>
 
-		<form role="form" action="/addConference.html" method="POST" onSubmit="return window.checkValidity();">
+		<form role="form" action="/addConference" method="POST" onSubmit="return window.checkValidity();">
 		  <div class="form-group">
 		    <label for="purpose">Purpose of Meeting:</label>
 		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting" id="purpose-input"></input>
@@ -37,8 +37,7 @@
 		    <label for="participants">Select a Teacher:</label>
 				<select id ="participant-select" name="participants">
 					{% for teacher in teachers %}
-						<!-- <option value="{{teacher.auth_ids[0]}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>-->
-						<option value="{{teacher.first_name}} {{teacher.last_name}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
+						<option value="{{teacher.auth_ids[0]}}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
 					{% endfor %}
 				</select>
 
