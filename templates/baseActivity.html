@@ -65,8 +65,8 @@
 			<div id="sidebar">
 				<ul class="nav nav-pills nav-stacked">
 					<!-- <li class="active"><a href="#">Section</a></li> -->
-					<li id="home_li"><a class="side-nav-link" href="home.html">Home</a></li>
-					<li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect.html">Switch Class</a></li>
+					<li id="home_li"><a class="side-nav-link" href="home">Home</a></li>
+					<li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect">Switch Class</a></li>
 				    <script>
 				        $(document).ready(function() {
 				            $('.fancybox').fancybox({
@@ -80,33 +80,31 @@
 
 
 						{% if usertype == 0 %} {#admin#}
-							<li id="schoolSetup_li"><a class="side-nav-link" href="schoolSetup.html">Set up School</a></li>
+							<li id="schoolSetup_li"><a class="side-nav-link" href="schoolSetup">Set up School</a></li>
 							<li id="childRegistration_li"><a class="side-nav-link" href="childRegistration">Add a Child</a></li>
 							<li id="teacherRegistration_li"><a class="side-nav-link" href="teacherRegistration">Documents</a></li>
 
 
 						{% elif usertype == 1 %} {#teacher#}
-							<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
-							<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
-							<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
-							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
-							<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
+							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
+							<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>
+							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
+							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
 
 
 						{% elif usertype == 2 %} {#parent#}
-							<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
-							<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
-							<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
-							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
-							<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
+							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
+							<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>
+							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
+							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
 
 
 						{% elif usertype == 3 %} {#student#}
-							<li id="calendar_li"><a class="side-nav-link" href="calendar.html">Calendar</a></li>
-							<li id="grades_li"><a class="side-nav-link" href="grades.html">Grades</a></li>
-							<li id="documents_li"><a class="side-nav-link" href="documents.html">Documents</a></li>
-							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule.html">Conference</a></li>
-							<li id="messaging_li"><a class="side-nav-link" href="messaging.html">Inbox</a></li>
+							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
+							<li id="grades_li"><a class="side-nav-link" href="grades">Grades</a></li>
+							<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>
+							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
+							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
 
 
 						{% else %}  {#error no login#}
