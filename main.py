@@ -304,6 +304,7 @@ class SetPasswordHandler(MyHandler):
     @user_required
     def post(self):
         password = self.request.get('password')
+
         old_token = self.request.get('t')
 
         if not password or password != self.request.get('confirm_password'):
@@ -570,7 +571,7 @@ class ContactTeacherPageHandler(MyHandler):
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
-        
+
 class AddMessagePageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -591,12 +592,12 @@ class AddMessagePageHandler(MyHandler):
         #teachers = teachers[0]
         #participants = [self.user_info['auth_ids'][0], teachers]
         participants = self.user.first_name+' '+self.user.last_name+', '+teachers
-        
+
         message = models.PrivateMessage(
                 message = theMessage
         )
         messageID = message.put()
-        
+
         thread = models.MessageThread(
                 time = messageID.get().time,
                 subject = theSubject,
@@ -741,6 +742,18 @@ class CreateAdminHandler(MyHandler):
             verified=False)
         self.redirect('/')
 
+class ProfileHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.render('profile.html')
+
+class EditProfileHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.render('profileEdit.html')
+
 
 
 config = {
@@ -788,6 +801,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addPost.html', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
-    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin')
+    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
+    webapp2.Route('/profile', ProfileHandler, name='profile'),
+    webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit')
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
