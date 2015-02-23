@@ -604,7 +604,7 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-        message_list = models.MessageThread.query()
+        message_list = models.MessageThread.query().order(-models.MessageThread.time)
         self.templateValues['message_list'] = message_list
         self.render('messaging.html')
 
@@ -627,6 +627,7 @@ class AddMessagePageHandler(MyHandler):
         #teachers = teachers[0]
         #participants = [self.user_info['auth_ids'][0], teachers]
         message = models.PrivateMessage(
+                sender = self.user.key,
                 message = theMessage
         )
         messageID = message.put()
