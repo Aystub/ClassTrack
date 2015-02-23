@@ -65,9 +65,11 @@ class MyHandler(webapp2.RequestHandler):
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+            self.templateValues['primaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].primary_color
+            self.templateValues['secondaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].secondary_color
 
             #Children
-            children_ids = self.user.children
+            children_ids = self.user.family
             if children_ids: #list is not empty
                 children_query = models.User.query(models.User.auth_ids.IN(children_ids))
                 self.templateValues['children_list'] = children_query
@@ -196,7 +198,6 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
-        school = self.request.get('school')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
         verified = False
@@ -220,7 +221,6 @@ class SignupPageHandler(MyHandler):
             last_name=last_name,
             user_type=user_type,
             children=child,
-            school=school,
             verified=verified,
             classList=classList,
             meetings=meeting,
@@ -669,7 +669,7 @@ class ClassSelectPageHandler(MyHandler):
         self.login_check()
         self.render('classSelect.html')
 
-
+#MUST BE UPDATED TO ADD KEYS TO USER
 class AddChildHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -811,6 +811,28 @@ class SchoolSetupHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'School Setup'
         self.render('schoolSetup.html')
+
+    def post(self):
+        school = models.School(
+                name = self.request.get('school_name'),
+                primary_color = self.request.get('school_color_primary'),
+                secondary_color = self.request.get('school_color_secondary'),
+                address = self.request.get('school_address'),
+                state = self.request.get('school_state'),
+                county = self.request.get('school_county'),
+                zipcode = self.request.get('school_zipcode'),
+                phone = self.request.get('school_phone'),
+                admins = [self.user.key]
+            )
+        school.put()
+
+        school_query = models.School.query().filter(models.School.admins==self.user.key)
+        schools = [school.key for school in school_query]
+        self.user.school = schools
+        self.user.key.get().put()
+
+        self.redirect('/')
+
 
 class CreateAdminHandler(MyHandler):
     def get(self):

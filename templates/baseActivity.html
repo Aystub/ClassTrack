@@ -20,6 +20,25 @@
         <script type="text/javascript" src="/assets/js/touchswipe/jquery.touchSwipe.min.js"></script>
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+		<style>
+			.navbar-custom-global{
+				background-color: {{primaryColor}};
+			}
+			.footer{
+				background-color: {{primaryColor}};
+			}
+			#sidebar{
+				background-color: {{primaryColor}}
+			}
+			.navbar-custom-global .navbar-nav > .active > a,
+			.navbar-custom-global .navbar-nav > .active > a:hover,
+			.navbar-custom-global .navbar-nav > .active > a:focus {
+				background-color: {{secondaryColor}};
+			}
+			.nav > li > a:hover{
+				background-color: {{secondaryColor}};
+			}
+		</style>
 		{%block scriptBlock %}{% endblock %}
 
 	</head>

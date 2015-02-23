@@ -105,3 +105,67 @@ function lookupChildForClasses(){
     }
   });
 }
+
+
+//STATE PICKER. Append State Options to a Select element
+$(document).ready(function(){
+    var listStates = [
+      'Alabama',
+      'Alaska',
+      'Arizona',
+      'Arkansas',
+      'California',
+      'Colorado',
+      'Connecticut',
+      'Delaware',
+      'Florida',
+      'Georgia',
+      'Hawaii',
+      'Idaho',
+      'Illinois',
+      'Indiana',
+      'Iowa',
+      'Kansas',
+      'Kentucky',
+      'Louisiana',
+      'Maine',
+      'Maryland',
+      'Massachusetts',
+      'Michigan',
+      'Minnesota',
+      'Mississippi',
+      'Missouri',
+      'Montana',
+      'Nebraska',
+      'Nevada',
+      'New Hampshire',
+      'New Jersey',
+      'New Mexico',
+      'New York',
+      'North Carolina',
+      'North Dakota',
+      'Ohio',
+      'Oklahoma',
+      'Oregon',
+      'Pennsylvania',
+      'Rhode Island',
+      'South Carolina',
+      'South Dakota',
+      'Tennessee',
+      'Texas',
+      'Utah',
+      'Vermont',
+      'Virginia',
+      'Washington',
+      'West Virginia',
+      'Wisconsin',
+      'Wyoming',
+      'District of Columbia',
+      'Puerto Rico',
+      'U.S. Virgin Islands'
+    ];
+    for(var i = 0; i < listStates.length; i++){
+      var optionString = "<option value='"+listStates[i]+"'>"+listStates[i]+"</option>";
+      $("#stateSelect").append(optionString);
+    }
+});
