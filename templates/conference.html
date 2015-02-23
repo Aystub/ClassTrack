@@ -18,6 +18,7 @@
   <link href="/assets/css/style.css" rel="stylesheet">
 
   <link rel="stylesheet" type="text/css" href="../assets/css/chatroom_demo.css">
+
 </head>
 <body>
 
@@ -60,7 +61,7 @@
 
     </div>
 
-    <div id="infoDiv">
+    
       
 
 
@@ -71,9 +72,11 @@
           <div class="col-md-3">{{participants}}</div>
           <div class="col-md-3">{{purpose}}</div>
         </div>
-
     </div>
-
+    <form>
+    <input type="text" id="chatText"></input>
+    <input type="button" onClick="sendChat()" value="Submit"></input>
+    <div class="row" id="chatbox">
     </div>
 
 
@@ -82,8 +85,12 @@
         <script src="../assets/js/jquery.js"></script>
         <script src="../assets/js/modernizr-latest.js"></script>
         <!-- <script src="../assets/js/simplewebrtc/simplewebrtc.bundle.js"></script> -->
-        <script type="text/javascript" src="/_ah/channel/jsapi"></script>
         <script src="../assets/js/adapter.js"></script>
+        <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+        <!-- <script type="text/javascript" src="../assets/js/channel.js"></script> -->
+
+
+
 
 
       <script type="text/javascript">
@@ -451,6 +458,26 @@ function setRemote(message) {
             xhr.send(msgString);
           }
 
+
+          function sendChat()
+          {
+              if(!started)
+              {
+                alert("You must connect first");
+                return;
+              }
+              
+              message = $('#chatText').val();
+              $("#chatbox").append(message);
+              $('#chatText').val("");
+              sendMessage(
+                {
+                  type: 'chat', 
+                  message: message
+                }
+              );
+          }
+
           function processSignalingMessage(msg) {
             // var message = JSON.parse(msg.data);
             if (!started) {
@@ -461,7 +488,13 @@ function setRemote(message) {
             if (msg.type === 'offer') {
               setRemote(msg);
               doAnswer();
-            } else if (msg.type === 'answer') {
+            } 
+            else if(msg.type === 'chat')
+            {
+              $("#chatbox").append(msg.message);
+            }
+            else if (msg.type === 'answer') {
+              alert("Got the answer");
               setRemote(msg);
             } else if (msg.type === 'candidate') {
               var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label, candidate:msg.candidate});
@@ -554,6 +587,7 @@ function setRemote(message) {
           }
 
           function doAnswer() {
+            alert("Answering");
             console.log("Sending answer to peer.");
             mediaConstraints = {
               optional: [],
@@ -590,7 +624,7 @@ function setRemote(message) {
 
               if(localStream != null)
               {
-                alert("This is called");
+                alert("Calling the other user");
                 console.log('Adding local stream.');
                 pc.addStream(localStream);
               }

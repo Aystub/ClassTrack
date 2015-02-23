@@ -1,0 +1,2 @@
+1. Changing the method to get to the conference page to GET.
+2. This allows us to change the POST handler of the conference page
