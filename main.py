@@ -916,6 +916,12 @@ class ChannelDisconnectionHandler(MyHandler):
         conference.currentLoggedInUsers.remove(user_id)
         conference.put()
 
+class SendMessageHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('testSendMessage.html')
+
+
 
 config = {
   'webapp2_extras.auth': {
@@ -963,7 +969,9 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel'),
     webapp2.Route('/_ah/channel/connected/', ChannelConnectionHandler, name='ConnectionHandler'),
-    webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler')
+    webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler'),
+    webapp2.Route('/testSendMessage', SendMessageHandler, name='SendMessageHandler')
+
 
     # webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)
