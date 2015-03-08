@@ -118,16 +118,6 @@ class MessageThread(ndb.Model):
     def id(self):
         return self.key.id()
 
-class Conference(ndb.Model):
-    purpose = ndb.StringProperty(required=True)
-    participants = ndb.KeyProperty(kind='User',repeated=True)
-    datetime = ndb.DateProperty(required=True)
-    created = ndb.DateTimeProperty(auto_now_add=True)
-    partString = ndb.StringProperty()
-
-    def id(self):
-        return self.key.id()
-
 
 #############Posts - TBD##################
 class NFPost(ndb.Model):
@@ -157,3 +147,14 @@ class NFPost(ndb.Model):
 
     def remove(self):
         self.key.delete()
+
+class Conference(ndb.Model):
+    purpose = ndb.StringProperty(required=True)
+    participants = ndb.StringProperty(repeated=True)
+    datetime = ndb.DateProperty(required=True)
+    created = ndb.DateTimeProperty(auto_now_add=True)
+    partString = ndb.StringProperty()
+    currentLoggedInUsers = ndb.StringProperty(repeated=True)
+    participant_ids = ndb.IntegerProperty(repeated=True)
+    def id(self):
+        return self.key.id()

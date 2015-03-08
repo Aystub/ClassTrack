@@ -62,25 +62,18 @@
 						// ['8am', '3pm']
 					]
 				});
-
 				$.fn.datepicker.defaults.format = "mm/dd/yyyy";
 				$('#timePicker').timepicker('option', { useSelect: true });
 				$('#datePicker').datepicker({
 				});
-
-
 				var d = new Date();
-
 				var month = d.getMonth()+1;
 				var day = d.getDate();
-
 				// var output = d.getFullYear() + '/' +
 				//     (month<10 ? '0' : '') + month + '/' +
 				//     (day<10 ? '0' : '') + day;
-
 				//  $("#date-input").text(output);
 			});
-
 			function checkValidity()
 			{
 				if($("#datePicker").val() == "")
