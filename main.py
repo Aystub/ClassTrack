@@ -835,6 +835,7 @@ class EditProfileHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
+        testText = 'test of varaible passing'
         self.render('profileEdit.html')
 
 

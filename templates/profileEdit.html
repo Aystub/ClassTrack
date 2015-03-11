@@ -4,6 +4,7 @@
 
 {% block content %}
 
+
 <div class="container">
   <div class="spacer25"></div>
 
@@ -13,15 +14,15 @@
     <form role="form" action="/signup" method="POST">
       <div class="form-group">
         <label for="fname">First Name:</label>
-        <input class="form-control" type="text" name="fname" placeholder="First Name"></input>
+        <input class="form-control" type="text" name="fname" placeholder="{{ first_name }}"></input>
       </div>
       <div class="form-group">
         <label for="lname">Last Name:</label>
-        <input class="form-control" type="text" name="lname" placeholder="Last Name"></input>
+        <input class="form-control" type="text" name="lname" placeholder="{{ lname }}"></input>
       </div>
       <div class="form-group">
         <label for="email">Email:</label>
-        <input class="form-control" type="text" name="email" placeholder="Email"></input>
+        <input class="form-control" type="text" name="email" placeholder="{{ testText }}"></input>
       </div>
       <div class="form-group">
         <label for="password">Password:</label>
