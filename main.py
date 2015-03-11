@@ -9,12 +9,15 @@ from datetime import datetime
 import models
 import json
 import re
+import time
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
 
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
+from google.appengine.api import channel
+
 
 jinja_environment = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
@@ -25,6 +28,32 @@ teacher_user = 1 #user is a teacher
 parent_user = 2  #user is a parent
 student_user = 3 #user is a student
 #END CONSTANTS
+
+# No longer in use because of Node.JS, however, storing for 10 future commits
+# starts 3-7-15
+# def maybe_add_constraint(constraints, param, constraint):
+#     if (param.lower() == 'true'):
+#         constraints['optional'].append({constraint: True})
+#     elif (param.lower() == 'false'):
+#         constraints['optional'].append({constraint: False})
+#     return constraints
+
+# def make_pc_constraints(dtls, dscp, ipv6):
+#     constraints = { 'optional': [] }
+#     maybe_add_constraint(constraints, dtls, 'DtlsSrtpKeyAgreement')
+#     maybe_add_constraint(constraints, dscp, 'googDscp')
+#     maybe_add_constraint(constraints, ipv6, 'googIPv6')
+
+# def get_preferred_audio_send_codec(user_agent):
+#     # Empty string means no preference.
+#     preferred_audio_send_codec = ''
+#     # Prefer to send ISAC on Chrome for Android.
+#     if 'Android' in user_agent and 'Chrome' in user_agent:
+#         preferred_audio_send_codec = 'ISAC/16000'
+#     return preferred_audio_send_codec
+    
+# def get_preferred_audio_receive_codec():
+#     return 'opus/48000'
 
 #JSON Serialization issues
 def default(obj):
@@ -53,6 +82,33 @@ def user_required(handler):
 
 class MyHandler(webapp2.RequestHandler):
     "Setup self.user and self.templateValues values."
+    # def setupUser(self):
+    #     """Returns the implementation of the user model.
+    #        It is consistent with config['webapp2_extras.auth']['user_model'], if set.
+    #     """
+    #     self.user_exists = self.auth.get_user_by_session()
+    #     self.templateValues = {}
+    #     if self.user_exists:
+    #         children_name_list = []
+    #         self.templateValues['logout'] = '/logout'
+    #         self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
+    #         self.templateValues['username'] = self.user_info['auth_ids'][0]
+    #         self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+    #         self.templateValues['id'] = self.user_info['user_id']
+
+    #         #Children
+    #         children_ids = self.user.children
+    #         if not children_ids[0] == "None": #list is not empty
+    #             children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+    #             self.templateValues['children_list'] = children_query
+
+    #         #Classes
+    #         class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+    #         self.templateValues['selected_class'] = class_list[len(class_list)-1]
+    #     else:
+    #         self.templateValues['login'] = '/login'
+    #         self.templateValues['signup'] = '/signup'
+
     def setupUser(self):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
@@ -65,9 +121,12 @@ class MyHandler(webapp2.RequestHandler):
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+            if self.user.school:
+                self.templateValues['primaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].primary_color
+                self.templateValues['secondaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].secondary_color
 
             #Children
-            children_ids = self.user.children
+            children_ids = self.user.family
             if children_ids: #list is not empty
                 children_query = models.User.query(models.User.auth_ids.IN(children_ids))
                 self.templateValues['children_list'] = children_query
@@ -196,7 +255,6 @@ class SignupPageHandler(MyHandler):
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
-        school = self.request.get('school')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
         verified = False
@@ -220,7 +278,6 @@ class SignupPageHandler(MyHandler):
             last_name=last_name,
             user_type=user_type,
             children=child,
-            school=school,
             verified=verified,
             classList=classList,
             meetings=meeting,
@@ -519,6 +576,33 @@ class ConferenceSchedulerPageHandler(MyHandler):
 
 
 class AddConferencePageHandler(MyHandler):
+    # def get(self):
+    #     self.setupUser()
+    #     self.navbarSetup()
+    #     self.templateValues['user'] = self.user
+    #     self.templateValues['title'] = 'Conferencing | ClassTrack'
+    #     teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+    #     teachers = [teacher.to_dict() for teacher in teacher_query]
+    #     self.templateValues['teachers'] = teacher_query
+    #     self.login_check()
+    #     self.render('addConference.html')
+
+    # def post(self):
+    #     self.setupUser()
+    #     extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
+    #     teachers = self.request.get('participants')
+    #     #teachers = teachers[0]
+    #     #participants = [self.user_info['auth_ids'][0], teachers]
+    #     participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+    #     post = models.Conference(
+    #             purpose = self.request.get('purpose'),
+    #             participants = participants,
+    #             datetime = extractedDateTime,
+    #             currentLoggedInUsers = []
+    #         )
+    #     post.put()
+    #     self.response.write("<h1> Conference Added </h1>")
+
     def get(self):
         self.setupUser()
         self.navbarSetup()
@@ -529,20 +613,35 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
-
+   
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
-        teacher = models.User.query(models.User.auth_ids==teachers).get()
-        #teacher = [teacher.to_dict() for teacher in teacher_query]
+        # This section of code is from the master before merge 3-7-15
+        # Keeping here to test changes from WebRTC
+# <<<<<<< HEAD 
+#         teacher = models.User.query(models.User.auth_ids==teachers).get()
+#         #teacher = [teacher.to_dict() for teacher in teacher_query]
 
-        #self.response.write(teacher)
+#         #self.response.write(teacher)
+# =======
+        participant_id = []
+        for auth_id in participants:
+            model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
+            # model = [model.to_dict() for model in model_query]
+            participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+        teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        self.response.write(teacher)
+# >>>>>>> WebRTC
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
+                participant_ids = participant_id,
                 datetime = extractedDateTime
             )
         key=post.put()
@@ -574,28 +673,7 @@ class DelConferenceHandler(MyHandler):
         key2.delete()
         self.redirect('conferenceSchedule')
 
-class ConferencePageHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.login_check()
-        self.render('conference.html')
 
-    def post(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues = {}
-        purpose = self.request.get('purpose')
-        participants = self.request.get('participants')
-        datetime = self.request.get('datettime')
-        roomkey = self.request.get('roomkey')
-        self.templateValues['purpose'] = purpose
-        self.templateValues['participants'] = participants
-        self.templateValues['datetime'] = datetime
-        self.templateValues['roomkey'] = roomkey
-        self.render('conference.html')
 
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
@@ -669,7 +747,7 @@ class ClassSelectPageHandler(MyHandler):
         self.login_check()
         self.render('classSelect.html')
 
-
+#MUST BE UPDATED TO ADD KEYS TO USER
 class AddChildHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -812,6 +890,28 @@ class SchoolSetupHandler(MyHandler):
         self.templateValues['title'] = 'School Setup'
         self.render('schoolSetup.html')
 
+    def post(self):
+        school = models.School(
+                name = self.request.get('school_name'),
+                primary_color = self.request.get('school_color_primary'),
+                secondary_color = self.request.get('school_color_secondary'),
+                address = self.request.get('school_address'),
+                state = self.request.get('school_state'),
+                county = self.request.get('school_county'),
+                zipcode = self.request.get('school_zipcode'),
+                phone = self.request.get('school_phone'),
+                admins = [self.user.key]
+            )
+        school.put()
+
+        school_query = models.School.query().filter(models.School.admins==self.user.key)
+        schools = [school.key for school in school_query]
+        self.user.school = schools
+        self.user.key.get().put()
+
+        self.redirect('/')
+
+
 class CreateAdminHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -837,6 +937,159 @@ class EditProfileHandler(MyHandler):
         self.navbarSetup()
         testText = 'test of varaible passing'
         self.render('profileEdit.html')
+
+
+class ConferenceMessageChannelHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('ConferenceMessageChannel.html')
+
+    def post(self):
+        self.templateValues = {}
+        user_id = self.request.get('user_id')
+        # channel.create_channel(user_id);
+        message = self.request.body
+        user_query = models.User.query()
+        channel.send_message(identifier, "Hello World, from " + user_id)
+        # for x in range(0,60):
+        #     time.sleep(1)
+        #     for user in user_query:
+        #         channel.create_channel(user.auth_ids[0]);
+        #         channel.send_message(user.auth_ids[0], message)  
+        # channel.send_message(self.user_info['auth_ids'][0], message)
+        self.render('ConferenceMessageChannel.html')
+
+class ConferencePageHandler(MyHandler):
+
+
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.login_check()
+
+        dtls = self.request.get('dtls')
+        dscp = self.request.get('dscp')
+        ipv6 = self.request.get('ipv6')
+
+        roomkey = self.request.get('roomkey')
+        purpose = models.Conference.get_by_id(int(roomkey)).purpose
+        participants = models.Conference.get_by_id(int(roomkey)).participants
+        datetime = models.Conference.get_by_id(int(roomkey)).datetime
+        user_id = str(self.user_info['user_id'])
+        pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
+
+        initiator = 'true';
+        conference = models.Conference.get_by_id(int(roomkey))
+        # if len(conference.currentLoggedInUsers) != 0:
+        # if conference.currentLoggedInUsers[0] != user_id:
+        # logging.warning("THIS IS THE INITIATOR")
+        # logging.warning(conference.participant_ids[0])
+        # logging.warning("THIS IS THE CURRENT USER")
+        # logging.warning(user_id)
+        # logging.warning()
+
+        if int(user_id) == int(conference.participant_ids[0]):
+            initiator = 'false';
+
+        identifier = roomkey + user_id
+        token = channel.create_channel(identifier)
+        self.templateValues['token'] = token
+
+        audio_receive_codec = self.request.get('arc')
+        if not audio_receive_codec:
+            audio_receive_codec = get_preferred_audio_receive_codec()
+
+        user_agent = self.request.headers['User-Agent']
+        audio_send_codec = self.request.get('asc')
+        if not audio_send_codec:
+            audio_send_codec = get_preferred_audio_send_codec(user_agent)
+
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.templateValues['purpose'] = purpose
+        self.templateValues['participants'] = participants
+        self.templateValues['datetime'] = datetime
+        self.templateValues['roomkey'] = roomkey
+        self.templateValues['user_id'] = user_id
+        self.templateValues['audio_send_codec'] = audio_send_codec
+        self.templateValues['audio_receive_codec'] = audio_receive_codec
+        self.templateValues['pc_constraints'] = pc_constraints
+        self.templateValues['initiator'] = initiator
+        self.render('conference.html')
+
+    def post(self):
+        roomkey = self.request.get('roomkey')
+        user_id = self.request.get('user_id')
+        # logging.info("value of my roomkey is %s", str(roomkey))
+        conference = models.Conference.get_by_id(int(roomkey))
+        # logging.warning("User " + user_id + " has logged in")
+        # conference.currentLoggedInUsers.append(user_id)
+        # conference.put()
+        message = self.request.body
+        # logging.info("Message is %s", str(message))
+        for u_id in conference.currentLoggedInUsers:
+            if u_id != user_id:
+                channel.send_message(roomkey+u_id, message)
+            # channel.send_message(roomkey+user_id, message)
+            # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
+
+
+        # logging.warning("================ HELLO WORLD =================")
+
+
+
+        # token = channel.create_channel(identifier)
+        # self.templateValues['token'] = token
+
+        # channel.send_message(identifier, "Hello World, from " + user_id)
+        # if len(room.currentLoggedInUsers) != 0:
+        #     send_to = room.currentLoggedInUsers[0]
+        #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # else:
+        #     send_to = user_id
+            # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # message = self.request.get('message')
+        # if message:
+        #     channel.send_message(1, message)
+        # self.render('conference.html')
+
+
+
+
+
+class ChannelConnectionHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        conference = models.Conference.get_by_id(int(roomkey))
+        if user_id not in conference.currentLoggedInUsers:
+            conference.currentLoggedInUsers.append(user_id)
+            conference.put()
+
+
+class ChannelDisconnectionHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        logging.warning("THIS IS THE ROOMKEY")
+        logging.warning(roomkey)
+        conference = models.Conference.get_by_id(int(roomkey))
+        conference.currentLoggedInUsers.remove(user_id)
+        conference.put()
+
+class SendMessageHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('testSendMessage.html')
+
 
 
 config = {
@@ -876,6 +1129,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
+    webapp2.Route('/addMessage',AddMessagePageHandler, name='addmessage'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
@@ -887,6 +1142,10 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
-    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin')
-    # webapp2.Route('/.*', NotFoundPageHandler)
+    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
+    # webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel'),
+    # webapp2.Route('/_ah/channel/connected/', ChannelConnectionHandler, name='ConnectionHandler'),
+    # webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler'),
+    # webapp2.Route('/testSendMessage', SendMessageHandler, name='SendMessageHandler')
+    webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

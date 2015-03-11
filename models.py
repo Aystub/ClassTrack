@@ -10,9 +10,10 @@ class User(webapp2_extras.appengine.auth.models.User):
     last_name = ndb.StringProperty()
     user_type = ndb.IntegerProperty()
     meetings = ndb.KeyProperty(kind='Conference',repeated=True)
-    children = ndb.StringProperty(repeated=True)
-    messageThreads = ndb.StringProperty(repeated=True)
-    classList = ndb.StringProperty(repeated=True)
+    family = ndb.KeyProperty(kind='User',repeated=True)
+    message_threads = ndb.KeyProperty(kind='MessageThread',repeated=True)
+    class_list = ndb.KeyProperty(kind='Classes',repeated=True)
+    school = ndb.KeyProperty(kind='School',repeated=True)
 
     def id(self):
         return self.key.id()
@@ -58,6 +59,67 @@ class User(webapp2_extras.appengine.auth.models.User):
         """
         self.password = security.generate_password_hash(raw_password, length=12)
 
+class School(ndb.Model):
+    name = ndb.StringProperty(required=True)
+    address = ndb.StringProperty(required=True)
+    phone = ndb.StringProperty(required=True)
+    state = ndb.StringProperty(required=True)
+    county = ndb.StringProperty(required=True)
+    zipcode = ndb.StringProperty(required=True)
+    primary_color = ndb.StringProperty()
+    secondary_color = ndb.StringProperty()
+    students = ndb.KeyProperty(kind='User',repeated=True)
+    teachers = ndb.KeyProperty(kind='User',repeated=True)
+    admins = ndb.KeyProperty(kind='User',repeated=True)
+    classes = ndb.KeyProperty(kind='Classes',repeated=True)
+
+    def id(self):
+        return self.key.id()
+
+    @staticmethod #just like a Java static method
+    def getSchool(num):
+        """Returns the pin with the given num (a String), or None if there is no such num."""
+        try:
+            theSchool = School.get_by_id(long(num))
+            return theSchool
+        except ValueError:
+            return None
+
+    def getDict(self):
+        """Returns a dictionary representation of parts of this pin."""
+        return {'schoolID': self.id(), 'school_name': self.school_name}
+
+    def remove(self):
+        self.key.delete()
+
+class Classes(ndb.Model):
+    teacher = ndb.KeyProperty(kind='User',repeated=True)
+    school = ndb.KeyProperty(kind='School',required=True)
+    student_list = ndb.KeyProperty(kind='User',repeated=True)
+    name = ndb.StringProperty(required=True)
+
+    def id(self):
+        return self.key.id()
+
+class PrivateMessage(ndb.Model):
+    sender = ndb.KeyProperty(required=True)
+    message = ndb.TextProperty()
+    time = ndb.DateTimeProperty(auto_now_add=True)
+
+    def id(self):
+        return self.key.id()
+
+class MessageThread(ndb.Model):
+    time = ndb.DateTimeProperty(required=True,indexed=True)
+    subject = ndb.StringProperty(required=True)
+    users = ndb.KeyProperty(kind='User',repeated=True)
+    messageList = ndb.KeyProperty(kind='PrivateMessage',repeated=True)
+
+    def id(self):
+        return self.key.id()
+
+
+#############Posts - TBD##################
 class NFPost(ndb.Model):
     schoolID = ndb.IntegerProperty(default=0)
     classID = ndb.IntegerProperty(default=0)
@@ -86,61 +148,13 @@ class NFPost(ndb.Model):
     def remove(self):
         self.key.delete()
 
-class School(ndb.Model):
-    school_name = ndb.StringProperty(required=True)
-    state = ndb.StringProperty(required=True)
-    county = ndb.StringProperty(required=True)
-
-    def id(self):
-        return self.key.id()
-
-    @staticmethod #just like a Java static method
-    def getSchool(num):
-        """Returns the pin with the given num (a String), or None if there is no such num."""
-        try:
-            theSchool = School.get_by_id(long(num))
-            return theSchool
-        except ValueError:
-            return None
-
-    def getDict(self):
-        """Returns a dictionary representation of parts of this pin."""
-        return {'schoolID': self.id(), 'school_name': self.school_name}
-
-    def remove(self):
-        self.key.delete()
-
-class Classes(ndb.Model):
-    teacher = ndb.StringProperty()
-    school = ndb.StringProperty()
-    studentList = ndb.StringProperty(repeated=True)
-    name = ndb.StringProperty()
-
-    def id(self):
-        return self.key.id()
-
-class PrivateMessage(ndb.Model):
-    sender = ndb.KeyProperty(required=True)
-    message = ndb.TextProperty()
-    time = ndb.DateTimeProperty(auto_now_add=True)
-
-    def id(self):
-        return self.key.id()
-
-class MessageThread(ndb.Model):
-    time = ndb.DateTimeProperty(required=True,indexed=True)
-    subject = ndb.StringProperty(required=True)
-    users = ndb.KeyProperty(repeated=True)
-    messageList = ndb.KeyProperty(repeated=True)
-
-    def id(self):
-        return self.key.id()
-
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
     participants = ndb.StringProperty(repeated=True)
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
     partString = ndb.StringProperty()
+    currentLoggedInUsers = ndb.StringProperty(repeated=True)
+    participant_ids = ndb.IntegerProperty(repeated=True)
     def id(self):
         return self.key.id()

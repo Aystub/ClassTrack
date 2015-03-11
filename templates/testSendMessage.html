@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <p>Hello World!</p>
+    <script>
+          function sendMessage1(message) 
+          {
+            var msgString = JSON.stringify(message);
+            console.log('Client to Server: ' + msgString);
+            // path = '/ConferenceMessageChannel?user_id=' + key;
+            path = "//54.164.63.7:9000/";
+            var xhr = new XMLHttpRequest();
+
+            xhr.onreadystatechange = function(){
+                if(xhr.readyState == 4)
+                {
+                    var message = JSON.parse(xhr.responseText);
+                    if(message != "null")
+                        console.log(message.firstName);
+                }
+            }
+
+            function sendMessage(message)
+            {
+                
+            }
+
+            xhr.open('POST', path, true);
+            xhr.setRequestHeader('Access-Control-Allow-Headers', '*');
+            xhr.setRequestHeader('Content-type', 'application/json');
+            // xhr.setRequestHeader('Access-Control-Allow', '*');
+            xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
+            xhr.setRequestHeader("Access-Control-Allow-Methods","GET, POST, PUT, DELETE");
+            // xhr.setRequestHeader("Content-Length", msgString.length);
+            // xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+
+            xhr.send(msgString);
+          }
+    </script>
+</body>
+</html>
