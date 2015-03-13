@@ -835,31 +835,66 @@ class InitNDBHandler(MyHandler):
 
         #******SCHOOLS*******
         newschool = models.School(
-                school_name = 'Seneca Middle School'
+                name = 'Seneca Middle School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Hogwarts School of Witchcraft and Wizardry'
+                name = 'Hogwarts School of Witchcraft and Wizardry',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Ashford Academy'
+                name = 'Ashford Academy',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Naoetsu Private High School'
+                name = 'Naoetsu Private High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Fumizuki Academy'
+                name = 'Fumizuki Academy',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Private Magic University Affiliated High School'
+                name = 'Private Magic University Affiliated High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Karakura High School'
+                name = 'Karakura High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
 
@@ -892,7 +927,7 @@ class SchoolSetupHandler(MyHandler):
 
     def post(self):
         school = models.School(
-                name = self.request.get('school_name'),
+                self.request.get('name'),
                 primary_color = self.request.get('school_color_primary'),
                 secondary_color = self.request.get('school_color_secondary'),
                 address = self.request.get('school_address'),
