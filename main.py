@@ -561,7 +561,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
             for part in small_list:
                 person_query = models.User.query().filter(models.User.auth_ids==part)
                 person = [person.to_dict() for person in person_query]
-                names += person[0]['first_name']
+                names += person[0]['first_name'] + " "
                 names += person[0]['last_name']
                 names += ', '
             part_list.append(names)
@@ -683,8 +683,13 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-        message_list = models.MessageThread.query().order(-models.MessageThread.time)
+
+        message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
+        message_list_count = 0
+        self.templateValues['message_list_count'] = message_list_count
         self.templateValues['message_list'] = message_list
+
+
         self.render('messaging.html')
 
 class AddMessagePageHandler(MyHandler):
@@ -697,19 +702,31 @@ class AddMessagePageHandler(MyHandler):
 
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
+
+        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        teachers = [teacher.to_dict() for teacher in teacher_query]
+        self.templateValues['teachers'] = teacher_query
         self.render('addMessage.html')
 
     def post(self):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
+        teachers = self.request.get('participants')
 
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        participants = [self.user_info['auth_ids'][0],teachers]
+
+        # participant_id = []
+        # for auth_id in participants:
+        #     model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
+        #     participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+
+        # participants = self.user.first_name+' '+self.user.last_name+', '+teachers
 
         message = models.PrivateMessage(
                 sender = self.user.key,
+                # recipient = participant_id[len(participant_id)-1],
                 message = theMessage
         )
         messageID = message.put()
