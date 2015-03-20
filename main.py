@@ -65,9 +65,7 @@ class MyHandler(webapp2.RequestHandler):
             self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
             self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
-            self.templateValues['primaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].primary_color
-            self.templateValues['secondaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].secondary_color
-
+           
             #Children
             children_ids = self.user.family
             if children_ids: #list is not empty
@@ -625,11 +623,7 @@ class AddMessagePageHandler(MyHandler):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
-
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
-
+       
         message = models.PrivateMessage(
                 sender = self.user.key,
                 message = theMessage
@@ -644,7 +638,15 @@ class AddMessagePageHandler(MyHandler):
             )
         thread.put()
         self.response.write("<h1> Message Added </h1>")
-
+       
+class ReplayMessagePageHandler(MyHandler):
+    def post(self):
+        message = models.PrivateMessage(
+                sender = self.user.key,
+                message = theMessage
+        )
+        messageID = message.put()
+        
 class ShowMessagePageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -897,6 +899,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
+    webapp2.Route('/addMessage',AddMessagePageHandler, name='messaging'),
+    webapp2.Route('/showMessage',ShowMessagePageHandler, name='messaging'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),

@@ -25,10 +25,76 @@
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
 
 	</head>
+    
+    <style>
+    .footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      /* Set the fixed height of the footer here */
+      height: auto;
+      background-color: #FFF;
+    }
+    
+    .bubble{
+        text-align:center;
+        position: relative;
+        width: 300px;
+        height: auto;
+        padding: 5px;
+        background: #CBF2D0;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        border: #27AE60 solid 2px;
+    }
+
+    .bubble:after{
+        content: '';
+        position: absolute;
+        border-style: solid;
+        border-width: 15px 20px 0;
+        border-color: #CBF2D0 transparent;
+        display: block;
+        width: 0;
+        z-index: 1;
+        margin-left: -20px;
+        bottom: -15px;
+        left: 21%;
+    }
+
+    .bubble:before{
+        content: '';
+        position: absolute;
+        border-style: solid;
+        border-width: 16px 21px 0;
+        border-color: #27AE60 transparent;
+        display: block;
+        width: 0;
+        z-index: 0;
+        margin-left: -21px;
+        bottom: -18px;
+    left: 21%;
+    }
+    </style>
 
 	<body>
+    <div class="bubble">
         {% for message in MessageList %}
             {{message.get().message}}
         {%endfor%}
+     </div>
+        <br/>
+        <div class="footer">
+            <form method="POST" action="replyMessage">
+                <div class="form-group">
+                    <label for="Message">Message:</label>
+                    <textarea class="form-control" placeholder="Message" id ="Message" name = "message"></textarea>
+                </div >
+                
+                <input type = "hidden" name="roomkey" value=1234>
+                <input type = "submit" value="Reply" class="btn btn-default">
+            </form>
+        </div>
 	</body>
 	</html>
