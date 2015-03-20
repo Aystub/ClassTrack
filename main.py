@@ -352,7 +352,7 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        qry = models.NFPost.query().order(-models.NFPost.time)
+        qry = models.NFPost.query().order(-models.NFPost.time).fetch()
         self.templateValues['newsfeed_list'] = qry
         self.login_check()
         self.render('home.html')
@@ -576,33 +576,6 @@ class ConferenceSchedulerPageHandler(MyHandler):
 
 
 class AddConferencePageHandler(MyHandler):
-    # def get(self):
-    #     self.setupUser()
-    #     self.navbarSetup()
-    #     self.templateValues['user'] = self.user
-    #     self.templateValues['title'] = 'Conferencing | ClassTrack'
-    #     teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-    #     teachers = [teacher.to_dict() for teacher in teacher_query]
-    #     self.templateValues['teachers'] = teacher_query
-    #     self.login_check()
-    #     self.render('addConference.html')
-
-    # def post(self):
-    #     self.setupUser()
-    #     extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
-    #     teachers = self.request.get('participants')
-    #     #teachers = teachers[0]
-    #     #participants = [self.user_info['auth_ids'][0], teachers]
-    #     participants = self.user.first_name+' '+self.user.last_name+', '+teachers
-    #     post = models.Conference(
-    #             purpose = self.request.get('purpose'),
-    #             participants = participants,
-    #             datetime = extractedDateTime,
-    #             currentLoggedInUsers = []
-    #         )
-    #     post.put()
-    #     self.response.write("<h1> Conference Added </h1>")
-
     def get(self):
         self.setupUser()
         self.navbarSetup()
@@ -619,24 +592,13 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
-        # This section of code is from the master before merge 3-7-15
-        # Keeping here to test changes from WebRTC
-# <<<<<<< HEAD 
-#         teacher = models.User.query(models.User.auth_ids==teachers).get()
-#         #teacher = [teacher.to_dict() for teacher in teacher_query]
-
-#         #self.response.write(teacher)
-# =======
         participant_id = []
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
-            # model = [model.to_dict() for model in model_query]
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
         teacher = models.User.query(models.User.auth_ids==teachers).get()
-        # teacher = [teacher.to_dict() for teacher in teacher_query]
 
-        self.response.write(teacher)
-# >>>>>>> WebRTC
+        # self.response.write(teacher)
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),

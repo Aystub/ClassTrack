@@ -28,22 +28,33 @@
     
     <div class="row" style="margin-bottom:20px">
         {% if usertype == 1%}  {#teacher#}
-            <center><button href="addPost.html" id="add_button" class="custom_button fancybox fancybox.iframe">Add Post</button></center>
+            <center><button href="/addPost" id="add_button" class="custom_button fancybox fancybox.iframe">Add Post</button></center>
         {% endif %}
     </div>
 
 
     <div class="row home_newsfeed ">
-				{% for news in newsfeed_list %}
-				<div class="alert alert-warning" role="alert">
-					<span class="glyphicon glyphicon-th" aria-hidden="true"></span>
-					{{news.caption}}
-					<br/>
-					<br/>
-					<a href="#">Read More</a>
-				</div>
-				{% endfor %}
-			</div>
+      {% if newsfeed_list|length != 0 %}
+  			{% for news in newsfeed_list %}
+  			<div class="alert alert-warning" role="alert">
+  				<span class="glyphicon glyphicon-th" aria-hidden="true"></span>
+  				{{news.caption}}
+  				<br/>
+  				<br/>
+  				<a href="#">Read More</a>
+  			</div>
+  			{% endfor %}
+
+      {% else %}
+          <div class="alert alert-info col-md-11" role="alert">
+              <div class="row" style="text-align:center">
+                  <div class="col-md-3"></div>
+                  <div class="col-md-6">You have no new messages.</div>
+                  <div class="col-md-3"></div>
+              </div>
+          </div>  
+      {% endif %}
+		</div>
 
             <!-- Quick and Dirty. Move to Js File later-->
             <script>
