@@ -678,8 +678,6 @@ class DelConferenceHandler(MyHandler):
         key2.delete()
         self.redirect('conferenceSchedule')
 
-
-
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -688,11 +686,10 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-        message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
-        message_list_count = 0
-        self.templateValues['message_list_count'] = message_list_count
+        #message_list = models.MessageThread.query().order(-models.MessageThread.time)
+        message_list = self.user.messages
         self.templateValues['message_list'] = message_list
-
+        #self.response.write(self.user.key)
         self.render('messaging.html')
 
 class AddMessagePageHandler(MyHandler):
@@ -705,31 +702,15 @@ class AddMessagePageHandler(MyHandler):
 
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
-
-        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-        teachers = [teacher.to_dict() for teacher in teacher_query]
-        self.templateValues['teachers'] = teacher_query
         self.render('addMessage.html')
 
     def post(self):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
-        teachers = self.request.get('participants')
-
-        participants = [self.user_info['auth_ids'][0],teachers]
-
-        # participant_id = []
-        # for auth_id in participants:
-        #     model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
-        #     participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-        # teacher = models.User.query(models.User.auth_ids==teachers).get()
-
-        # participants = self.user.first_name+' '+self.user.last_name+', '+teachers
-
+       
         message = models.PrivateMessage(
                 sender = self.user.key,
-                sender_first_name = self.user.first_name,
                 message = theMessage
         )
         messageID = message.put()
@@ -740,10 +721,36 @@ class AddMessagePageHandler(MyHandler):
                 users = [self.user.key],
                 messageList = [messageID]
             )
-        thread.put()
-
+            
+        key = thread.put()
+        
+        this_user = self.user
+        if not this_user.messages:
+            this_user.messages = [key]
+        else:
+            this_user.messages += [key]
+            
+        this_user.put()
+            
         self.response.write("<h1> Message Added </h1>")
-
+       
+class ReplyMessageHandler(MyHandler):
+    def post(self):
+        theMessage = self.request.get("message")
+    
+        message = models.PrivateMessage(
+                sender = self.user.key,
+                message = theMessage
+        )
+        messageID = message.put()
+        
+        id = self.request.get("roomkey")
+        MessageThread = ndb.Key('MessageThread', int(id)).get()
+        MessageThread.messageList += [messageID]
+        MessageThread.put()
+        
+        self.response.write("<h1> Message Added: " + str(messageID.id()) +  " </h1>")
+        
 class ShowMessagePageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -753,6 +760,7 @@ class ShowMessagePageHandler(MyHandler):
         id = self.request.get("messageId")
         MessageList = ndb.Key('MessageThread', int(id)).get().messageList
         self.templateValues['MessageList'] = MessageList
+        self.templateValues['RoomKey'] = id
         self.login_check()
         self.render('showMessage.html')
 
@@ -1193,6 +1201,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
     webapp2.Route('/addMessage',AddMessagePageHandler, name='addmessage'),
+    webapp2.Route('/replyMessage',ReplyMessageHandler, name='replymessage'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),

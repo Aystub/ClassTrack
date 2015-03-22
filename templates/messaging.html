@@ -46,14 +46,13 @@
       {% for MessageThread in message_list %}
       <div class="alert alert-success col-md-11" role="alert">
           <div class="row" style="text-align:center">
-              <div class="col-md-1"></div>
-              <div class="col-md-3">{{MessageThread['users'][0].get().first_name}}</div>
-              <div class="col-md-3">{{MessageThread['subject']}}</div>
-              <div class="col-md-3">{{MessageThread['time'].strftime("%A, %B %d - %I:%M %p")}}</div>
-              <div class="col-md-2">
-                  <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
+                <div class="col-md-1"></div>
+                <div class="col-md-3">{{MessageThread.get()['users'][0].get().first_name}}</div>
+                <div class="col-md-3">{{MessageThread.get()['subject']}}</div>
+                <div class="col-md-3">{{MessageThread.get()['time'].strftime("%A, %B %d - %I:%M %p")}}</div><div class="col-md-2">
+                <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
 			</div>
-              <div class="col-md-2"></div>
+            <div class="col-md-2"></div>
           </div>
       </div>
       {% endfor %}
