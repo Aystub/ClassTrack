@@ -33,12 +33,53 @@
         <div style="display: inline;" id="schoolSug"></div>
       </div>
       <div class="form-group">
-        <input id="teacher_code" class="form-control" type="hidden" name="teacher_code" value="47"></input>
+        <input id="teacher_code" class="form-control" type="hidden" name="teacher_code" value="1"></input> <!-- Used to be 47 -->
       </div>
-      <button type="submit" class="btn btn-default">Submit</button>
+
+      <div class="form-group" id="class-container">
+        <label for="school">Class Name:</label>
+        <input id='class-name-1' class='form-control' type='text' name='class-name-1' placeholder='Class Name'></input>
+      </div>
+      <button type="button" id="addClassButton" onclick="addClassRow()" class="btn btn-default form-control"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Class</button>
+      <center><button style="margin-top:20px" type="submit" class="custom_button green_button">Submit</button></center>
+      <input id="class-indexes" class="form-control" type="hidden" name="class-indexes" value=""></input>
+
     </div>
   </form>
 
 </div>
+
+<script type="text/javascript">
+  var row_index = 2;
+  var classArray = [1];
+
+
+  function addClassRow()
+  {
+    var name = new String("name-" + row_index);
+    $('#class-container').append(" <input id='" + name + "' style='margin-top:12px' class='form-control' type='text' name='" + name + "' placeholder='Class Name'></input>");
+    $('#class-container').append("<button class='btn btn-default form-control remove-class-button' type='button' id='"+ name +"-remove-button' onclick='removeRow("+ row_index +")'>Remove</button>");
+    classArray.push(row_index);
+    row_index++;
+    $('#class-indexes').val(JSON.stringify(classArray));
+  }
+
+  function removeRow(row_index)
+  {
+    var name = "name-" + row_index;
+    var row = $("#" + name);
+    var buttonID = name + "-remove-button";
+    var button = $("#" + buttonID);
+    row.remove();
+    button.remove();
+
+    var index = classArray.indexOf(row_index);
+
+    classArray.splice(index,1);
+    $('#class-indexes').val(JSON.stringify(classArray));
+
+  }
+
+</script>
 
 {% endblock %}

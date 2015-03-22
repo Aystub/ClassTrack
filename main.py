@@ -258,6 +258,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
+        class_name_indexes = self.request.get('class-indexes') # for classes
         verified = False
         if teacher_code:
             user_type = teacher_user
@@ -272,6 +273,7 @@ class SignupPageHandler(MyHandler):
         classList = []
         meeting = []
         messageThread = []
+        
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -575,9 +577,13 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_query = models.Conference.query()
-        conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
+        conference_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids and self.user_info['user_id'] == models.Conference.accepted_ids)
+        conference_not_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
+        # conference_accepted_list = conference_list.filter()
+        # conference_not_accepted_list = {x| x in conference_list and x not in conference_accepted_list}
+
         part_list = [];
-        for conf in conference_list:
+        for conf in conference_accepted_list:
             names=''
             small_list = conf.participants
             for part in small_list:
@@ -590,8 +596,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
-        self.templateValues['conference_list'] = conference_list
-        self.templateValues['conference_invitation_list'] = conference_invitation_list
+        self.templateValues['conference_list'] = conference_accepted_list
+        self.templateValues['conference_invitation_list'] = conference_not_accepted_list
         self.templateValues['part_list'] = part_list
         self.login_check()
         self.render('conferenceSchedule.html')
