@@ -63,6 +63,8 @@
 							<li><select class="form-control" style="margin-top: 7px;">
 							{% for child in children_list%}
 								<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
+								<li><a href="/addChild">Add Child</a></li>
+
 							{%endfor%}
 						{% endif %}
 						</select></li>

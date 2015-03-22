@@ -151,6 +151,7 @@ class NFPost(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
+    accepted_ids = ndb.IntegerProperty(repeated=True)
     participants = ndb.StringProperty(repeated=True)
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
