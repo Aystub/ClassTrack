@@ -3,7 +3,8 @@
 
 
 #sidebar {
-	width:15%;
+	width:150px;
+	min-height: 100vh;
 	float: left;
 	position:relative;
 	overflow-y:auto;

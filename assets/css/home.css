@@ -373,3 +373,39 @@ body{
 #add-post{
   padding: 45px 15px 15px;
 }
+
+.custom_button
+{
+  position: relative;
+  vertical-align: top;
+  width: 200px;
+  height: 60px;
+  padding: 0;
+  font-size: 22px;
+  text-align: center;
+  border: 0;
+  cursor: pointer;
+  margin-right:10px;
+  margin-left:10px;
+}
+
+.green_button
+{
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #16A086;
+  border-bottom: 2px solid #117a65;
+  -webkit-box-shadow: inset 0 -2px #117a65;
+  box-shadow: inset 0 -2px #117a65;
+}
+
+#sidebar-toggle
+{
+  display: none;
+}
+
+@media screen and (max-width: 375px) {
+    #sidebar-toggle {
+        display: inline;
+    }
+}
