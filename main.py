@@ -438,10 +438,12 @@ class LoginPageHandler(MyHandler):
         password = self.request.get('password') #Get password value from html
         try:
             u = self.auth.get_user_by_password(email, password, remember=True, save_session=True)
-            self.redirect('/')
-            #this_user = self.user
-            #if this_user.children == ['None']:
-            #    this_user.children = [link]
+            this_user = self.user
+
+            if this_user.family == []:
+                self.redirect('/addChild')
+            else:
+                self.redirect('/')
         except (InvalidAuthIdError, InvalidPasswordError) as e:
             logging.info('Login failed for user %s because of %s', email, type(e))
             self.templateValues = {}
@@ -612,7 +614,7 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
-        
+
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
         # teacher = models.User.query(models.User.auth_ids==teachers).get()
