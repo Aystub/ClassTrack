@@ -113,7 +113,7 @@
 
 						{% elif usertype == 2 %} {#parent#}
 							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
-							<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>
+							<!--<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>-->
 							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
 							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
 
@@ -121,7 +121,7 @@
 						{% elif usertype == 3 %} {#student#}
 							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
 							<li id="grades_li"><a class="side-nav-link" href="grades">Grades</a></li>
-							<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>
+							<!--<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>-->
 							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
 							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
 
@@ -198,7 +198,7 @@
 			fixHeights();
 			fixWidth();
 			// Swipe
-		  $(document).swipe( 
+		  $(document).swipe(
 		  	{
 	        	//Generic swipe handler for all directions
 	       	 	swipeLeft:function(event, direction, distance, duration, fingerCount) {

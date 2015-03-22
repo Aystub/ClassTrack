@@ -423,6 +423,9 @@ class LoginPageHandler(MyHandler):
         try:
             u = self.auth.get_user_by_password(email, password, remember=True, save_session=True)
             self.redirect('/')
+            #this_user = self.user
+            #if this_user.children == ['None']:
+            #    this_user.children = [link]
         except (InvalidAuthIdError, InvalidPasswordError) as e:
             logging.info('Login failed for user %s because of %s', email, type(e))
             self.templateValues = {}
@@ -745,13 +748,19 @@ class AddChildHandler(MyHandler):
         self.render('addChild.html')
 
     def post(self):
-        link = self.request.get("student_id")
+        student_id = self.request.get("student_id")
+        student = ndb.Key("User",int(student_id)).get()
         this_user = self.user
-        if this_user.children == ['None']:
-            this_user.children = [link]
+        if this_user.family == ['None']:
+            this_user.family = [student.key]
         else:
-            this_user.children += [link]
+            this_user.family += [student.key]
         this_user.put()
+
+        if student.family == ['None']:
+            student.family = [this_user.key]
+        else:
+            student.family += [this_user.key]
 
 class LookupChildHandler(MyHandler):
     def post(self):
@@ -943,8 +952,10 @@ class CreateAdminHandler(MyHandler):
             last_name='AdminLastName',
             user_type=admin_user,
             children=[],
-            school='None',
-            verified=false)
+            verified='false',
+            classList=[],
+            meetings=[],
+            messageThreads=[])
         self.redirect('/')
 
 class ProfileHandler(MyHandler):
@@ -1145,7 +1156,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
