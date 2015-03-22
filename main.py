@@ -129,7 +129,7 @@ class MyHandler(webapp2.RequestHandler):
             #Children
             children_ids = self.user.family
             if children_ids: #list is not empty
-                children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+                children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
             #Classes
@@ -615,7 +615,7 @@ class AddConferencePageHandler(MyHandler):
         # teacher = models.User.query(models.User.auth_ids==teachers).get()
         # teacher = [teacher.to_dict() for teacher in teacher_query]
         # self.response.write(teacher)
-        
+
         participant_id = []
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
@@ -669,12 +669,10 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-
         message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
         message_list_count = 0
         self.templateValues['message_list_count'] = message_list_count
         self.templateValues['message_list'] = message_list
-
 
         self.render('messaging.html')
 
@@ -712,7 +710,7 @@ class AddMessagePageHandler(MyHandler):
 
         message = models.PrivateMessage(
                 sender = self.user.key,
-                # recipient = participant_id[len(participant_id)-1],
+                sender_first_name = self.user.first_name,
                 message = theMessage
         )
         messageID = message.put()
@@ -724,6 +722,7 @@ class AddMessagePageHandler(MyHandler):
                 messageList = [messageID]
             )
         thread.put()
+
         self.response.write("<h1> Message Added </h1>")
 
 class ShowMessagePageHandler(MyHandler):
@@ -761,13 +760,19 @@ class AddChildHandler(MyHandler):
         self.render('addChild.html')
 
     def post(self):
-        link = self.request.get("student_id")
+        student_id = self.request.get("student_id")
+        student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        if this_user.children == ['None']:
-            this_user.children = [link]
+        if this_user.family == ['None']:
+            this_user.family = [student.key]
         else:
-            this_user.children += [link]
+            this_user.family += [student.key]
         this_user.put()
+
+        if student.family == ['None']:
+            student.family = [this_user.key]
+        else:
+            student.family += [this_user.key]
 
 class LookupChildHandler(MyHandler):
     def post(self):
@@ -900,8 +905,6 @@ class InitNDBHandler(MyHandler):
                 phone = '555-555-5555'
             )
         newschool.put()
-
-
 
         self.redirect('/')
 
