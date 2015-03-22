@@ -258,10 +258,21 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
-        class_name_indexes = self.request.get('class-indexes') # for classes
+        # school = self.request.get('school')
+
         verified = False
+
+        child = []
+        classList = []
+        meeting = []
+        messageThread = []
+
+
         if teacher_code:
             user_type = teacher_user
+            class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
+            
+
         elif student_id:
             user_type = student_user
             verified = True
@@ -269,11 +280,9 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = parent_user
 
-        child = []
-        classList = []
-        meeting = []
-        messageThread = []
-        
+
+
+       
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -285,6 +294,18 @@ class SignupPageHandler(MyHandler):
             classList=classList,
             meetings=meeting,
             messageThreads=messageThread)
+
+
+        # if teacher_code:
+        #     for index in class_name_indexes:
+        #         # classList.append() 
+        #         class_name = self.request.get('name-' + str(index))
+        #         teacher_query = 
+        #         class_data = models.Classes(
+        #             teacher = [],
+        #             # school = school,
+        #             student_list = [],
+        #             name = class_name)
 
 
 
@@ -939,22 +960,21 @@ class SchoolSetupHandler(MyHandler):
 
     def post(self):
         school = models.School(
-                self.request.get('name'),
+                name = self.request.get('name'),
                 primary_color = self.request.get('school_color_primary'),
                 secondary_color = self.request.get('school_color_secondary'),
                 address = self.request.get('school_address'),
                 state = self.request.get('school_state'),
                 county = self.request.get('school_county'),
                 zipcode = self.request.get('school_zipcode'),
-                phone = self.request.get('school_phone'),
-                admins = [self.user.key]
+                phone = self.request.get('school_phone')
             )
         school.put()
 
-        school_query = models.School.query().filter(models.School.admins==self.user.key)
-        schools = [school.key for school in school_query]
-        self.user.school = schools
-        self.user.key.get().put()
+        # school_query = models.School.query().filter(models.School.admins==self.user.key)
+        # schools = [school.key for school in school_query]
+        # self.user.school = schools
+        # self.user.key.get().put()
 
         self.redirect('/')
 

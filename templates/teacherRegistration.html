@@ -27,18 +27,18 @@
         <label for="password">Password:</label>
         <input class="form-control" type="password" name="password" placeholder="Password"></input>
       </div>
-      <div class="form-group">
+<!--       <div class="form-group">
         <label for="school">School Name:</label>
         <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="School Name"></input>
         <div style="display: inline;" id="schoolSug"></div>
-      </div>
+      </div> -->
       <div class="form-group">
         <input id="teacher_code" class="form-control" type="hidden" name="teacher_code" value="1"></input> <!-- Used to be 47 -->
       </div>
 
       <div class="form-group" id="class-container">
         <label for="school">Class Name:</label>
-        <input id='class-name-1' class='form-control' type='text' name='class-name-1' placeholder='Class Name'></input>
+        <input id='name-1' class='form-control' type='text' name='name-1' placeholder='Class Name'></input>
       </div>
       <button type="button" id="addClassButton" onclick="addClassRow()" class="btn btn-default form-control"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Class</button>
       <center><button style="margin-top:20px" type="submit" class="custom_button green_button">Submit</button></center>
@@ -81,5 +81,7 @@
   }
 
 </script>
+<script src="/assets/js/schoolSuggestion.js"></script>
+
 
 {% endblock %}
