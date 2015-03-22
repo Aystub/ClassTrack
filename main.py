@@ -553,7 +553,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_list = models.Conference.query()
+        conference_query = models.Conference.query()
+        conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
         part_list = [];
         for conf in conference_list:
             names=''
