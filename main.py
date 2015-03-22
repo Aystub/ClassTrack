@@ -368,7 +368,7 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        qry = models.NFPost.query().order(-models.NFPost.time)
+        qry = models.NFPost.query().order(-models.NFPost.time).fetch()
         self.templateValues['newsfeed_list'] = qry
         self.login_check()
         self.render('home.html')
@@ -569,7 +569,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_list = models.Conference.query()
+        conference_query = models.Conference.query()
+        conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
         part_list = [];
         for conf in conference_list:
             names=''
@@ -577,7 +578,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
             for part in small_list:
                 person_query = models.User.query().filter(models.User.auth_ids==part)
                 person = [person.to_dict() for person in person_query]
-                names += person[0]['first_name']
+                names += person[0]['first_name'] + " "
                 names += person[0]['last_name']
                 names += ', '
             part_list.append(names)
@@ -592,33 +593,6 @@ class ConferenceSchedulerPageHandler(MyHandler):
 
 
 class AddConferencePageHandler(MyHandler):
-    # def get(self):
-    #     self.setupUser()
-    #     self.navbarSetup()
-    #     self.templateValues['user'] = self.user
-    #     self.templateValues['title'] = 'Conferencing | ClassTrack'
-    #     teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-    #     teachers = [teacher.to_dict() for teacher in teacher_query]
-    #     self.templateValues['teachers'] = teacher_query
-    #     self.login_check()
-    #     self.render('addConference.html')
-
-    # def post(self):
-    #     self.setupUser()
-    #     extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
-    #     teachers = self.request.get('participants')
-    #     #teachers = teachers[0]
-    #     #participants = [self.user_info['auth_ids'][0], teachers]
-    #     participants = self.user.first_name+' '+self.user.last_name+', '+teachers
-    #     post = models.Conference(
-    #             purpose = self.request.get('purpose'),
-    #             participants = participants,
-    #             datetime = extractedDateTime,
-    #             currentLoggedInUsers = []
-    #         )
-    #     post.put()
-    #     self.response.write("<h1> Conference Added </h1>")
-
     def get(self):
         self.setupUser()
         self.navbarSetup()
@@ -635,24 +609,20 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
+
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
-# <<<<<<< HEAD
-#         teacher = models.User.query(models.User.auth_ids==teachers).get()
-#         #teacher = [teacher.to_dict() for teacher in teacher_query]
-
-#         #self.response.write(teacher)
-# =======
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # teacher = [teacher.to_dict() for teacher in teacher_query]
+        # self.response.write(teacher)
+        
         participant_id = []
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
-            # model = [model.to_dict() for model in model_query]
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
         teacher = models.User.query(models.User.auth_ids==teachers).get()
-        # teacher = [teacher.to_dict() for teacher in teacher_query]
 
-        self.response.write(teacher)
-# >>>>>>> WebRTC
+        # self.response.write(teacher)
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),
@@ -699,8 +669,13 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-        message_list = models.MessageThread.query().order(-models.MessageThread.time)
+
+        message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
+        message_list_count = 0
+        self.templateValues['message_list_count'] = message_list_count
         self.templateValues['message_list'] = message_list
+
+
         self.render('messaging.html')
 
 class AddMessagePageHandler(MyHandler):
@@ -713,19 +688,31 @@ class AddMessagePageHandler(MyHandler):
 
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
+
+        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        teachers = [teacher.to_dict() for teacher in teacher_query]
+        self.templateValues['teachers'] = teacher_query
         self.render('addMessage.html')
 
     def post(self):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
-        #teachers = teachers[0]
-        #participants = [self.user_info['auth_ids'][0], teachers]
+        teachers = self.request.get('participants')
 
-        participants = self.user.first_name+' '+self.user.last_name+', '+teachers
+        participants = [self.user_info['auth_ids'][0],teachers]
+
+        # participant_id = []
+        # for auth_id in participants:
+        #     model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
+        #     participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+
+        # participants = self.user.first_name+' '+self.user.last_name+', '+teachers
 
         message = models.PrivateMessage(
                 sender = self.user.key,
+                # recipient = participant_id[len(participant_id)-1],
                 message = theMessage
         )
         messageID = message.put()
@@ -851,31 +838,66 @@ class InitNDBHandler(MyHandler):
 
         #******SCHOOLS*******
         newschool = models.School(
-                school_name = 'Seneca Middle School'
+                name = 'Seneca Middle School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Hogwarts School of Witchcraft and Wizardry'
+                name = 'Hogwarts School of Witchcraft and Wizardry',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Ashford Academy'
+                name = 'Ashford Academy',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Naoetsu Private High School'
+                name = 'Naoetsu Private High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Fumizuki Academy'
+                name = 'Fumizuki Academy',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Private Magic University Affiliated High School'
+                name = 'Private Magic University Affiliated High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
         newschool = models.School(
-                school_name = 'Karakura High School'
+                name = 'Karakura High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
             )
         newschool.put()
 
@@ -908,7 +930,7 @@ class SchoolSetupHandler(MyHandler):
 
     def post(self):
         school = models.School(
-                name = self.request.get('school_name'),
+                self.request.get('name'),
                 primary_color = self.request.get('school_color_primary'),
                 secondary_color = self.request.get('school_color_secondary'),
                 address = self.request.get('school_address'),

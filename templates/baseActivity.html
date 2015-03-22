@@ -85,7 +85,7 @@
 				<ul class="nav nav-pills nav-stacked">
 					<!-- <li class="active"><a href="#">Section</a></li> -->
 					<li id="home_li"><a class="side-nav-link" href="home">Home</a></li>
-					<li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect">Switch Class</a></li>
+					<!-- <li><a class="side-nav-link fancybox fancybox.iframe" href="classSelect">Switch Class</a></li> -->
 				    <script>
 				        $(document).ready(function() {
 				            $('.fancybox').fancybox({
@@ -106,7 +106,7 @@
 
 						{% elif usertype == 1 %} {#teacher#}
 							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
-							<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>
+							<!-- <li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li> -->
 							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
 							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
 
@@ -144,13 +144,21 @@
 			</div>
 
 			<div id="content-right-of-sidebar">
+				<center><button class="custom_button green_button" id = "sidebar-toggle" onclick="toggleSidebar()">Close Side Menu</button></center>
 				{% block content %}{% endblock %}
 			</div>
 		</div>
 	{% block bottom %}
 	<script>
+		var sidebarShown = true;
+
 		$(document).ready(function(){
 			setup();
+			if($(window).width() < 350)
+			{
+				sidebarShown = false;
+				collapseSideMenu();
+			}
 		});
 
         var timer_id;
@@ -164,6 +172,17 @@
                     fixWidth();
                     fixHeights();
 
+					if($(window).width() < 375)
+					{
+						sidebarShown = false;
+						collapseSideMenu();
+					}
+					else
+					{
+						sidebarShown = true;
+						expandSideMenu();
+					}
+
                 }, 300);
             });
 
@@ -173,23 +192,23 @@
 
 		function setup()
 		{
-			var path = window.location.pathname.substring(1, (window.location.pathname.length-5));
+			var path = window.location.pathname.substring(1, (window.location.pathname.length));
 			$("#"+path+"_li").addClass("side-nav-active");
 			newsfeedMinHeight();
 			fixHeights();
 			fixWidth();
 			// Swipe
-			  $(document).swipe( {
-		        //Generic swipe handler for all directions
-		       	 	swipeLeft:function(event, direction, distance, duration, fingerCount) {
-		       	 		collapseSideMenu();
-		        	},
-		       	 	swipeRight:function(event, direction, distance, duration, fingerCount) {
-		       	 		expandSideMenu();
-		       	 	},
-	   	 	        threshold:75
-		    	}
-		    );
+		  $(document).swipe( 
+		  	{
+	        	//Generic swipe handler for all directions
+	       	 	swipeLeft:function(event, direction, distance, duration, fingerCount) {
+	       	 		collapseSideMenu();
+	        	},
+	       	 	swipeRight:function(event, direction, distance, duration, fingerCount) {
+	       	 		expandSideMenu();
+	       	 	},
+   	 	        threshold:75
+	    	});
 		}
 		function newsfeedMinHeight()
 		{
@@ -233,7 +252,7 @@
 				$('#sidebar').height($('.below_nav').height());
 				$('#content-right-of-sidebar').height($('.below_nav').height());
 			}
-			$('#sidebar').height($('#content-right-of-sidebar').height());
+			$('#sidebar').height($('#content-right-of-sidebar').height() + 100);
 		}
 		function fixWidth()
 		{
@@ -244,15 +263,25 @@
 		{
 			$(".below_nav").css("background-color","#FFF");
 			$('#sidebar').stop().animate({width:0});
-			$('#content-right-of-sidebar').stop().animate({width:$(document).width()});
+			$('#content-right-of-sidebar').stop().animate({width:$(window).width()});
+			$('#sidebar-toggle').html('Open Side Menu');
+			sidebarShown = false;
 		}
 		function expandSideMenu()
 		{
 			var rightwidth = $(document).width()-180;
 			$('#sidebar').stop().animate({width:150});
 			$('#content-right-of-sidebar').stop().animate({width: rightwidth});
-			// $(".below_nav").css("background-color","#16A086"); // Hardcoded value, this is just the color of the sidebar
+			$('#sidebar-toggle').html('Close Side Menu');
+			sidebarShown = true;
+		}
 
+		function toggleSidebar()
+		{
+			if(sidebarShown)
+				collapseSideMenu();
+			else
+				expandSideMenu();
 		}
 	</script>
 	</body>
