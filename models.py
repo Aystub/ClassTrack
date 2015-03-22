@@ -103,7 +103,6 @@ class Classes(ndb.Model):
 
 class PrivateMessage(ndb.Model):
     sender = ndb.KeyProperty(required=True)
-    sender_first_name = ndb.TextProperty()
     message = ndb.TextProperty()
     time = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -151,9 +150,8 @@ class NFPost(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
-    accepted_ids = ndb.IntegerProperty(repeated=True)
     participants = ndb.StringProperty(repeated=True)
-    datetime = ndb.DateProperty(required=True)
+    datetime = ndb.DateTimeProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
     partString = ndb.StringProperty()
     currentLoggedInUsers = ndb.StringProperty(repeated=True)

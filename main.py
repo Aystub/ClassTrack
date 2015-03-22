@@ -258,7 +258,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
-        class_name_indexes = self.request.get('class-indexes') # for classes
+        #class_name_indexes = self.request.get('class-indexes') # for classes
         verified = False
         if teacher_code:
             user_type = teacher_user
@@ -273,7 +273,7 @@ class SignupPageHandler(MyHandler):
         classList = []
         meeting = []
         messageThread = []
-        
+
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -577,7 +577,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_query = models.Conference.query()
-        conference_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids and self.user_info['user_id'] == models.Conference.accepted_ids)
+        conference_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids )
+        #and self.user_info['user_id'] == models.Conference.accepted_ids)
         conference_not_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
         # conference_accepted_list = conference_list.filter()
         # conference_not_accepted_list = {x| x in conference_list and x not in conference_accepted_list}
