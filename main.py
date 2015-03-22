@@ -10,6 +10,7 @@ import models
 import json
 import re
 import time
+from google.appengine.api import mail
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -51,7 +52,7 @@ student_user = 3 #user is a student
 #     if 'Android' in user_agent and 'Chrome' in user_agent:
 #         preferred_audio_send_codec = 'ISAC/16000'
 #     return preferred_audio_send_codec
-    
+
 # def get_preferred_audio_receive_codec():
 #     return 'opus/48000'
 
@@ -297,9 +298,24 @@ class SignupPageHandler(MyHandler):
 
             verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-            msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
+            sender_address="NoReply Classtrack <noreply@classtrack.com>"
+            subject="Please Verify Your Email"
+            user_address = email
+            body = """
+            Dear %s:
 
-            self.display_message(msg.format(url=verification_url))
+            Please verify your email by clicking the following link:
+            %s
+
+            Thanks!
+            Team Classtrack
+            """.format(first_name, verification_url)
+
+            mail.send_mail(sender_address, user_address, subject, body)
+
+            msg = 'A verification email has been sent to {email_confirmation}'
+
+            self.display_message(msg.format(email_confirmation=email))
         else:
             self.redirect('/childRegistration')
 
@@ -613,7 +629,7 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
-   
+
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
@@ -621,7 +637,7 @@ class AddConferencePageHandler(MyHandler):
         participants = [self.user_info['auth_ids'][0],teachers]
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
-# <<<<<<< HEAD 
+# <<<<<<< HEAD
 #         teacher = models.User.query(models.User.auth_ids==teachers).get()
 #         #teacher = [teacher.to_dict() for teacher in teacher_query]
 
@@ -954,7 +970,7 @@ class ConferenceMessageChannelHandler(MyHandler):
         #     time.sleep(1)
         #     for user in user_query:
         #         channel.create_channel(user.auth_ids[0]);
-        #         channel.send_message(user.auth_ids[0], message)  
+        #         channel.send_message(user.auth_ids[0], message)
         # channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
 
