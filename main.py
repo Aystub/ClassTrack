@@ -272,6 +272,7 @@ class SignupPageHandler(MyHandler):
         child = []
         classList = []
         meeting = []
+        invited = []
         messageThread = []
 
 
@@ -284,6 +285,7 @@ class SignupPageHandler(MyHandler):
             verified=verified,
             classList=classList,
             meetings=meeting,
+            invited=invited,
             messageThreads=messageThread)
 
 
@@ -576,33 +578,57 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_query = models.Conference.query()
-        conference_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids )
-        #and self.user_info['user_id'] == models.Conference.accepted_ids)
-        conference_not_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
-        # conference_accepted_list = conference_list.filter()
-        # conference_not_accepted_list = {x| x in conference_list and x not in conference_accepted_list}
+        #conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
+        user1 = self.user
+        conference_list = []
+        part_list = []
+        if(user1.meetings):
+            conference_list = models.Conference.query(models.Conference.key.IN(user1.meetings))
+            for conf in conference_list:
+                names=''
+                #replace with name string
+                small_list = conf.participants
+                for part in small_list:
+                    person_query = models.User.query().filter(models.User.auth_ids==part)
+                    person = [person.to_dict() for person in person_query]
+                    names += person[0]['first_name'] + " "
+                    names += person[0]['last_name']
+                    names += ', '
+                part_list.append(names)
 
-        part_list = [];
-        for conf in conference_accepted_list:
-            names=''
-            small_list = conf.participants
-            for part in small_list:
-                person_query = models.User.query().filter(models.User.auth_ids==part)
-                person = [person.to_dict() for person in person_query]
-                names += person[0]['first_name'] + " "
-                names += person[0]['last_name']
-                names += ', '
-            part_list.append(names)
-        conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
+        invite_list = []
+        small_list_inv = []
+        part_list_inv = []
+        if(user1.invited):
+            invite_list = models.Conference.query(models.Conference.key.IN(user1.invited))
+            for conf in invite_list:
+                names=''
+                #replace with name string
+                small_list_inv = conf.participants
+                for part in small_list_inv:
+                    person_query = models.User.query().filter(models.User.auth_ids==part)
+                    person = [person.to_dict() for person in person_query]
+                    names += person[0]['first_name'] + " "
+                    names += person[0]['last_name']
+                    names += ', '
+                part_list_inv.append(names)
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
-        self.templateValues['conference_list'] = conference_accepted_list
-        self.templateValues['conference_invitation_list'] = conference_not_accepted_list
+        self.templateValues['conference_list'] = conference_list
+        self.templateValues['conference_list_inv'] = invite_list
         self.templateValues['part_list'] = part_list
+        self.templateValues['part_list_inv'] = part_list_inv
         self.login_check()
         self.render('conferenceSchedule.html')
 
+#class acceptConference(MyHandler):
+    # def get(self):
+    #     self.setupUser()
+    #     self.navbarSetup()
+    #     self.templateValues['user'] = self.user
+    #     self.templateValues['title'] = 'Grades | ClassTrack'
+    #     self.login_check()
+    #     self.render('grades.html')
 
 class AddConferencePageHandler(MyHandler):
     def get(self):
@@ -636,9 +662,12 @@ class AddConferencePageHandler(MyHandler):
         # self.response.write(teacher)
 
         participant_id = []
+        names = ''
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+            names += model_query.first_name
+            names += model_query.last_name + ', '
         teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
@@ -647,7 +676,8 @@ class AddConferencePageHandler(MyHandler):
                 purpose = self.request.get('purpose'),
                 participants = participants,
                 participant_ids = participant_id,
-                datetime = extractedDateTime
+                datetime = extractedDateTime,
+                names_list = names
             )
         key=post.put()
 
@@ -664,6 +694,7 @@ class AddConferencePageHandler(MyHandler):
             teacher.meetings = [key]
         else:
             teacher.meetings += [key]
+
 
         teacher.put()
         this_user.put()
@@ -708,7 +739,7 @@ class AddMessagePageHandler(MyHandler):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
-       
+
         message = models.PrivateMessage(
                 sender = self.user.key,
                 message = theMessage
@@ -721,36 +752,36 @@ class AddMessagePageHandler(MyHandler):
                 users = [self.user.key],
                 messageList = [messageID]
             )
-            
+
         key = thread.put()
-        
+
         this_user = self.user
         if not this_user.messages:
             this_user.messages = [key]
         else:
             this_user.messages += [key]
-            
+
         this_user.put()
-            
+
         self.response.write("<h1> Message Added </h1>")
-       
+
 class ReplyMessageHandler(MyHandler):
     def post(self):
         theMessage = self.request.get("message")
-    
+
         message = models.PrivateMessage(
                 sender = self.user.key,
                 message = theMessage
         )
         messageID = message.put()
-        
+
         id = self.request.get("roomkey")
         MessageThread = ndb.Key('MessageThread', int(id)).get()
         MessageThread.messageList += [messageID]
         MessageThread.put()
-        
+
         self.response.write("<h1> Message Added: " + str(messageID.id()) +  " </h1>")
-        
+
 class ShowMessagePageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -1197,6 +1228,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
+#    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
