@@ -103,6 +103,7 @@ class Classes(ndb.Model):
 
 class PrivateMessage(ndb.Model):
     sender = ndb.KeyProperty(required=True)
+    sender_first_name = ndb.TextProperty()
     message = ndb.TextProperty()
     time = ndb.DateTimeProperty(auto_now_add=True)
 

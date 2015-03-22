@@ -42,34 +42,21 @@
 		</div>
 		<div class="push"></div>
 
-<!--         <div class="alert alert-success col-md-11" role="alert">
-            <div class="row" style="text-align:center">
-                <div class="col-md-1"></div>
-                <div class="col-md-3">Johnny, Billy, Jenny</div>
-                <div class="col-md-3">Building Communiction App</div>
-                <div class="col-md-3">Sunday, February 22 - 11:05 PM</div>
-                <div class="col-md-2">
-                    <button href="" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
-				</div>
-            </div>
-        </div> -->
-
-
-        {% if message_list|length != 0%}
-	        {% for MessageThread in message_list %}
-	        <div class="alert alert-success col-md-11" role="alert">
-	            <div class="row" style="text-align:center">
-	                <div class="col-md-1"></div>
-	                <div class="col-md-3">{{MessageThread['users'][0].get().first_name}}</div>
-	                <div class="col-md-3">{{MessageThread['subject']}}</div>
-	                <div class="col-md-3">{{MessageThread['time'].strftime("%A, %B %d - %I:%M %p")}}</div>
-	                <div class="col-md-2">
-	                    <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
-					</div>
-	                <div class="col-md-2"></div>
-	            </div>
-	        </div>
-	        {% endfor %}
+    {% if message_list|length != 0%}
+      {% for MessageThread in message_list %}
+      <div class="alert alert-success col-md-11" role="alert">
+          <div class="row" style="text-align:center">
+              <div class="col-md-1"></div>
+              <div class="col-md-3">{{MessageThread['users'][0].get().first_name}}</div>
+              <div class="col-md-3">{{MessageThread['subject']}}</div>
+              <div class="col-md-3">{{MessageThread['time'].strftime("%A, %B %d - %I:%M %p")}}</div>
+              <div class="col-md-2">
+                  <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>
+			</div>
+              <div class="col-md-2"></div>
+          </div>
+      </div>
+      {% endfor %}
 
 	    {% else %}
 	        <div class="alert alert-info col-md-11" role="alert">
@@ -78,10 +65,10 @@
 	                <div class="col-md-6">You have no new messages.</div>
 	                <div class="col-md-3"></div>
 	            </div>
-	        </div>	
+	        </div>
 		{% endif %}
 
-        
+
 	{% endblock %}
 
 	{% block bottom %}{{ super() }}{% endblock %}

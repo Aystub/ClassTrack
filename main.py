@@ -10,6 +10,7 @@ import models
 import json
 import re
 import time
+from google.appengine.api import mail
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -128,7 +129,7 @@ class MyHandler(webapp2.RequestHandler):
             #Children
             children_ids = self.user.family
             if children_ids: #list is not empty
-                children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+                children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
             #Classes
@@ -297,9 +298,24 @@ class SignupPageHandler(MyHandler):
 
             verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-            msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
+            sender_address="NoReply Classtrack <noreply@classtrack.com>"
+            subject="Please Verify Your Email"
+            user_address = email
+            body = """
+            Dear %s:
 
-            self.display_message(msg.format(url=verification_url))
+            Please verify your email by clicking the following link:
+            %s
+
+            Thanks!
+            Team Classtrack
+            """.format(first_name, verification_url)
+
+            mail.send_mail(sender_address, user_address, subject, body)
+
+            msg = 'A verification email has been sent to {email_confirmation}'
+
+            self.display_message(msg.format(email_confirmation=email))
         else:
             self.redirect('/childRegistration')
 
@@ -596,12 +612,19 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
+        
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
         # teacher = models.User.query(models.User.auth_ids==teachers).get()
         #teacher = [teacher.to_dict() for teacher in teacher_query]
 
         #self.response.write(teacher)
+
+        # This section of code is from the master before merge 3-7-15
+        # Keeping here to test changes from WebRTC
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # teacher = [teacher.to_dict() for teacher in teacher_query]
+        # self.response.write(teacher)
 
         participant_id = []
         for auth_id in participants:
@@ -656,12 +679,10 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-
         message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
         message_list_count = 0
         self.templateValues['message_list_count'] = message_list_count
         self.templateValues['message_list'] = message_list
-
 
         self.render('messaging.html')
 
@@ -699,7 +720,7 @@ class AddMessagePageHandler(MyHandler):
 
         message = models.PrivateMessage(
                 sender = self.user.key,
-                # recipient = participant_id[len(participant_id)-1],
+                sender_first_name = self.user.first_name,
                 message = theMessage
         )
         messageID = message.put()
@@ -711,6 +732,7 @@ class AddMessagePageHandler(MyHandler):
                 messageList = [messageID]
             )
         thread.put()
+
         self.response.write("<h1> Message Added </h1>")
 
 class ShowMessagePageHandler(MyHandler):
@@ -749,7 +771,7 @@ class AddChildHandler(MyHandler):
 
     def post(self):
         student_id = self.request.get("student_id")
-        student = ndb.Key("User",int(student_id)).get()
+        student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
         if this_user.family == ['None']:
             this_user.family = [student.key]
@@ -893,8 +915,6 @@ class InitNDBHandler(MyHandler):
                 phone = '555-555-5555'
             )
         newschool.put()
-
-
 
         self.redirect('/')
 
