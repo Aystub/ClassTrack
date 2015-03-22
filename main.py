@@ -10,6 +10,7 @@ import models
 import json
 import re
 import time
+from google.appengine.api import mail
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -128,7 +129,7 @@ class MyHandler(webapp2.RequestHandler):
             #Children
             children_ids = self.user.family
             if children_ids: #list is not empty
-                children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+                children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
             #Classes
@@ -257,6 +258,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
+        class_name_indexes = self.request.get('class-indexes') # for classes
         verified = False
         if teacher_code:
             user_type = teacher_user
@@ -272,6 +274,7 @@ class SignupPageHandler(MyHandler):
         meeting = []
         invited = []
         messageThread = []
+
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -299,9 +302,24 @@ class SignupPageHandler(MyHandler):
 
             verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-            msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
+            sender_address="NoReply Classtrack <noreply@classtrack.com>"
+            subject="Please Verify Your Email"
+            user_address = email
+            body = """
+            Dear %s:
 
-            self.display_message(msg.format(url=verification_url))
+            Please verify your email by clicking the following link:
+            %s
+
+            Thanks!
+            Team Classtrack
+            """.format(first_name, verification_url)
+
+            mail.send_mail(sender_address, user_address, subject, body)
+
+            msg = 'A verification email has been sent to {email_confirmation}'
+
+            self.display_message(msg.format(email_confirmation=email))
         else:
             self.redirect('/childRegistration')
 
@@ -424,7 +442,12 @@ class LoginPageHandler(MyHandler):
         password = self.request.get('password') #Get password value from html
         try:
             u = self.auth.get_user_by_password(email, password, remember=True, save_session=True)
-            self.redirect('/')
+            this_user = self.user
+
+            if this_user.family == []:
+                self.redirect('/addChild')
+            else:
+                self.redirect('/')
         except (InvalidAuthIdError, InvalidPasswordError) as e:
             logging.info('Login failed for user %s because of %s', email, type(e))
             self.templateValues = {}
@@ -625,6 +648,20 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
+
+        # This section of code is from the master before merge 3-7-15
+        # Keeping here to test changes from WebRTC
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+        #teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        #self.response.write(teacher)
+
+        # This section of code is from the master before merge 3-7-15
+        # Keeping here to test changes from WebRTC
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # teacher = [teacher.to_dict() for teacher in teacher_query]
+        # self.response.write(teacher)
+
         participant_id = []
         names = ''
         for auth_id in participants:
@@ -673,8 +710,6 @@ class DelConferenceHandler(MyHandler):
         key2.delete()
         self.redirect('conferenceSchedule')
 
-
-
 class ContactTeacherPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -683,13 +718,10 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-
-        message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
-        message_list_count = 0
-        self.templateValues['message_list_count'] = message_list_count
+        #message_list = models.MessageThread.query().order(-models.MessageThread.time)
+        message_list = self.user.messages
         self.templateValues['message_list'] = message_list
-
-
+        #self.response.write(self.user.key)
         self.render('messaging.html')
 
 class AddMessagePageHandler(MyHandler):
@@ -702,31 +734,15 @@ class AddMessagePageHandler(MyHandler):
 
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
-
-        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-        teachers = [teacher.to_dict() for teacher in teacher_query]
-        self.templateValues['teachers'] = teacher_query
         self.render('addMessage.html')
 
     def post(self):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
-        teachers = self.request.get('participants')
-
-        participants = [self.user_info['auth_ids'][0],teachers]
-
-        # participant_id = []
-        # for auth_id in participants:
-        #     model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
-        #     participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-        # teacher = models.User.query(models.User.auth_ids==teachers).get()
-
-        # participants = self.user.first_name+' '+self.user.last_name+', '+teachers
 
         message = models.PrivateMessage(
                 sender = self.user.key,
-                # recipient = participant_id[len(participant_id)-1],
                 message = theMessage
         )
         messageID = message.put()
@@ -737,8 +753,35 @@ class AddMessagePageHandler(MyHandler):
                 users = [self.user.key],
                 messageList = [messageID]
             )
-        thread.put()
+
+        key = thread.put()
+
+        this_user = self.user
+        if not this_user.messages:
+            this_user.messages = [key]
+        else:
+            this_user.messages += [key]
+
+        this_user.put()
+
         self.response.write("<h1> Message Added </h1>")
+
+class ReplyMessageHandler(MyHandler):
+    def post(self):
+        theMessage = self.request.get("message")
+
+        message = models.PrivateMessage(
+                sender = self.user.key,
+                message = theMessage
+        )
+        messageID = message.put()
+
+        id = self.request.get("roomkey")
+        MessageThread = ndb.Key('MessageThread', int(id)).get()
+        MessageThread.messageList += [messageID]
+        MessageThread.put()
+
+        self.response.write("<h1> Message Added: " + str(messageID.id()) +  " </h1>")
 
 class ShowMessagePageHandler(MyHandler):
     def get(self):
@@ -749,6 +792,7 @@ class ShowMessagePageHandler(MyHandler):
         id = self.request.get("messageId")
         MessageList = ndb.Key('MessageThread', int(id)).get().messageList
         self.templateValues['MessageList'] = MessageList
+        self.templateValues['RoomKey'] = id
         self.login_check()
         self.render('showMessage.html')
 
@@ -775,13 +819,19 @@ class AddChildHandler(MyHandler):
         self.render('addChild.html')
 
     def post(self):
-        link = self.request.get("student_id")
+        student_id = self.request.get("student_id")
+        student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        if this_user.children == ['None']:
-            this_user.children = [link]
+        if this_user.family == ['None']:
+            this_user.family = [student.key]
         else:
-            this_user.children += [link]
+            this_user.family += [student.key]
         this_user.put()
+
+        if student.family == ['None']:
+            student.family = [this_user.key]
+        else:
+            student.family += [this_user.key]
 
 class LookupChildHandler(MyHandler):
     def post(self):
@@ -915,8 +965,6 @@ class InitNDBHandler(MyHandler):
             )
         newschool.put()
 
-
-
         self.redirect('/')
 
 class TeacherRegistrationHandler(MyHandler):
@@ -973,8 +1021,10 @@ class CreateAdminHandler(MyHandler):
             last_name='AdminLastName',
             user_type=admin_user,
             children=[],
-            school='None',
-            verified=False)
+            verified='false',
+            classList=[],
+            meetings=[],
+            messageThreads=[])
         self.redirect('/')
 
 class ProfileHandler(MyHandler):
@@ -987,6 +1037,7 @@ class EditProfileHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
+        testText = 'test of varaible passing'
         self.render('profileEdit.html')
 
 
@@ -1174,7 +1225,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
@@ -1183,6 +1234,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
     webapp2.Route('/addMessage',AddMessagePageHandler, name='addmessage'),
+    webapp2.Route('/replyMessage',ReplyMessageHandler, name='replymessage'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),

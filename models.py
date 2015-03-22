@@ -12,7 +12,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     meetings = ndb.KeyProperty(kind='Conference', repeated=True)
     invited = ndb.KeyProperty(kind='Conference', repeated=True)
     family = ndb.KeyProperty(kind='User',repeated=True)
-    message_threads = ndb.KeyProperty(kind='MessageThread',repeated=True)
+    messages = ndb.KeyProperty(kind='MessageThread',repeated=True)
     class_list = ndb.KeyProperty(kind='Classes',repeated=True)
     school = ndb.KeyProperty(kind='School',repeated=True)
 
@@ -104,6 +104,7 @@ class Classes(ndb.Model):
 
 class PrivateMessage(ndb.Model):
     sender = ndb.KeyProperty(required=True)
+    sender_first_name = ndb.TextProperty()
     message = ndb.TextProperty()
     time = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -151,6 +152,7 @@ class NFPost(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
+    accepted_ids = ndb.IntegerProperty(repeated=True)
     participants = ndb.StringProperty(repeated=True)
     datetime = ndb.DateProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
