@@ -51,7 +51,7 @@ student_user = 3 #user is a student
 #     if 'Android' in user_agent and 'Chrome' in user_agent:
 #         preferred_audio_send_codec = 'ISAC/16000'
 #     return preferred_audio_send_codec
-    
+
 # def get_preferred_audio_receive_codec():
 #     return 'opus/48000'
 
@@ -270,6 +270,7 @@ class SignupPageHandler(MyHandler):
         child = []
         classList = []
         meeting = []
+        invited = []
         messageThread = []
 
         user_data = self.user_model.create_user(email,
@@ -281,6 +282,7 @@ class SignupPageHandler(MyHandler):
             verified=verified,
             classList=classList,
             meetings=meeting,
+            invited=invited,
             messageThreads=messageThread)
 
 
@@ -553,28 +555,58 @@ class ConferenceSchedulerPageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        conference_query = models.Conference.query()
-        conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
-        part_list = [];
-        for conf in conference_list:
-            names=''
-            small_list = conf.participants
-            for part in small_list:
-                person_query = models.User.query().filter(models.User.auth_ids==part)
-                person = [person.to_dict() for person in person_query]
-                names += person[0]['first_name'] + " "
-                names += person[0]['last_name']
-                names += ', '
-            part_list.append(names)
-        conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
+        #conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
+        user1 = self.user
+        conference_list = []
+        part_list = []
+        if(user1.meetings):
+            conference_list = models.Conference.query(models.Conference.key.IN(user1.meetings))
+            for conf in conference_list:
+                names=''
+                #replace with name string
+                small_list = conf.participants
+                for part in small_list:
+                    person_query = models.User.query().filter(models.User.auth_ids==part)
+                    person = [person.to_dict() for person in person_query]
+                    names += person[0]['first_name'] + " "
+                    names += person[0]['last_name']
+                    names += ', '
+                part_list.append(names)
+
+        invite_list = []
+        small_list_inv = []
+        part_list_inv = []
+        if(user1.invited):
+            invite_list = models.Conference.query(models.Conference.key.IN(user1.invited))
+            for conf in invite_list:
+                names=''
+                #replace with name string
+                small_list_inv = conf.participants
+                for part in small_list_inv:
+                    person_query = models.User.query().filter(models.User.auth_ids==part)
+                    person = [person.to_dict() for person in person_query]
+                    names += person[0]['first_name'] + " "
+                    names += person[0]['last_name']
+                    names += ', '
+                part_list_inv.append(names)
+
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
-        self.templateValues['conference_invitation_list'] = conference_invitation_list
+        self.templateValues['conference_list_inv'] = invite_list
         self.templateValues['part_list'] = part_list
+        self.templateValues['part_list_inv'] = part_list_inv
         self.login_check()
         self.render('conferenceSchedule.html')
 
+#class acceptConference(MyHandler):
+    # def get(self):
+    #     self.setupUser()
+    #     self.navbarSetup()
+    #     self.templateValues['user'] = self.user
+    #     self.templateValues['title'] = 'Grades | ClassTrack'
+    #     self.login_check()
+    #     self.render('grades.html')
 
 class AddConferencePageHandler(MyHandler):
     def get(self):
@@ -587,16 +619,19 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
-   
+
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
         participant_id = []
+        names = ''
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+            names += model_query.first_name
+            names += model_query.last_name + ', '
         teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
@@ -605,7 +640,8 @@ class AddConferencePageHandler(MyHandler):
                 purpose = self.request.get('purpose'),
                 participants = participants,
                 participant_ids = participant_id,
-                datetime = extractedDateTime
+                datetime = extractedDateTime,
+                names_list = names
             )
         key=post.put()
 
@@ -622,6 +658,7 @@ class AddConferencePageHandler(MyHandler):
             teacher.meetings = [key]
         else:
             teacher.meetings += [key]
+
 
         teacher.put()
         this_user.put()
@@ -969,7 +1006,7 @@ class ConferenceMessageChannelHandler(MyHandler):
         #     time.sleep(1)
         #     for user in user_query:
         #         channel.create_channel(user.auth_ids[0]);
-        #         channel.send_message(user.auth_ids[0], message)  
+        #         channel.send_message(user.auth_ids[0], message)
         # channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
 
@@ -1141,6 +1178,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
+#    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
