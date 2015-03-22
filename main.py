@@ -258,7 +258,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
-        class_name_indexes = self.request.get('class-indexes') # for classes
+        #class_name_indexes = self.request.get('class-indexes') # for classes
         verified = False
         if teacher_code:
             user_type = teacher_user
@@ -612,7 +612,6 @@ class ConferenceSchedulerPageHandler(MyHandler):
                     names += person[0]['last_name']
                     names += ', '
                 part_list_inv.append(names)
-
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
