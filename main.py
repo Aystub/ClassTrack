@@ -51,7 +51,7 @@ student_user = 3 #user is a student
 #     if 'Android' in user_agent and 'Chrome' in user_agent:
 #         preferred_audio_send_codec = 'ISAC/16000'
 #     return preferred_audio_send_codec
-    
+
 # def get_preferred_audio_receive_codec():
 #     return 'opus/48000'
 
@@ -613,7 +613,7 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
-   
+
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
@@ -621,7 +621,7 @@ class AddConferencePageHandler(MyHandler):
         participants = [self.user_info['auth_ids'][0],teachers]
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
-# <<<<<<< HEAD 
+# <<<<<<< HEAD
 #         teacher = models.User.query(models.User.auth_ids==teachers).get()
 #         #teacher = [teacher.to_dict() for teacher in teacher_query]
 
@@ -922,7 +922,7 @@ class CreateAdminHandler(MyHandler):
             user_type=admin_user,
             children=[],
             school='None',
-            verified=False)
+            verified=false)
         self.redirect('/')
 
 class ProfileHandler(MyHandler):
@@ -955,7 +955,7 @@ class ConferenceMessageChannelHandler(MyHandler):
         #     time.sleep(1)
         #     for user in user_query:
         #         channel.create_channel(user.auth_ids[0]);
-        #         channel.send_message(user.auth_ids[0], message)  
+        #         channel.send_message(user.auth_ids[0], message)
         # channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
 
