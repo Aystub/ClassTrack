@@ -28,7 +28,7 @@
 
 	<body>
         {% for message in MessageList %}
-            {{message.get().message}}
+          {{message.get().sender_first_name}}: {{message.get().message}}
         {%endfor%}
 	</body>
 	</html>

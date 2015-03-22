@@ -10,6 +10,7 @@ import models
 import json
 import re
 import time
+from google.appengine.api import mail
 
 from webapp2_extras import auth
 from webapp2_extras import sessions
@@ -51,7 +52,7 @@ student_user = 3 #user is a student
 #     if 'Android' in user_agent and 'Chrome' in user_agent:
 #         preferred_audio_send_codec = 'ISAC/16000'
 #     return preferred_audio_send_codec
-    
+
 # def get_preferred_audio_receive_codec():
 #     return 'opus/48000'
 
@@ -128,7 +129,7 @@ class MyHandler(webapp2.RequestHandler):
             #Children
             children_ids = self.user.family
             if children_ids: #list is not empty
-                children_query = models.User.query(models.User.auth_ids.IN(children_ids))
+                children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
             #Classes
@@ -257,6 +258,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
+        class_name_indexes = self.request.get('class-indexes') # for classes
         verified = False
         if teacher_code:
             user_type = teacher_user
@@ -271,6 +273,7 @@ class SignupPageHandler(MyHandler):
         classList = []
         meeting = []
         messageThread = []
+        
 
         user_data = self.user_model.create_user(email,
             first_name=first_name,
@@ -297,9 +300,24 @@ class SignupPageHandler(MyHandler):
 
             verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-            msg = 'Send an email to user in order to verify their address. They will be able to do so by visiting <a href="{url}">{url}</a>'
+            sender_address="NoReply Classtrack <noreply@classtrack.com>"
+            subject="Please Verify Your Email"
+            user_address = email
+            body = """
+            Dear %s:
 
-            self.display_message(msg.format(url=verification_url))
+            Please verify your email by clicking the following link:
+            %s
+
+            Thanks!
+            Team Classtrack
+            """.format(first_name, verification_url)
+
+            mail.send_mail(sender_address, user_address, subject, body)
+
+            msg = 'A verification email has been sent to {email_confirmation}'
+
+            self.display_message(msg.format(email_confirmation=email))
         else:
             self.redirect('/childRegistration')
 
@@ -422,7 +440,12 @@ class LoginPageHandler(MyHandler):
         password = self.request.get('password') #Get password value from html
         try:
             u = self.auth.get_user_by_password(email, password, remember=True, save_session=True)
-            self.redirect('/')
+            this_user = self.user
+
+            if this_user.family == []:
+                self.redirect('/addChild')
+            else:
+                self.redirect('/')
         except (InvalidAuthIdError, InvalidPasswordError) as e:
             logging.info('Login failed for user %s because of %s', email, type(e))
             self.templateValues = {}
@@ -554,9 +577,13 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         conference_query = models.Conference.query()
-        conference_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
+        conference_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids and self.user_info['user_id'] == models.Conference.accepted_ids)
+        conference_not_accepted_list = conference_query.filter(self.user_info['user_id'] == models.Conference.participant_ids)
+        # conference_accepted_list = conference_list.filter()
+        # conference_not_accepted_list = {x| x in conference_list and x not in conference_accepted_list}
+
         part_list = [];
-        for conf in conference_list:
+        for conf in conference_accepted_list:
             names=''
             small_list = conf.participants
             for part in small_list:
@@ -569,8 +596,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
         conference_invitation_list = [{'time':'1-5-2015 3:00 pm' ,'message':'Catch Up', 'participants':'Sarah, Hailey'}]
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
-        self.templateValues['conference_list'] = conference_list
-        self.templateValues['conference_invitation_list'] = conference_invitation_list
+        self.templateValues['conference_list'] = conference_accepted_list
+        self.templateValues['conference_invitation_list'] = conference_not_accepted_list
         self.templateValues['part_list'] = part_list
         self.login_check()
         self.render('conferenceSchedule.html')
@@ -587,12 +614,26 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
-   
+
     def post(self):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
         participants = [self.user_info['auth_ids'][0],teachers]
+
+        # This section of code is from the master before merge 3-7-15
+        # Keeping here to test changes from WebRTC
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+        #teacher = [teacher.to_dict() for teacher in teacher_query]
+
+        #self.response.write(teacher)
+
+        # This section of code is from the master before merge 3-7-15
+        # Keeping here to test changes from WebRTC
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # teacher = [teacher.to_dict() for teacher in teacher_query]
+        # self.response.write(teacher)
+
         participant_id = []
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
@@ -646,12 +687,10 @@ class ContactTeacherPageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
-
         message_list = models.MessageThread.query().order(-models.MessageThread.time).fetch() # We need to change the query to give our messages
         message_list_count = 0
         self.templateValues['message_list_count'] = message_list_count
         self.templateValues['message_list'] = message_list
-
 
         self.render('messaging.html')
 
@@ -689,7 +728,7 @@ class AddMessagePageHandler(MyHandler):
 
         message = models.PrivateMessage(
                 sender = self.user.key,
-                # recipient = participant_id[len(participant_id)-1],
+                sender_first_name = self.user.first_name,
                 message = theMessage
         )
         messageID = message.put()
@@ -701,6 +740,7 @@ class AddMessagePageHandler(MyHandler):
                 messageList = [messageID]
             )
         thread.put()
+
         self.response.write("<h1> Message Added </h1>")
 
 class ShowMessagePageHandler(MyHandler):
@@ -738,13 +778,19 @@ class AddChildHandler(MyHandler):
         self.render('addChild.html')
 
     def post(self):
-        link = self.request.get("student_id")
+        student_id = self.request.get("student_id")
+        student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        if this_user.children == ['None']:
-            this_user.children = [link]
+        if this_user.family == ['None']:
+            this_user.family = [student.key]
         else:
-            this_user.children += [link]
+            this_user.family += [student.key]
         this_user.put()
+
+        if student.family == ['None']:
+            student.family = [this_user.key]
+        else:
+            student.family += [this_user.key]
 
 class LookupChildHandler(MyHandler):
     def post(self):
@@ -878,8 +924,6 @@ class InitNDBHandler(MyHandler):
             )
         newschool.put()
 
-
-
         self.redirect('/')
 
 class TeacherRegistrationHandler(MyHandler):
@@ -936,8 +980,10 @@ class CreateAdminHandler(MyHandler):
             last_name='AdminLastName',
             user_type=admin_user,
             children=[],
-            school='None',
-            verified=False)
+            verified='false',
+            classList=[],
+            meetings=[],
+            messageThreads=[])
         self.redirect('/')
 
 class ProfileHandler(MyHandler):
@@ -950,6 +996,7 @@ class EditProfileHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
+        testText = 'test of varaible passing'
         self.render('profileEdit.html')
 
 
@@ -969,7 +1016,7 @@ class ConferenceMessageChannelHandler(MyHandler):
         #     time.sleep(1)
         #     for user in user_query:
         #         channel.create_channel(user.auth_ids[0]);
-        #         channel.send_message(user.auth_ids[0], message)  
+        #         channel.send_message(user.auth_ids[0], message)
         # channel.send_message(self.user_info['auth_ids'][0], message)
         self.render('ConferenceMessageChannel.html')
 
@@ -1137,7 +1184,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
