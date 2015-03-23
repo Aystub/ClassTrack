@@ -268,23 +268,16 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = parent_user
 
-        child = []
-        classList = []
-        meeting = []
-        messageThread = []
-
         user_data = self.user_model.create_user(email,
             first_name=first_name,
             password_raw=password,
             last_name=last_name,
             user_type=user_type,
-            children=child,
+            family=[],
             verified=verified,
-            classList=classList,
-            meetings=meeting,
-            messageThreads=messageThread)
-
-
+            class_list=[],
+            meeting=[],
+            message_threads=[])
 
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
@@ -298,23 +291,22 @@ class SignupPageHandler(MyHandler):
 
             verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-            sender_address="NoReply Classtrack <noreply@classtrack.com>"
-            subject="Please Verify Your Email"
+            sender_address="classtracknoreply@gmail.com"
+            subject="Welcome to Classtrack! Please Verify Your Email."
             user_address = email
             body = """
-            Dear %s:
+            Dear {name}:
 
             Please verify your email by clicking the following link:
-            %s
+            {link}
 
             Thanks!
             Team Classtrack
-            """.format(first_name, verification_url)
+            """.format(name=first_name, link=verification_url)
 
             mail.send_mail(sender_address, user_address, subject, body)
 
             msg = 'A verification email has been sent to {email_confirmation}'
-
             self.display_message(msg.format(email_confirmation=email))
         else:
             self.redirect('/childRegistration')
@@ -325,10 +317,6 @@ class VerificationHandler(MyHandler):
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']
         verification_type = kwargs['type']
-        # it should be something more concise like
-        # self.auth.get_user_by_token(user_id, signup_token)
-        # unfortunately the auth interface does not (yet) allow to manipulate
-        # signup tokens concisely
         user, ts = self.user_model.get_by_auth_token(int(user_id), signup_token,'signup')
 
         if not user:
@@ -339,14 +327,17 @@ class VerificationHandler(MyHandler):
         self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
 
         if verification_type == 'v':
-            # remove signup token, we don't want users to come back with an old link
+            # remove signup token to prevent users from coming back with an old link
             self.user_model.delete_signup_token(user.get_id(), signup_token)
 
             if not user.verified:
                 user.verified = True
+                #Need to reassign user.auth_ids to avoid a JSON serialization error that
+                #was constantly occuring.
+                user.auth_ids = [user.auth_ids[0]]
                 user.put()
 
-            self.display_message('User email address has been verified.')
+            self.display_message('Your email address has been verified.')
             return
 
         elif verification_type == 'p':
@@ -763,13 +754,13 @@ class AddChildHandler(MyHandler):
         student_id = self.request.get("student_id")
         student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        if this_user.family == ['None']:
+        if this_user.family == []:
             this_user.family = [student.key]
         else:
             this_user.family += [student.key]
         this_user.put()
 
-        if student.family == ['None']:
+        if student.family == []:
             student.family = [this_user.key]
         else:
             student.family += [this_user.key]
@@ -961,7 +952,7 @@ class CreateAdminHandler(MyHandler):
             password_raw='admin',
             last_name='AdminLastName',
             user_type=admin_user,
-            children=[],
+            family=[],
             school='None',
             verified=False)
         self.redirect('/')
