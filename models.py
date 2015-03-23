@@ -9,9 +9,10 @@ class User(webapp2_extras.appengine.auth.models.User):
     first_name = ndb.StringProperty()
     last_name = ndb.StringProperty()
     user_type = ndb.IntegerProperty()
-    meetings = ndb.KeyProperty(kind='Conference',repeated=True)
+    meetings = ndb.KeyProperty(kind='Conference', repeated=True)
+    invited = ndb.KeyProperty(kind='Conference', repeated=True)
     family = ndb.KeyProperty(kind='User',repeated=True)
-    message_threads = ndb.KeyProperty(kind='MessageThread',repeated=True)
+    messages = ndb.KeyProperty(kind='MessageThread',repeated=True)
     class_list = ndb.KeyProperty(kind='Classes',repeated=True)
     school = ndb.KeyProperty(kind='School',repeated=True)
 
@@ -103,7 +104,6 @@ class Classes(ndb.Model):
 
 class PrivateMessage(ndb.Model):
     sender = ndb.KeyProperty(required=True)
-    sender_first_name = ndb.TextProperty()
     message = ndb.TextProperty()
     time = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -152,10 +152,16 @@ class NFPost(ndb.Model):
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
     participants = ndb.StringProperty(repeated=True)
-    datetime = ndb.DateProperty(required=True)
+    datetime = ndb.DateTimeProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
-    partString = ndb.StringProperty()
     currentLoggedInUsers = ndb.StringProperty(repeated=True)
     participant_ids = ndb.IntegerProperty(repeated=True)
+    accepted = ndb.BooleanProperty(default=False)
+    names_list = ndb.StringProperty()
+
     def id(self):
         return self.key.id()
+
+    @classmethod
+    def getKey(self):
+        return self.key
