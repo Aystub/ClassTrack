@@ -61,10 +61,11 @@ def default(obj):
     """Default JSON serializer."""
     import calendar, datetime
 
+    millis = 0
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
             obj = obj - obj.utcoffset()
-    millis = int(
+        millis = int(
         calendar.timegm(obj.timetuple()) * 1000 +
         obj.microsecond / 1000
     )
