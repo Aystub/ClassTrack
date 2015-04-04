@@ -7,31 +7,34 @@
 <div class="container">
   <div class="spacer25"></div>
 
+    {% if error %}
+      <div class="alert alert-warning" style="margin-top:20px"><p> {{ error }} </p></div>
+    {% endif %}
   <div class="col-md-4 col-md-offset-4">
     <h1 style="margin-left:-15px;">Teacher Registration:</h1>
     <br>
     <form role="form" action="/signup" method="POST">
       <div class="form-group">
         <label for="fname">First Name:</label>
-        <input class="form-control" type="text" name="fname" placeholder="First Name"></input>
+        <input class="form-control" type="text" name="fname" placeholder="First Name" value="{{previous_fname}}"></input>
       </div>
       <div class="form-group">
         <label for="lname">Last Name:</label>
-        <input class="form-control" type="text" name="lname" placeholder="Last Name"></input>
+        <input class="form-control" type="text" name="lname" placeholder="Last Name" value="{{previous_lname}}"></input>
       </div>
       <div class="form-group">
         <label for="email">Email:</label>
-        <input class="form-control" type="text" name="email" placeholder="Email"></input>
+        <input class="form-control" type="text" name="email" placeholder="Email" value="{{previous_email}}"></input>
       </div>
       <div class="form-group">
         <label for="password">Password:</label>
-        <input class="form-control" type="password" name="password" placeholder="Password"></input>
+        <input class="form-control" type="password" name="password" placeholder="Password" value="{{previous_password}}"></input>
       </div>
-<!--       <div class="form-group">
+      <div class="form-group">
         <label for="school">School Name:</label>
-        <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="School Name"></input>
+        <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="School Name" value="{{previous_school_name}}"></input>
         <div style="display: inline;" id="schoolSug"></div>
-      </div> -->
+      </div>
       <div class="form-group">
         <input id="teacher_code" class="form-control" type="hidden" name="teacher_code" value="1"></input> <!-- Used to be 47 -->
       </div>
@@ -42,7 +45,7 @@
       </div>
       <button type="button" id="addClassButton" onclick="addClassRow()" class="btn btn-default form-control"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Class</button>
       <center><button style="margin-top:20px" type="submit" class="custom_button green_button">Submit</button></center>
-      <input id="class-indexes" class="form-control" type="hidden" name="class-indexes" value=""></input>
+      <input id="class-indexes" class="form-control" type="hidden" name="class-indexes" value="[1]"></input>
 
     </div>
   </form>
@@ -52,6 +55,10 @@
 <script type="text/javascript">
   var row_index = 2;
   var classArray = [1];
+
+  $(document).ready(function(){
+    initializeClassIndexJSON();
+  });
 
 
   function addClassRow()
@@ -72,13 +79,18 @@
     var button = $("#" + buttonID);
     row.remove();
     button.remove();
-
     var index = classArray.indexOf(row_index);
-
     classArray.splice(index,1);
     $('#class-indexes').val(JSON.stringify(classArray));
-
   }
+
+  function initializeClassIndexJSON()
+  {
+    var index = classArray.indexOf(row_index);
+    $('class-indexes').val('{[1]}');
+  }
+
+
 
 </script>
 <script src="/assets/js/schoolSuggestion.js"></script>

@@ -252,13 +252,14 @@ class SignupPageHandler(MyHandler):
         self.render('signup.html')
 
     def post(self):
+        self.templateValues = {}
         password = self.request.get('password')
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
-        # school = self.request.get('school')
+        school_name = self.request.get('school')
 
         verified = False
 
@@ -269,8 +270,27 @@ class SignupPageHandler(MyHandler):
 
 
         if teacher_code:
+        # Check if valid school
+            requested_school = models.School.query(models.School.name == school_name).fetch(1, keys_only = True)
+            if len(requested_school) == 0:
+                self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
+                self.render('teacherRegistration.html')
+
             user_type = teacher_user
             class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
+            classList = []
+            for index in class_name_indexes:
+                prefix = "name-"
+                request_code = prefix + str(index)
+                class_name = self.request.get(request_code)
+                # Check if name is invalid
+                if class_name != '':
+                    new_class = models.Classes(
+                        school = requested_school[0],
+                        name = class_name
+                    )
+                    new_class_key = new_class.put()
+                    classList.append(new_class_key)
             
 
         elif student_id:
@@ -281,9 +301,6 @@ class SignupPageHandler(MyHandler):
             user_type = parent_user
 
 
-
-       
-
         user_data = self.user_model.create_user(email,
             first_name=first_name,
             password_raw=password,
@@ -291,27 +308,33 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             children=child,
             verified=verified,
-            classList=classList,
+            class_list=classList,
             meetings=meeting,
-            messageThreads=messageThread)
+            messageThreads=messageThread,
+            school = requested_school)
 
-
-        # if teacher_code:
-        #     for index in class_name_indexes:
-        #         # classList.append() 
-        #         class_name = self.request.get('name-' + str(index))
-        #         teacher_query = 
-        #         class_data = models.Classes(
-        #             teacher = [],
-        #             # school = school,
-        #             student_list = [],
-        #             name = class_name)
-
-
-
-        if not user_data[0]: #user_data is a tuple
-            self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
+        # Check if duplicate entry for email
+        if not user_data[0]: #user_data is a tuple (boolean, info). Boolean denotes success
+            self.templateValues['error'] = 'Unable to create account for the email address %s because an account for this email address already exists. Please try another email.' % (email)
+            self.render('teacherRegistration.html')
+            # We need to retroactively delete the classes that were just created
+            # This could possibly work better if we queried if a email exists earlier
+            # But we're currently relying on WebApp2 authentication to determine uniqueness
+            # by creating first and then checking
+            for entry in classList:
+                entry.delete()
             return
+        else:
+            if teacher_code:
+                new_teacher = user_data[1].key
+                schoolObj = requested_school[0].get()
+                schoolObj.put()
+                for class_entry in classList:
+                    schoolObj.classes.append(class_entry)
+                    classObj = class_entry.get()
+                    classObj.teacher.append(new_teacher)
+                    classObj.put()
+                schoolObj.put()
 
         if not student_id:
             user = user_data[1]
@@ -326,6 +349,8 @@ class SignupPageHandler(MyHandler):
             user_address = email
             body = """
             Dear %s:
+
+            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us. 
 
             Please verify your email by clicking the following link:
             %s
@@ -960,7 +985,7 @@ class SchoolSetupHandler(MyHandler):
 
     def post(self):
         school = models.School(
-                name = self.request.get('name'),
+                name = self.request.get('school_name'),
                 primary_color = self.request.get('school_color_primary'),
                 secondary_color = self.request.get('school_color_secondary'),
                 address = self.request.get('school_address'),

@@ -12,7 +12,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     meetings = ndb.KeyProperty(kind='Conference',repeated=True)
     family = ndb.KeyProperty(kind='User',repeated=True)
     message_threads = ndb.KeyProperty(kind='MessageThread',repeated=True)
-    class_list = ndb.StringProperty(repeated=True)
+    class_list = ndb.KeyProperty(kind='Classes', repeated=True)
     school = ndb.KeyProperty(kind='School',repeated=True)
 
     def id(self):
@@ -76,6 +76,9 @@ class School(ndb.Model):
     def id(self):
         return self.key.id()
 
+    def getKey(self):
+        return self.key.get()
+
     @staticmethod #just like a Java static method
     def getSchool(num):
         """Returns the pin with the given num (a String), or None if there is no such num."""
@@ -93,13 +96,16 @@ class School(ndb.Model):
         self.key.delete()
 
 class Classes(ndb.Model):
-    teacher = ndb.KeyProperty(kind='User',repeated=True)
     school = ndb.KeyProperty(kind='School',required=True)
-    student_list = ndb.KeyProperty(kind='User',repeated=True)
     name = ndb.StringProperty(required=True)
+    student_list = ndb.KeyProperty(kind='User',repeated=True)
+    teacher = ndb.KeyProperty(kind='User',repeated=True)
 
     def id(self):
         return self.key.id()
+
+    def key(self):
+        return self.key
 
 class PrivateMessage(ndb.Model):
     sender = ndb.KeyProperty(required=True)
