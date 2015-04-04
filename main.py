@@ -679,6 +679,8 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
         teachers = [teacher.to_dict() for teacher in teacher_query]
+        if len(teachers) == 0:
+            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
