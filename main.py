@@ -595,6 +595,20 @@ class CalendarPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Calendar | ClassTrack'
         self.login_check()
+        conferences = []
+
+        if(self.user.meetings):
+            conference_list = models.Conference.query(models.Conference.key.IN(self.user.meetings))
+            for conf in conference_list:
+                data ={}
+                names = ''
+                data['title'] = conf.names_list + "\n" + conf.purpose
+                data['start'] = conf.datetime.strftime("%Y-%m-%d")
+                conferences.append(data)
+        # data['title'] = 'daniel'
+        # data['start'] = "2015-04-07"
+        # conferences.append(data)
+        self.templateValues['conferences'] = json.dumps(conferences)
         self.render('calendar.html')
 
 class GradesPageHandler(MyHandler):
@@ -709,8 +723,9 @@ class AddConferencePageHandler(MyHandler):
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-            names += model_query.first_name
+            names += model_query.first_name + " "
             names += model_query.last_name + ', '
+        clean_names = names[:-1]
         teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
@@ -720,7 +735,7 @@ class AddConferencePageHandler(MyHandler):
                 participants = participants,
                 participant_ids = participant_id,
                 datetime = extractedDateTime,
-                names_list = names
+                names_list = clean_names
             )
         key=post.put()
 
@@ -927,6 +942,15 @@ class AddPostHandler(MyHandler):
                 owner = str(self.user_info['auth_ids'][0])
             )
         nfpost.put()
+
+class AddChildClassHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Child to Class'
+        self.login_check()
+        self.render('addChildClass.html')
 
 class InitNDBHandler(MyHandler):
     def get(self):
@@ -1313,6 +1337,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+    webapp2.Route('/addChildClass', AddChildClassHandler, name='addChild'),
+
     webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
