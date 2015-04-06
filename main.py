@@ -275,6 +275,7 @@ class SignupPageHandler(MyHandler):
             if len(requested_school) == 0:
                 self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
                 self.render('teacherRegistration.html')
+                return
 
             user_type = teacher_user
             class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
