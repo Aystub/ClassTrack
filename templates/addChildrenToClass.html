@@ -9,6 +9,8 @@
 
 <form action="/addChildrenToClass" method="POST">
   <input type="hidden" name="courseID" value={{courseID}}></input>
+    <input type="hidden" id="changeOccured" name="changeOccured" value='false'></input>
+
   <div class="row" style="margin-top:50px">
   <div class="col-md-6">
       <h1>Not in Class</h1>
@@ -33,6 +35,7 @@
     <div class="row" style="width:400px; margin-left: auto; margin-right: auto">
     <button onclick="moveRight()"> Add Students to Class </button>
     <button onclick="moveLeft()"> Remove Students from Class </button>
+    <h1>Course ID: {{courseID}} </h1>
     
     </div>
 <script type="text/javascript">
@@ -47,6 +50,7 @@
   });
 
   function moveRight() {
+    $('#changeOccured').val('true');
     //alert("Elft value is t : "+leftValue);
     var leftSelect = $('#potential-students');
     var rightSelect = $('#current-students');
@@ -75,6 +79,8 @@
   }
 
     function moveLeft() {
+    $('#changeOccured').val('true');
+
     //alert("Elft value is t : "+leftValue);
     var leftSelect = $('#potential-students');
     var rightSelect = $('#current-students');
