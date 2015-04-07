@@ -1008,70 +1008,54 @@ class InitNDBHandler(MyHandler):
             )
         nfpost.put()
 
-        #******SCHOOLS*******
+        #School
         newschool = models.School(
                 name = 'Seneca Middle School',
+                address = '810 W South 4th St, Seneca, SC 29678',
+                phone = '555-555-5555',
                 state = 'South Carolina',
+                county = 'Oconee',
                 zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
+                primary_color = 'FFFFFF',
+                secondary_color = 'FFFFFF'
             )
-        newschool.put()
-        newschool = models.School(
-                name = 'Hogwarts School of Witchcraft and Wizardry',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Ashford Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Naoetsu Private High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Fumizuki Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Private Magic University Affiliated High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Karakura High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
+        Seneca = newschool.put()
+        
+        #Make Class
+        newclass = models.Classes(
+        school = Seneca,
+        name = "Math 142"        
+        )
+        mathclass = newclass.put()
+        
+        #Link School and Class
+        Seneca.get().class_list = [mathclass]
+        
+        Seneca.get().put()
+        
+        #Teacher
+        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
+            first_name="John",
+            password_raw="password",
+            last_name="Goodmen",
+            user_type=teacher_user,
+            family=[],
+            verified=True,
+            class_list=[mathclass],
+            meetings=[],
+            messageThreads=[],
+            school = [Seneca])
+        
+        #Link Teacher
+        Seneca.get().teachers = [user_data[1].key]
+        mathclass.get().teacher = [user_data[1].key]
+        Seneca.get().put()
+        mathclass.get().put()
+        #Add Students and Add to List
+        studentList = []
+        
+        
+        #Link Students
 
         self.redirect('/')
 
