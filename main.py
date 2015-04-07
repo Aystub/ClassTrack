@@ -61,10 +61,11 @@ def default(obj):
     """Default JSON serializer."""
     import calendar, datetime
 
+    millis = 0
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
             obj = obj - obj.utcoffset()
-    millis = int(
+        millis = int(
         calendar.timegm(obj.timetuple()) * 1000 +
         obj.microsecond / 1000
     )
@@ -252,16 +253,47 @@ class SignupPageHandler(MyHandler):
         self.render('signup.html')
 
     def post(self):
+        self.templateValues = {}
         password = self.request.get('password')
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
-        #class_name_indexes = self.request.get('class-indexes') # for classes
+        school_name = self.request.get('school')
         verified = False
+
+        child = []
+        classList = []
+        meeting = []
+        messageThread = []
+
+        requested_school = models.School.query(models.School.name == school_name).fetch(1, keys_only = True)
+
         if teacher_code:
+        # Check if valid school
+            if len(requested_school) == 0:
+                self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
+                self.render('teacherRegistration.html')
+                return
+
             user_type = teacher_user
+            class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
+            classList = []
+            for index in class_name_indexes:
+                prefix = "name-"
+                request_code = prefix + str(index)
+                class_name = self.request.get(request_code)
+                # Check if name is invalid
+                if class_name != '':
+                    new_class = models.Classes(
+                        school = requested_school[0],
+                        name = class_name
+                    )
+                    new_class_key = new_class.put()
+                    classList.append(new_class_key)
+            
+
         elif student_id:
             user_type = student_user
             verified = True
@@ -276,13 +308,33 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             family=[],
             verified=verified,
-            class_list=[],
-            meeting=[],
-            message_threads=[])
+            class_list=classList,
+            meetings=meeting,
+            messageThreads=messageThread,
+            school = requested_school)
 
-        if not user_data[0]: #user_data is a tuple
-            self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
+        # Check if duplicate entry for email
+        if not user_data[0]: #user_data is a tuple (boolean, info). Boolean denotes success
+            self.templateValues['error'] = 'Unable to create account for the email address %s because an account for this email address already exists. Please try another email.' % (email)
+            self.render('teacherRegistration.html')
+            # We need to retroactively delete the classes that were just created
+            # This could possibly work better if we queried if a email exists earlier
+            # But we're currently relying on WebApp2 authentication to determine uniqueness
+            # by creating first and then checking
+            for entry in classList:
+                entry.delete()
             return
+        else:
+            if teacher_code:
+                new_teacher = user_data[1].key
+                schoolObj = requested_school[0].get()
+                schoolObj.put()
+                for class_entry in classList:
+                    schoolObj.classes.append(class_entry)
+                    classObj = class_entry.get()
+                    classObj.teacher.append(new_teacher)
+                    classObj.put()
+                schoolObj.put()
 
         if not student_id:
             user = user_data[1]
@@ -297,6 +349,8 @@ class SignupPageHandler(MyHandler):
             user_address = email
             body = """
             Dear {name}:
+
+            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us. 
 
             Please verify your email by clicking the following link:
             {link}
@@ -542,6 +596,20 @@ class CalendarPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Calendar | ClassTrack'
         self.login_check()
+        conferences = []
+
+        if(self.user.meetings):
+            conference_list = models.Conference.query(models.Conference.key.IN(self.user.meetings))
+            for conf in conference_list:
+                data ={}
+                names = ''
+                data['title'] = conf.names_list + "\n" + conf.purpose
+                data['start'] = conf.datetime.strftime("%Y-%m-%d")
+                conferences.append(data)
+        # data['title'] = 'daniel'
+        # data['start'] = "2015-04-07"
+        # conferences.append(data)
+        self.templateValues['conferences'] = json.dumps(conferences)
         self.render('calendar.html')
 
 class GradesPageHandler(MyHandler):
@@ -626,6 +694,8 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
         teachers = [teacher.to_dict() for teacher in teacher_query]
+        if len(teachers) == 0:
+            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
@@ -654,8 +724,9 @@ class AddConferencePageHandler(MyHandler):
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-            names += model_query.first_name
+            names += model_query.first_name + " "
             names += model_query.last_name + ', '
+        clean_names = names[:-1]
         teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
@@ -665,7 +736,7 @@ class AddConferencePageHandler(MyHandler):
                 participants = participants,
                 participant_ids = participant_id,
                 datetime = extractedDateTime,
-                names_list = names
+                names_list = clean_names
             )
         key=post.put()
 
@@ -752,6 +823,13 @@ class AddMessagePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Inbox'
         self.login_check()
+
+
+        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        teachers = [teacher.to_dict() for teacher in teacher_query]
+        if len(teachers) == 0:
+            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
+        self.templateValues['teachers'] = teacher_query
 
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
@@ -873,6 +951,15 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
+class AddChildClassHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Child to Class'
+        self.login_check()
+        self.render('addChildClass.html')
+
 class InitNDBHandler(MyHandler):
     def get(self):
         #********Posts***********
@@ -921,70 +1008,54 @@ class InitNDBHandler(MyHandler):
             )
         nfpost.put()
 
-        #******SCHOOLS*******
+        #School
         newschool = models.School(
                 name = 'Seneca Middle School',
+                address = '810 W South 4th St, Seneca, SC 29678',
+                phone = '555-555-5555',
                 state = 'South Carolina',
+                county = 'Oconee',
                 zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
+                primary_color = 'FFFFFF',
+                secondary_color = 'FFFFFF'
             )
-        newschool.put()
-        newschool = models.School(
-                name = 'Hogwarts School of Witchcraft and Wizardry',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Ashford Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Naoetsu Private High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Fumizuki Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Private Magic University Affiliated High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Karakura High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
+        Seneca = newschool.put()
+        
+        #Make Class
+        newclass = models.Classes(
+        school = Seneca,
+        name = "Math 142"        
+        )
+        mathclass = newclass.put()
+        
+        #Link School and Class
+        Seneca.get().class_list = [mathclass]
+        
+        Seneca.get().put()
+        
+        #Teacher
+        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
+            first_name="John",
+            password_raw="password",
+            last_name="Goodmen",
+            user_type=teacher_user,
+            family=[],
+            verified=True,
+            class_list=[mathclass],
+            meetings=[],
+            messageThreads=[],
+            school = [Seneca])
+        
+        #Link Teacher
+        Seneca.get().teachers = [user_data[1].key]
+        mathclass.get().teacher = [user_data[1].key]
+        Seneca.get().put()
+        mathclass.get().put()
+        #Add Students and Add to List
+        studentList = []
+        
+        
+        #Link Students
 
         self.redirect('/')
 
@@ -1013,22 +1084,21 @@ class SchoolSetupHandler(MyHandler):
 
     def post(self):
         school = models.School(
-                self.request.get('name'),
+                name = self.request.get('school_name'),
                 primary_color = self.request.get('school_color_primary'),
                 secondary_color = self.request.get('school_color_secondary'),
                 address = self.request.get('school_address'),
                 state = self.request.get('school_state'),
                 county = self.request.get('school_county'),
                 zipcode = self.request.get('school_zipcode'),
-                phone = self.request.get('school_phone'),
-                admins = [self.user.key]
+                phone = self.request.get('school_phone')
             )
         school.put()
 
-        school_query = models.School.query().filter(models.School.admins==self.user.key)
-        schools = [school.key for school in school_query]
-        self.user.school = schools
-        self.user.key.get().put()
+        # school_query = models.School.query().filter(models.School.admins==self.user.key)
+        # schools = [school.key for school in school_query]
+        # self.user.school = schools
+        # self.user.key.get().put()
 
         self.redirect('/')
 
@@ -1082,7 +1152,6 @@ class ConferenceMessageChannelHandler(MyHandler):
         self.render('ConferenceMessageChannel.html')
 
 class ConferencePageHandler(MyHandler):
-
 
     def get(self):
         self.setupUser()
@@ -1174,11 +1243,8 @@ class ConferencePageHandler(MyHandler):
         # if message:
         #     channel.send_message(1, message)
         # self.render('conference.html')
-
-
-
-
-
+        
+        
 class ChannelConnectionHandler(MyHandler):
     def post(self):
         self.setupUser()
@@ -1245,11 +1311,11 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    #webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
-#    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
+    #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
@@ -1259,6 +1325,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+    webapp2.Route('/addChildClass', AddChildClassHandler, name='addChild'),
     webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),

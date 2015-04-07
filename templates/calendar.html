@@ -19,22 +19,26 @@
 	<div class="row">
 		<div id='calendar'></div>
 		<script>
+
+			var eventsList ={{ conferences | safe }};
+
 			// Full Calendar
 			// http://fullcalendar.io/
 			// Data can be retrieved through AJAX
 			$(document).ready(function(){
 				    $('#calendar').fullCalendar({
 				    	height: 500,
-			    	    events: [
-				        {
-				            title  : 'Thanksgiving',
-				            start  : '2014-11-27'
-				        },
-				        {
-				            title  : 'CSCE 490 Presentation',
-				            start  : '2014-12-05',
-				        }
-				    ]
+			    	    events: eventsList
+			    	 //    [
+					    //     {
+					    //         title  : 'Thanksgiving',
+					    //         start  : '2015-4-27'
+					    //     },
+					    //     {
+					    //         title  : 'CSCE 490 Presentation',
+					    //         start  : '2014-12-05',
+					    //     }
+				    	// ]
 			    });
 			});
 		</script>

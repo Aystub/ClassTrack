@@ -60,14 +60,14 @@
 						{% if not children_list %}
 						<li><a href="/addChild">Add Child</a></li>
 						{% else %}
-							<li><select class="form-control" style="margin-top: 7px;">
-							{% for child in children_list%}
-								<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
-								<li><a href="/addChild">Add Child</a></li>
-
-							{%endfor%}
-						{% endif %}
-						</select></li>
+							<li>
+								<select class="form-control" style="margin-top: 7px;">
+								{% for child in children_list%}
+									<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
+								{%endfor%}
+								{% endif %}
+								</select>
+							</li>
 						<!--<li><a>Current Class Selected</a></li>
 						<li><a>{{selected_class}}</a></li>-->
 					</ul>

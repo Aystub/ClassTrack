@@ -28,6 +28,9 @@
 
 	<body>
 
+	    {% if error %}
+	      <div class="alert alert-warning" style=""><p> {{ error }} </p></div>
+	    {% else %}
 		<form role="form" action="/addConference" method="POST" onSubmit="return window.checkValidity();">
 		  <div class="form-group">
 		    <label for="purpose">Purpose of Meeting:</label>
@@ -92,5 +95,7 @@
 				}
 			}
 		</script>
+	    {% endif %}
+
 	</body>
 	</html>
