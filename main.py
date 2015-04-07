@@ -1169,7 +1169,6 @@ class ConferenceMessageChannelHandler(MyHandler):
 
 class ConferencePageHandler(MyHandler):
 
-
     def get(self):
         self.setupUser()
         self.navbarSetup()
@@ -1260,11 +1259,8 @@ class ConferencePageHandler(MyHandler):
         # if message:
         #     channel.send_message(1, message)
         # self.render('conference.html')
-
-
-
-
-
+        
+        
 class ChannelConnectionHandler(MyHandler):
     def post(self):
         self.setupUser()
@@ -1331,11 +1327,11 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    #webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
-#    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
+    #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
@@ -1346,7 +1342,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/addChildClass', AddChildClassHandler, name='addChild'),
-
     webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
