@@ -1208,21 +1208,16 @@ class AddChildrenToClassHandler(MyHandler):
 
         if changeOccured:
             if self.request.get('potential-students'):
-                logging.info("POTENTIAL STUDENT EDITS")
                 potential_list = self.request.params.getall('potential-students')
                 for student_id in potential_list:
                     if student_id != '':
                         student = models.User.get_by_id(int(student_id))
                         if student:
-                            logging.info(ndb.Key(models.Course, courseID))
-                            logging.info(student)
                             if ndb.Key(models.Course, courseID) in student.course_list:
-                                logging.info("WE ARE REMOVING FROM STUDENT "  + student.first_name)
                                 student.course_list.remove(ndb.Key(models.Course, courseID))
                                 student.put()
             
             if self.request.get('current-students'):
-                logging.info("CURRENT STUDENT EDITS")
                 current_list = self.request.params.getall('current-students')
                 logging.info(current_list)
                 for student_id in current_list:
@@ -1232,7 +1227,6 @@ class AddChildrenToClassHandler(MyHandler):
                             logging.info(student)
                             if ndb.Key(models.Course, courseID) not in student.course_list:
                                 student.course_list.append(ndb.Key(models.Course, courseID))
-                                logging.info("WE ARE ADDING TO STUDENT "  + student.first_name)
                                 student.put()
 
 
