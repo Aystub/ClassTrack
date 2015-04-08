@@ -104,9 +104,9 @@ class MyHandler(webapp2.RequestHandler):
     #             children_query = models.User.query(models.User.auth_ids.IN(children_ids))
     #             self.templateValues['children_list'] = children_query
 
-    #         #Classes
-    #         class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-    #         self.templateValues['selected_class'] = class_list[len(class_list)-1]
+    #         #Course
+    #         courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+    #         self.templateValues['selected_class'] = courseList[len(courseList)-1]
     #     else:
     #         self.templateValues['login'] = '/login'
     #         self.templateValues['signup'] = '/signup'
@@ -133,9 +133,9 @@ class MyHandler(webapp2.RequestHandler):
                 children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
-            #Classes
-            class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-            self.templateValues['selected_class'] = class_list[len(class_list)-1]
+            #Course
+            courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+            self.templateValues['selected_class'] = courseList[len(courseList)-1]
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
@@ -264,7 +264,7 @@ class SignupPageHandler(MyHandler):
         verified = False
 
         child = []
-        classList = []
+        courseList = []
         meeting = []
         messageThread = []
 
@@ -272,26 +272,26 @@ class SignupPageHandler(MyHandler):
 
         if teacher_code:
         # Check if valid school
-            if len(requested_school) == 0:
+            if len(requested_school) == 0 or requested_school is None:
                 self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
                 self.render('teacherRegistration.html')
                 return
 
             user_type = teacher_user
             class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
-            classList = []
+            courseList = []
             for index in class_name_indexes:
                 prefix = "name-"
                 request_code = prefix + str(index)
                 class_name = self.request.get(request_code)
                 # Check if name is invalid
                 if class_name != '':
-                    new_class = models.Classes(
+                    new_class = models.Course(
                         school = requested_school[0],
                         name = class_name
                     )
                     new_class_key = new_class.put()
-                    classList.append(new_class_key)
+                    courseList.append(new_class_key)
             
 
         elif student_id:
@@ -308,7 +308,7 @@ class SignupPageHandler(MyHandler):
             user_type=user_type,
             family=[],
             verified=verified,
-            class_list=classList,
+            courseList=courseList,
             meetings=meeting,
             messageThreads=messageThread,
             school = requested_school)
@@ -321,7 +321,7 @@ class SignupPageHandler(MyHandler):
             # This could possibly work better if we queried if a email exists earlier
             # But we're currently relying on WebApp2 authentication to determine uniqueness
             # by creating first and then checking
-            for entry in classList:
+            for entry in courseList:
                 entry.delete()
             return
         else:
@@ -329,7 +329,7 @@ class SignupPageHandler(MyHandler):
                 new_teacher = user_data[1].key
                 schoolObj = requested_school[0].get()
                 schoolObj.put()
-                for class_entry in classList:
+                for class_entry in courseList:
                     schoolObj.classes.append(class_entry)
                     classObj = class_entry.get()
                     classObj.teacher.append(new_teacher)
@@ -601,7 +601,7 @@ class CalendarPageHandler(MyHandler):
         if(self.user.meetings):
             conference_list = models.Conference.query(models.Conference.key.IN(self.user.meetings))
             for conf in conference_list:
-                data ={}
+                data = {}
                 names = ''
                 data['title'] = conf.names_list + "\n" + conf.purpose
                 data['start'] = conf.datetime.strftime("%Y-%m-%d")
@@ -901,9 +901,9 @@ class ClassSelectPageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Class Select | ClassTrack'
-        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-        self.templateValues['class_list'] = class_list
-        self.templateValues['selected_class'] = class_list[len(class_list)-1]
+        courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+        self.templateValues['courseList'] = courseList
+        self.templateValues['selected_class'] = courseList[len(courseList)-1]
         self.login_check()
         self.render('classSelect.html')
 
@@ -951,129 +951,7 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
-class AddChildClassHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Add Child to Class'
-        self.login_check()
-        self.render('addChildClass.html')
 
-class InitNDBHandler(MyHandler):
-    def get(self):
-        #********Posts***********
-        nfpost = models.NFPost(
-                caption = 'Last Element',
-                typeID = 0,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        nfpost = models.NFPost(
-                caption = 'Flu shots will be given 11/19/14',
-                typeID = 1,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        nfpost = models.NFPost(
-                caption = 'Sarah made an 87 on her English Test',
-                typeID = 3,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'PTA is holding a meeting on 12/5/14',
-                typeID = 2,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'Prom has been scheduled for 4/20!!',
-                typeID = 5,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'Please complete reading from chapter 11 by Friday!',
-                typeID = 4,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'LHS went 41-27 against CHS!',
-                typeID = 1,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        #******SCHOOLS*******
-        newschool = models.School(
-                name = 'Seneca Middle School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Hogwarts School of Witchcraft and Wizardry',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Ashford Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Naoetsu Private High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Fumizuki Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Private Magic University Affiliated High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Karakura High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-
-        self.redirect('/')
 
 class TeacherRegistrationHandler(MyHandler):
     def get(self):
@@ -1298,6 +1176,1035 @@ class SendMessageHandler(MyHandler):
         self.templateValues = {}
         self.render('testSendMessage.html')
 
+class ClassManagementHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        courseList = []
+        if self.user.courseList:
+            teacherCourseList = self.user.courseList
+            for course in teacherCourseList:
+                data = course.get()
+                entry = {}
+                entry['name'] = data.name
+                entry['key'] = course.id()
+                courseList.append(entry)
+
+        self.templateValues['courseList'] = courseList
+        self.render('classManagement.html')
+
+
+class AddChildrenToClassHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Child to Class'
+        self.login_check()
+
+        self.templateValues['courseID'] = self.request.get('courseID')
+
+        courseID = int(self.request.get('courseID'))
+        changeOccured = self.request.get('changeOccured')
+
+        if changeOccured:
+            if self.request.get('potential-students'):
+                potential_list = self.request.params.getall('potential-students')
+                for student_id in potential_list:
+                    if student_id != '':
+                        student = models.User.get_by_id(int(student_id))
+                        if student:
+                            if ndb.Key(models.Course, courseID) in student.course_list:
+                                student.course_list.remove(ndb.Key(models.Course, courseID))
+                                student.put()
+            
+            if self.request.get('current-students'):
+                current_list = self.request.params.getall('current-students')
+                logging.info(current_list)
+                for student_id in current_list:
+                    if student_id != '':
+                        student = models.User.get_by_id(int(student_id))
+                        if student:
+                            logging.info(student)
+                            if ndb.Key(models.Course, courseID) not in student.course_list:
+                                student.course_list.append(ndb.Key(models.Course, courseID))
+                                student.put()
+
+
+        student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school
+        currentCourse = ndb.Key(models.Course, courseID)
+        current_query = student_query.filter(models.User.course_list == currentCourse)
+        
+        potential_query = []
+
+        current_list = []
+        current_value_list = []
+        for student in current_query:
+            entry = {}
+            entry['name'] = student.first_name + " " + student.last_name
+            entry['value'] = student.id()
+            current_value_list.append(student.id())
+            current_list.append(entry)
+ 
+        for student in student_query:
+            contains = False
+            if student.id() in current_value_list:
+               contains = True
+            if not contains:
+                potential_query.append(student) 
+
+
+        potential_list = []
+        for student in potential_query:
+            entry = {}
+            entry['name'] = student.first_name + " " + student.last_name
+            entry['value'] = student.id()
+            potential_list.append(entry)
+
+
+
+        self.templateValues['potential_list'] = json.dumps(potential_list)
+        self.templateValues['current_list'] = json.dumps(current_list)
+        self.render('addChildrenToClass.html')
+
+
+
+
+
+# Dummy data handlers
+class MakeDummyChildrenHandler(MyHandler):
+    def get(self):
+        requested_school = models.School.query(models.School.name == 'Seneca Middle School').fetch(1, keys_only = True)
+        default_course = models.Course.query(models.Course.name == 'DEFAULTNONECOURSE').fetch(1, keys_only = True)
+
+        new_child = models.User(
+            first_name = 'Devin',
+            last_name = 'Crawford',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Micheal',
+            last_name = 'Campbell',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Sam',
+            last_name = 'Ballard',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Rodolfo',
+            last_name = 'Frazier',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Edith',
+            last_name = 'Wolfe',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Stuart',
+            last_name = 'Neal',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Darlene',
+            last_name = 'Osborne',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Taylor',
+            last_name = 'Griffith',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Rita',
+        #     last_name = 'Anderson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Johnnie',
+        #     last_name = 'Bates',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kelly',
+        #     last_name = 'Thompson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Robin',
+        #     last_name = 'Reese',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Michele',
+        #     last_name = 'Robinson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Elsa',
+        #     last_name = 'Morris',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Beth',
+        #     last_name = 'Cross',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Andres',
+        #     last_name = 'Henderson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jesus',
+        #     last_name = 'Drake',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ethel',
+        #     last_name = 'Wright',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ida',
+        #     last_name = 'Burns',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Elaine',
+        #     last_name = 'Lawson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lawrence',
+        #     last_name = 'Chapman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jean',
+        #     last_name = 'Sanchez',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Alice',
+        #     last_name = 'Joseph',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Wm',
+        #     last_name = 'Mitchell',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Regina',
+        #     last_name = 'Rose',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ramona',
+        #     last_name = 'Rogers',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Richard',
+        #     last_name = 'Holt',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ann',
+        #     last_name = 'Bell',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Corey',
+        #     last_name = 'Adams',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lana',
+        #     last_name = 'Klein',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Pablo',
+        #     last_name = 'Mendoza',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Floyd',
+        #     last_name = 'Walsh',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Edmund',
+        #     last_name = 'Woods',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Dale',
+        #     last_name = 'Payne',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Geraldine',
+        #     last_name = 'Phillips',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Drew',
+        #     last_name = 'Leonard',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Sherri',
+        #     last_name = 'Luna',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lorene',
+        #     last_name = 'Olson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Luke',
+        #     last_name = 'Dawson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Luther',
+        #     last_name = 'Farmer',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Tanya',
+        #     last_name = 'Mcguire',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kathryn',
+        #     last_name = 'Elliott',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jeremiah',
+        #     last_name = 'Howard',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Alicia',
+        #     last_name = 'Vega',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Eula',
+        #     last_name = 'Hughes',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Reginald',
+        #     last_name = 'Cohen',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Shelley',
+        #     last_name = 'Lyons',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Casey',
+        #     last_name = 'Ortiz',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Paul',
+        #     last_name = 'Holloway',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Vanessa',
+        #     last_name = 'Black',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Marcia',
+        #     last_name = 'Goodman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Doris',
+        #     last_name = 'Duncan',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Wayne',
+        #     last_name = 'Waters',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Norman',
+        #     last_name = 'Morgan',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Alberto',
+        #     last_name = 'Norman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Erma',
+        #     last_name = 'May',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Anita',
+        #     last_name = 'Mcdaniel',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Pat',
+        #     last_name = 'Pena',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kate',
+        #     last_name = 'French',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kelley',
+        #     last_name = 'Douglas',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Angela',
+        #     last_name = 'Floyd',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Neil',
+        #     last_name = 'Ray',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Dana',
+        #     last_name = 'Silva',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Nellie',
+        #     last_name = 'Reed',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Candice',
+        #     last_name = 'Washington',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Joyce',
+        #     last_name = 'Wallace',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Christopher',
+        #     last_name = 'Fleming',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Eric',
+        #     last_name = 'Snyder',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Mandy',
+        #     last_name = 'Higgins',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Troy',
+        #     last_name = 'Mcgee',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Felix',
+        #     last_name = 'Simpson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Melanie',
+        #     last_name = 'Howell',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Georgia',
+        #     last_name = 'Dunn',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Joshua',
+        #     last_name = 'Nichols',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Gina',
+        #     last_name = 'Townsend',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Danny',
+        #     last_name = 'Alvarado',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Faith',
+        #     last_name = 'Vargas',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Irvin',
+        #     last_name = 'Sandoval',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Betsy',
+        #     last_name = 'Maldonado',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Abel',
+        #     last_name = 'Morton',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Sue',
+        #     last_name = 'Mclaughlin',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Monique',
+        #     last_name = 'Mcbride',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Deanna',
+        #     last_name = 'Mathis',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Emmett',
+        #     last_name = 'Mason',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Tomas',
+        #     last_name = 'Mann',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jackie',
+        #     last_name = 'Foster',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Garry',
+        #     last_name = 'Riley',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Gerardo',
+        #     last_name = 'Parks',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Fernando',
+        #     last_name = 'Lamb',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Bill',
+        #     last_name = 'Newman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Darrell',
+        #     last_name = 'Abbott',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lila',
+        #     last_name = 'Jacobs',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Bonnie',
+        #     last_name = 'Boyd',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Melinda',
+        #     last_name = 'Evans',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Edna',
+        #     last_name = 'Greer',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Valerie',
+        #     last_name = 'Carson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Billie',
+        #     last_name = 'Manning',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Sherry',
+        #     last_name = 'Ruiz',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Beverly',
+        #     last_name = 'Gill',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Rosemary',
+        #     last_name = 'Reid',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+   
+        
+class InitNDBHandler(MyHandler):
+    def get(self):
+        #********Posts***********
+        nfpost = models.NFPost(
+                caption = 'Last Element',
+                typeID = 0,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
+        nfpost = models.NFPost(
+                caption = 'Flu shots will be given 11/19/14',
+                typeID = 1,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
+        nfpost = models.NFPost(
+                caption = 'Sarah made an 87 on her English Test',
+                typeID = 3,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'PTA is holding a meeting on 12/5/14',
+                typeID = 2,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'Prom has been scheduled for 4/20!!',
+                typeID = 5,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'Please complete reading from chapter 11 by Friday!',
+                typeID = 4,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'LHS went 41-27 against CHS!',
+                typeID = 1,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
+        #******SCHOOLS*******
+        newschool = models.School(
+                name = 'Seneca Middle School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+        newschool = models.School(
+                name = 'Hogwarts School of Witchcraft and Wizardry',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+        newschool = models.School(
+                name = 'Ashford Academy',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+        newschool = models.School(
+                name = 'Naoetsu Private High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+        newschool = models.School(
+                name = 'Fumizuki Academy',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+        newschool = models.School(
+                name = 'Private Magic University Affiliated High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+        newschool = models.School(
+                name = 'Karakura High School',
+                state = 'South Carolina',
+                zipcode = '55555',
+                county = 'Seneca',
+                address = 'Example Address',
+                phone = '555-555-5555'
+            )
+        newschool.put()
+
+        self.redirect('/')
 
 
 config = {
@@ -1345,7 +2252,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
-    webapp2.Route('/addChildClass', AddChildClassHandler, name='addChild'),
+    webapp2.Route('/addChildrenToClass', AddChildrenToClassHandler, name='addChild'),
 
     webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
@@ -1353,9 +2260,10 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/profile', ProfileHandler, name='profile'),
     webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
+    # webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
     webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
-    # webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel'),
+    webapp2.Route('/makeDummyChildren', MakeDummyChildrenHandler, name="makeDummyChildren"),
+    webapp2.Route('/classManagement', ClassManagementHandler, name='classManagement'),
     # webapp2.Route('/_ah/channel/connected/', ChannelConnectionHandler, name='ConnectionHandler'),
     # webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler'),
     # webapp2.Route('/testSendMessage', SendMessageHandler, name='SendMessageHandler')
