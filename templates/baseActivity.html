@@ -60,14 +60,14 @@
 						{% if not children_list %}
 						<li><a href="/addChild">Add Child</a></li>
 						{% else %}
-							<li><select class="form-control" style="margin-top: 7px;">
-							{% for child in children_list%}
-								<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
-								<li><a href="/addChild">Add Child</a></li>
-
-							{%endfor%}
-						{% endif %}
-						</select></li>
+							<li>
+								<select class="form-control" style="margin-top: 7px;">
+								{% for child in children_list%}
+									<option value="{{child.auth_ids[0]}}">{{child.first_name}}</option>
+								{%endfor%}
+								{% endif %}
+								</select>
+							</li>
 						<!--<li><a>Current Class Selected</a></li>
 						<li><a>{{selected_class}}</a></li>-->
 					</ul>
@@ -111,6 +111,7 @@
 							<!-- <li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li> -->
 							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
 							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
+							<li id="classManagement_li"><a class="side-nav-link" href="classManagement">Manage Classes</a></li>
 
 
 						{% elif usertype == 2 %} {#parent#}

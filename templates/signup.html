@@ -8,6 +8,9 @@
   <div class="spacer25"></div>
 
   <div class="col-md-4 col-md-offset-4">
+    {% if error %}
+      <div class="alert alert-warning" style="margin-top:20px"><p> {{ error }} </p></div>
+    {% endif %}
     <h1 style="margin-left:-15px;">Sign Up:</h1>
     <br>
     <form role="form" action="/signup" method="POST">
@@ -26,6 +29,11 @@
       <div class="form-group">
         <label for="password">Password:</label>
         <input class="form-control" type="password" name="password" placeholder="Password"></input>
+      </div>
+      <div class="form-group">
+        <label for="school">School Name:</label>
+        <input id="schoolNameField" class="form-control" type="text" name="school" placeholder="School Name" value="{{previous_school_name}}"></input>
+        <div style="display: inline;" id="schoolSug"></div>
       </div>
       <!--<div class="form-group">
         <label for="school">School Name:</label>

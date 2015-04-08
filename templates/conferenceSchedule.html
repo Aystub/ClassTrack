@@ -50,7 +50,7 @@
 				<div class="col-md-2">{{part_list[loop.index0]}}</div>
 				<div class="col-md-6">
 
-						<div class="col-md-4">
+						<div class="col-md-6">
 							<form method="GET" action="http://54.164.63.7:9000/">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
 								<input type="hidden" name="name" value={{ first_name }}>
@@ -58,10 +58,10 @@
 								<input class="btn btn-default btn-block" type="submit" value="Enter">
 							</form>
 						</div>
-						<div class="col-md-4">
+<!-- 						<div class="col-md-4">
 							<a href="#" class="btn btn-default btn-block">Edit</a>
-						</div>
-						<div class="col-md-4">
+						</div> -->
+						<div class="col-md-6">
 							<form method="POST" action="delConference">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
 								<input name=SeleniumTestDelete id={{conference['purpose']}} class="btn btn-default btn-block" type="submit" value="Delete">

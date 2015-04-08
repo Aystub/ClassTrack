@@ -8,6 +8,9 @@
   <div class="spacer25"></div>
 
   <div class="col-md-4 col-md-offset-4">
+
+
+
     <h1 style="margin-left:-15px;">Add Child:</h1>
     <br>
     <div id="message"></div>
@@ -16,9 +19,12 @@
         <input id="childIDField" class="form-control" type="text" name="childID" placeholder="My Child's ID"></input>
         <div style="display: inline;" id="childResults"></div>
       </div>
-        <button onclick="return lookupChild();" class="btn btn-default">Submit</button>
-  </div>
+      <button onclick="lookupChild();" class="btn btn-default">Submit</button>
+    </div>
 
-</div>
+  
+  </div>
+  <script src="/assets/js/schoolSuggestion.js"></script>
+
 
 {% endblock %}

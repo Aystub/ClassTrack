@@ -61,10 +61,11 @@ def default(obj):
     """Default JSON serializer."""
     import calendar, datetime
 
+    millis = 0
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
             obj = obj - obj.utcoffset()
-    millis = int(
+        millis = int(
         calendar.timegm(obj.timetuple()) * 1000 +
         obj.microsecond / 1000
     )
@@ -103,9 +104,9 @@ class MyHandler(webapp2.RequestHandler):
     #             children_query = models.User.query(models.User.auth_ids.IN(children_ids))
     #             self.templateValues['children_list'] = children_query
 
-    #         #Classes
-    #         class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-    #         self.templateValues['selected_class'] = class_list[len(class_list)-1]
+    #         #Course
+    #         courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+    #         self.templateValues['selected_class'] = courseList[len(courseList)-1]
     #     else:
     #         self.templateValues['login'] = '/login'
     #         self.templateValues['signup'] = '/signup'
@@ -132,9 +133,9 @@ class MyHandler(webapp2.RequestHandler):
                 children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
-            #Classes
-            class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-            self.templateValues['selected_class'] = class_list[len(class_list)-1]
+            #Course
+            courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+            self.templateValues['selected_class'] = courseList[len(courseList)-1]
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
@@ -252,16 +253,47 @@ class SignupPageHandler(MyHandler):
         self.render('signup.html')
 
     def post(self):
+        self.templateValues = {}
         password = self.request.get('password')
         email = self.request.get('email')
         first_name = self.request.get('fname')
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
-        #class_name_indexes = self.request.get('class-indexes') # for classes
+        school_name = self.request.get('school')
         verified = False
+
+        child = []
+        courseList = []
+        meeting = []
+        messageThread = []
+
+        requested_school = models.School.query(models.School.name == school_name).fetch(1, keys_only = True)
+
         if teacher_code:
+        # Check if valid school
+            if len(requested_school) == 0 or requested_school is None:
+                self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
+                self.render('teacherRegistration.html')
+                return
+
             user_type = teacher_user
+            class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
+            courseList = []
+            for index in class_name_indexes:
+                prefix = "name-"
+                request_code = prefix + str(index)
+                class_name = self.request.get(request_code)
+                # Check if name is invalid
+                if class_name != '':
+                    new_class = models.Course(
+                        school = requested_school[0],
+                        name = class_name
+                    )
+                    new_class_key = new_class.put()
+                    courseList.append(new_class_key)
+            
+
         elif student_id:
             user_type = student_user
             verified = True
@@ -269,30 +301,40 @@ class SignupPageHandler(MyHandler):
         else:
             user_type = parent_user
 
-        child = []
-        classList = []
-        meeting = []
-        invited = []
-        messageThread = []
-
-
         user_data = self.user_model.create_user(email,
             first_name=first_name,
             password_raw=password,
             last_name=last_name,
             user_type=user_type,
-            children=child,
+            family=[],
             verified=verified,
-            classList=classList,
+            courseList=courseList,
             meetings=meeting,
-            invited=invited,
-            messageThreads=messageThread)
+            messageThreads=messageThread,
+            school = requested_school)
 
-
-
-        if not user_data[0]: #user_data is a tuple
-            self.display_message('Unable to create user for email %s because of duplicate keys %s' % (email, user_data[1]))
+        # Check if duplicate entry for email
+        if not user_data[0]: #user_data is a tuple (boolean, info). Boolean denotes success
+            self.templateValues['error'] = 'Unable to create account for the email address %s because an account for this email address already exists. Please try another email.' % (email)
+            self.render('teacherRegistration.html')
+            # We need to retroactively delete the classes that were just created
+            # This could possibly work better if we queried if a email exists earlier
+            # But we're currently relying on WebApp2 authentication to determine uniqueness
+            # by creating first and then checking
+            for entry in courseList:
+                entry.delete()
             return
+        else:
+            if teacher_code:
+                new_teacher = user_data[1].key
+                schoolObj = requested_school[0].get()
+                schoolObj.put()
+                for class_entry in courseList:
+                    schoolObj.classes.append(class_entry)
+                    classObj = class_entry.get()
+                    classObj.teacher.append(new_teacher)
+                    classObj.put()
+                schoolObj.put()
 
         if not student_id:
             user = user_data[1]
@@ -302,23 +344,24 @@ class SignupPageHandler(MyHandler):
 
             verification_url = self.uri_for('verification', type='v', user_id=user_id, signup_token=token, _full=True)
 
-            sender_address="NoReply Classtrack <noreply@classtrack.com>"
-            subject="Please Verify Your Email"
+            sender_address="classtracknoreply@gmail.com"
+            subject="Welcome to Classtrack! Please Verify Your Email."
             user_address = email
             body = """
-            Dear %s:
+            Dear {name}:
+
+            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us.
 
             Please verify your email by clicking the following link:
-            %s
+            {link}
 
             Thanks!
             Team Classtrack
-            """.format(first_name, verification_url)
+            """.format(name=first_name, link=verification_url)
 
             mail.send_mail(sender_address, user_address, subject, body)
 
             msg = 'A verification email has been sent to {email_confirmation}'
-
             self.display_message(msg.format(email_confirmation=email))
         else:
             self.redirect('/childRegistration')
@@ -329,10 +372,6 @@ class VerificationHandler(MyHandler):
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']
         verification_type = kwargs['type']
-        # it should be something more concise like
-        # self.auth.get_user_by_token(user_id, signup_token)
-        # unfortunately the auth interface does not (yet) allow to manipulate
-        # signup tokens concisely
         user, ts = self.user_model.get_by_auth_token(int(user_id), signup_token,'signup')
 
         if not user:
@@ -343,23 +382,25 @@ class VerificationHandler(MyHandler):
         self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
 
         if verification_type == 'v':
-            # remove signup token, we don't want users to come back with an old link
+            # remove signup token to prevent users from coming back with an old link
             self.user_model.delete_signup_token(user.get_id(), signup_token)
 
             if not user.verified:
                 user.verified = True
+                #Need to reassign user.auth_ids to avoid a JSON serialization error that
+                #was constantly occuring.
+                user.auth_ids = [user.auth_ids[0]]
                 user.put()
 
-            self.display_message('User email address has been verified.')
+            self.display_message('Your email address has been verified.')
             return
 
         elif verification_type == 'p':
             # supply user to the page
-            params = {
-                'user': user,
-                'token': signup_token
-            }
-            self.render('resetpassword.html', params)
+            self.setupUser()
+            self.templateValues['user'] = user
+            self.templateValues['token'] = signup_token
+            self.render('resetpassword.html')
         else:
             logging.info('verification type not supported')
             self.abort(404)
@@ -381,8 +422,13 @@ class HomePageHandler(MyHandler):
 class SetPasswordHandler(MyHandler):
     def get(self):
         self.redirect('/')
-    @user_required
+
     def post(self):
+        user = self.request.get('u')
+
+        if not user:
+            self.redirect('/login')
+
         password = self.request.get('password')
 
         old_token = self.request.get('t')
@@ -402,33 +448,44 @@ class SetPasswordHandler(MyHandler):
 
 class ForgotPasswordHandler(MyHandler):
     def get(self):
-        self._serve_page()
+        self.setupUser()
+        self.render('forgot.html')
 
     def post(self):
-        username = self.request.get('user_name')
+        self.setupUser()
+        username = self.request.get('email')
 
         user = self.user_model.get_by_auth_id(username)
         if not user:
             logging.info('Could not find any user entry for username %s', username)
-            self._serve_page(not_found=True)
+            self.templateValues['error'] = 'Sorry, we could not find an account matching ' + username
+            self.render('forgot.html')
             return
 
-        user_id = user.get_id()
+        user_id = user.id()
         token = self.user_model.create_signup_token(user_id)
 
         verification_url = self.uri_for('verification', type='p', user_id=user_id, signup_token=token, _full=True)
 
+        sender_address="classtracknoreply@gmail.com"
+        subject="Password Reset Request From Classtrack"
+        user_address = username
+        body = """
+        Dear {name}:
+
+        Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us.
+
+        Please verify your email by clicking the following link:
+        {link}
+
+        Thanks!
+        Team Classtrack
+        """.format(name=user.first_name, link=verification_url)
+
+        mail.send_mail(sender_address, user_address, subject, body)
         msg = 'Send an email to user in order to reset their password. They will be able to do so by visiting <a href="{url}">{url}</a>'
 
         self.display_message(msg.format(url=verification_url))
-
-    def _serve_page(self, not_found=False):
-        username = self.request.get('username')
-        self.templateValues['username'] = user_name
-        self.templateValues['not_found'] = not_found
-        self.render('forgot.html')
-
-
 
 class LoginPageHandler(MyHandler):
     def get(self):
@@ -554,6 +611,20 @@ class CalendarPageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Calendar | ClassTrack'
         self.login_check()
+        conferences = []
+
+        if(self.user.meetings):
+            conference_list = models.Conference.query(models.Conference.key.IN(self.user.meetings))
+            for conf in conference_list:
+                data = {}
+                names = ''
+                data['title'] = conf.names_list + "\n" + conf.purpose
+                data['start'] = conf.datetime.strftime("%Y-%m-%d")
+                conferences.append(data)
+        # data['title'] = 'daniel'
+        # data['start'] = "2015-04-07"
+        # conferences.append(data)
+        self.templateValues['conferences'] = json.dumps(conferences)
         self.render('calendar.html')
 
 class GradesPageHandler(MyHandler):
@@ -638,6 +709,8 @@ class AddConferencePageHandler(MyHandler):
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
         teachers = [teacher.to_dict() for teacher in teacher_query]
+        if len(teachers) == 0:
+            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
         self.templateValues['teachers'] = teacher_query
         self.login_check()
         self.render('addConference.html')
@@ -646,7 +719,7 @@ class AddConferencePageHandler(MyHandler):
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
-        participants = [self.user_info['auth_ids'][0],teachers]
+        participants = [self.user.auth_ids[0],teachers]
 
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
@@ -666,8 +739,9 @@ class AddConferencePageHandler(MyHandler):
         for auth_id in participants:
             model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
             participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-            names += model_query.first_name
+            names += model_query.first_name + " "
             names += model_query.last_name + ', '
+        clean_names = names[:-1]
         teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
@@ -677,7 +751,7 @@ class AddConferencePageHandler(MyHandler):
                 participants = participants,
                 participant_ids = participant_id,
                 datetime = extractedDateTime,
-                names_list = names
+                names_list = clean_names
             )
         key=post.put()
 
@@ -698,6 +772,40 @@ class AddConferencePageHandler(MyHandler):
 
         teacher.put()
         this_user.put()
+
+        teacher_full_name = teacher.first_name + teacher.last_name
+        user_full_name = self.user.first_name + self.user.last_name
+
+        #Email to Inviter
+        sender_address="classtracknoreply@gmail.com"
+        subject="Conference Invite - Classtrack"
+        user_address = self.user.auth_ids[0]
+        body = """
+        Dear {name}:
+
+        This email is confirming that you have invited {invited} to a video conference
+        on: {date_and_time}.
+
+        Thanks!
+        Team Classtrack
+        """.format(name=self.user.first_name, invited=teacher_full_name, date_and_time=extractedDateTime)
+
+        mail.send_mail(sender_address, user_address, subject, body)
+
+        #Email to Invited
+        sender_address="classtracknoreply@gmail.com"
+        subject="Conference Invite - Classtrack"
+        user_address = teacher.auth_ids[0]
+        body = """
+        Dear {name}:
+
+        {Inviter} has invited you to a video conference on: {date_and_time}.
+
+        Thanks!
+        Team Classtrack
+        """.format(name=self.user.first_name, Inviter=user_full_name, date_and_time=extractedDateTime)
+
+        mail.send_mail(sender_address, user_address, subject, body)
 
         self.response.write("<h1> Conference Added </h1>")
 
@@ -730,6 +838,13 @@ class AddMessagePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Inbox'
         self.login_check()
+
+
+        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        teachers = [teacher.to_dict() for teacher in teacher_query]
+        if len(teachers) == 0:
+            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
+        self.templateValues['teachers'] = teacher_query
 
         message_list = models.MessageThread.query()
         self.templateValues['message_list'] = message_list
@@ -801,9 +916,9 @@ class ClassSelectPageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Class Select | ClassTrack'
-        class_list = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-        self.templateValues['class_list'] = class_list
-        self.templateValues['selected_class'] = class_list[len(class_list)-1]
+        courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
+        self.templateValues['courseList'] = courseList
+        self.templateValues['selected_class'] = courseList[len(courseList)-1]
         self.login_check()
         self.render('classSelect.html')
 
@@ -821,13 +936,13 @@ class AddChildHandler(MyHandler):
         student_id = self.request.get("student_id")
         student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        if this_user.family == ['None']:
+        if this_user.family == []:
             this_user.family = [student.key]
         else:
             this_user.family += [student.key]
         this_user.put()
 
-        if student.family == ['None']:
+        if student.family == []:
             student.family = [this_user.key]
         else:
             student.family += [this_user.key]
@@ -851,6 +966,1227 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
+        nfpost = models.NFPost(
+                caption = 'Flu shots will be given 11/19/14',
+                typeID = 1,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
+        nfpost = models.NFPost(
+                caption = 'Sarah made an 87 on her English Test',
+                typeID = 3,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'PTA is holding a meeting on 12/5/14',
+                typeID = 2,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'Prom has been scheduled for 4/20!!',
+                typeID = 5,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'Please complete reading from chapter 11 by Friday!',
+                typeID = 4,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'LHS went 41-27 against CHS!',
+                typeID = 1,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
+        #School
+        newschool = models.School(
+                name = 'Seneca Middle School',
+                address = '810 W South 4th St, Seneca, SC 29678',
+                phone = '555-555-5555',
+                state = 'South Carolina',
+                county = 'Oconee',
+                zipcode = '55555',
+                primary_color = 'FFFFFF',
+                secondary_color = 'FFFFFF'
+            )
+        Seneca = newschool.put()
+
+        #Make Class
+        newclass = models.Classes(
+        school = Seneca,
+        name = "Math 142"
+        )
+        mathclass = newclass.put()
+
+        #Link School and Class
+        Seneca.get().class_list = [mathclass]
+
+        Seneca.get().put()
+
+        #Teacher
+        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
+            first_name="John",
+            password_raw="password",
+            last_name="Goodmen",
+            user_type=teacher_user,
+            family=[],
+            verified=True,
+            class_list=[mathclass],
+            meetings=[],
+            messageThreads=[],
+            school = [Seneca])
+
+        #Link Teacher
+        Seneca.get().teachers = [user_data[1].key]
+        mathclass.get().teacher = [user_data[1].key]
+        Seneca.get().put()
+        mathclass.get().put()
+        #Add Students and Add to List
+        studentList = []
+
+
+        #Link Students
+
+        self.redirect('/')
+
+class TeacherRegistrationHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['title'] = 'Teacher Registration'
+        self.render('teacherRegistration.html')
+
+class ChildRegistrationHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Child Registration'
+        self.render('childRegistration.html')
+
+class SchoolSetupHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'School Setup'
+        self.render('schoolSetup.html')
+
+    def post(self):
+        school = models.School(
+                name = self.request.get('school_name'),
+                primary_color = self.request.get('school_color_primary'),
+                secondary_color = self.request.get('school_color_secondary'),
+                address = self.request.get('school_address'),
+                state = self.request.get('school_state'),
+                county = self.request.get('school_county'),
+                zipcode = self.request.get('school_zipcode'),
+                phone = self.request.get('school_phone')
+            )
+        school.put()
+
+        # school_query = models.School.query().filter(models.School.admins==self.user.key)
+        # schools = [school.key for school in school_query]
+        # self.user.school = schools
+        # self.user.key.get().put()
+
+        self.redirect('/')
+
+
+class CreateAdminHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        user_data = self.user_model.create_user('admin@classtrack.com',
+            first_name='Admin',
+            password_raw='admin',
+            last_name='AdminLastName',
+            user_type=admin_user,
+            family=[],
+            school='None',
+            verified=False)
+
+        self.redirect('/')
+
+class ProfileHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.render('profile.html')
+
+class EditProfileHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        testText = 'test of varaible passing'
+        self.render('profileEdit.html')
+
+
+class ConferenceMessageChannelHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('ConferenceMessageChannel.html')
+
+    def post(self):
+        self.templateValues = {}
+        user_id = self.request.get('user_id')
+        # channel.create_channel(user_id);
+        message = self.request.body
+        user_query = models.User.query()
+        channel.send_message(identifier, "Hello World, from " + user_id)
+        # for x in range(0,60):
+        #     time.sleep(1)
+        #     for user in user_query:
+        #         channel.create_channel(user.auth_ids[0]);
+        #         channel.send_message(user.auth_ids[0], message)
+        # channel.send_message(self.user_info['auth_ids'][0], message)
+        self.render('ConferenceMessageChannel.html')
+
+class ConferencePageHandler(MyHandler):
+
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.login_check()
+
+        dtls = self.request.get('dtls')
+        dscp = self.request.get('dscp')
+        ipv6 = self.request.get('ipv6')
+
+        roomkey = self.request.get('roomkey')
+        purpose = models.Conference.get_by_id(int(roomkey)).purpose
+        participants = models.Conference.get_by_id(int(roomkey)).participants
+        datetime = models.Conference.get_by_id(int(roomkey)).datetime
+        user_id = str(self.user_info['user_id'])
+        pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
+
+        initiator = 'true';
+        conference = models.Conference.get_by_id(int(roomkey))
+        # if len(conference.currentLoggedInUsers) != 0:
+        # if conference.currentLoggedInUsers[0] != user_id:
+        # logging.warning("THIS IS THE INITIATOR")
+        # logging.warning(conference.participant_ids[0])
+        # logging.warning("THIS IS THE CURRENT USER")
+        # logging.warning(user_id)
+        # logging.warning()
+
+        if int(user_id) == int(conference.participant_ids[0]):
+            initiator = 'false';
+
+        identifier = roomkey + user_id
+        token = channel.create_channel(identifier)
+        self.templateValues['token'] = token
+
+        audio_receive_codec = self.request.get('arc')
+        if not audio_receive_codec:
+            audio_receive_codec = get_preferred_audio_receive_codec()
+
+        user_agent = self.request.headers['User-Agent']
+        audio_send_codec = self.request.get('asc')
+        if not audio_send_codec:
+            audio_send_codec = get_preferred_audio_send_codec(user_agent)
+
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.templateValues['purpose'] = purpose
+        self.templateValues['participants'] = participants
+        self.templateValues['datetime'] = datetime
+        self.templateValues['roomkey'] = roomkey
+        self.templateValues['user_id'] = user_id
+        self.templateValues['audio_send_codec'] = audio_send_codec
+        self.templateValues['audio_receive_codec'] = audio_receive_codec
+        self.templateValues['pc_constraints'] = pc_constraints
+        self.templateValues['initiator'] = initiator
+        self.render('conference.html')
+
+    def post(self):
+        roomkey = self.request.get('roomkey')
+        user_id = self.request.get('user_id')
+        # logging.info("value of my roomkey is %s", str(roomkey))
+        conference = models.Conference.get_by_id(int(roomkey))
+        # logging.warning("User " + user_id + " has logged in")
+        # conference.currentLoggedInUsers.append(user_id)
+        # conference.put()
+        message = self.request.body
+        # logging.info("Message is %s", str(message))
+        for u_id in conference.currentLoggedInUsers:
+            if u_id != user_id:
+                channel.send_message(roomkey+u_id, message)
+            # channel.send_message(roomkey+user_id, message)
+            # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
+
+
+        # logging.warning("================ HELLO WORLD =================")
+
+
+
+        # token = channel.create_channel(identifier)
+        # self.templateValues['token'] = token
+
+        # channel.send_message(identifier, "Hello World, from " + user_id)
+        # if len(room.currentLoggedInUsers) != 0:
+        #     send_to = room.currentLoggedInUsers[0]
+        #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # else:
+        #     send_to = user_id
+            # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # message = self.request.get('message')
+        # if message:
+        #     channel.send_message(1, message)
+        # self.render('conference.html')
+
+
+class ChannelConnectionHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        conference = models.Conference.get_by_id(int(roomkey))
+        if user_id not in conference.currentLoggedInUsers:
+            conference.currentLoggedInUsers.append(user_id)
+            conference.put()
+
+
+class ChannelDisconnectionHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        logging.warning("THIS IS THE ROOMKEY")
+        logging.warning(roomkey)
+        conference = models.Conference.get_by_id(int(roomkey))
+        conference.currentLoggedInUsers.remove(user_id)
+        conference.put()
+
+class SendMessageHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('testSendMessage.html')
+
+class ClassManagementHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        courseList = []
+        if self.user.courseList:
+            teacherCourseList = self.user.courseList
+            for course in teacherCourseList:
+                data = course.get()
+                entry = {}
+                entry['name'] = data.name
+                entry['key'] = course.id()
+                courseList.append(entry)
+
+        self.templateValues['courseList'] = courseList
+        self.render('classManagement.html')
+
+
+class AddChildrenToClassHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Add Child to Class'
+        self.login_check()
+
+        self.templateValues['courseID'] = self.request.get('courseID')
+
+        courseID = int(self.request.get('courseID'))
+        changeOccured = self.request.get('changeOccured')
+
+        if changeOccured:
+            if self.request.get('potential-students'):
+                potential_list = self.request.params.getall('potential-students')
+                for student_id in potential_list:
+                    if student_id != '':
+                        student = models.User.get_by_id(int(student_id))
+                        if student:
+                            if ndb.Key(models.Course, courseID) in student.course_list:
+                                student.course_list.remove(ndb.Key(models.Course, courseID))
+                                student.put()
+            
+            if self.request.get('current-students'):
+                current_list = self.request.params.getall('current-students')
+                for student_id in current_list:
+                    if student_id != '':
+                        student = models.User.get_by_id(int(student_id))
+                        if student:
+                            if ndb.Key(models.Course, courseID) not in student.course_list:
+                                student.course_list.append(ndb.Key(models.Course, courseID))
+                                student.put()
+
+
+        student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school - Daniel Vu
+        currentCourse = ndb.Key(models.Course, courseID)
+        current_query = student_query.filter(models.User.course_list == currentCourse)
+        
+        potential_query = []
+
+        current_list = []
+        current_value_list = []
+        for student in current_query:
+            entry = {}
+            entry['name'] = student.first_name + " " + student.last_name
+            entry['value'] = student.id()
+            current_value_list.append(student.id())
+            current_list.append(entry)
+ 
+        for student in student_query:
+            contains = False
+            if student.id() in current_value_list:
+               contains = True
+            if not contains:
+                potential_query.append(student) 
+
+
+        potential_list = []
+        for student in potential_query:
+            entry = {}
+            entry['name'] = student.first_name + " " + student.last_name
+            entry['value'] = student.id()
+            potential_list.append(entry)
+
+
+
+        self.templateValues['potential_list'] = json.dumps(potential_list)
+        self.templateValues['current_list'] = json.dumps(current_list)
+        self.render('addChildrenToClass.html')
+
+
+
+
+
+# Dummy data handlers
+class MakeDummyChildrenHandler(MyHandler):
+    def get(self):
+        requested_school = models.School.query(models.School.name == 'Seneca Middle School').fetch(1, keys_only = True)
+        default_course = models.Course.query(models.Course.name == 'DEFAULTNONECOURSE').fetch(1, keys_only = True)
+
+        new_child = models.User(
+            first_name = 'Devin',
+            last_name = 'Crawford',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Micheal',
+            last_name = 'Campbell',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Sam',
+            last_name = 'Ballard',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Rodolfo',
+            last_name = 'Frazier',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Edith',
+            last_name = 'Wolfe',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Stuart',
+            last_name = 'Neal',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Darlene',
+            last_name = 'Osborne',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Taylor',
+            last_name = 'Griffith',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Rita',
+        #     last_name = 'Anderson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Johnnie',
+        #     last_name = 'Bates',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kelly',
+        #     last_name = 'Thompson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Robin',
+        #     last_name = 'Reese',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Michele',
+        #     last_name = 'Robinson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Elsa',
+        #     last_name = 'Morris',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Beth',
+        #     last_name = 'Cross',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Andres',
+        #     last_name = 'Henderson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jesus',
+        #     last_name = 'Drake',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ethel',
+        #     last_name = 'Wright',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ida',
+        #     last_name = 'Burns',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Elaine',
+        #     last_name = 'Lawson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lawrence',
+        #     last_name = 'Chapman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jean',
+        #     last_name = 'Sanchez',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Alice',
+        #     last_name = 'Joseph',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Wm',
+        #     last_name = 'Mitchell',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Regina',
+        #     last_name = 'Rose',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ramona',
+        #     last_name = 'Rogers',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Richard',
+        #     last_name = 'Holt',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Ann',
+        #     last_name = 'Bell',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Corey',
+        #     last_name = 'Adams',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lana',
+        #     last_name = 'Klein',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Pablo',
+        #     last_name = 'Mendoza',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Floyd',
+        #     last_name = 'Walsh',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Edmund',
+        #     last_name = 'Woods',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Dale',
+        #     last_name = 'Payne',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Geraldine',
+        #     last_name = 'Phillips',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Drew',
+        #     last_name = 'Leonard',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Sherri',
+        #     last_name = 'Luna',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lorene',
+        #     last_name = 'Olson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Luke',
+        #     last_name = 'Dawson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Luther',
+        #     last_name = 'Farmer',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Tanya',
+        #     last_name = 'Mcguire',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kathryn',
+        #     last_name = 'Elliott',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jeremiah',
+        #     last_name = 'Howard',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Alicia',
+        #     last_name = 'Vega',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Eula',
+        #     last_name = 'Hughes',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Reginald',
+        #     last_name = 'Cohen',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Shelley',
+        #     last_name = 'Lyons',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Casey',
+        #     last_name = 'Ortiz',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Paul',
+        #     last_name = 'Holloway',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Vanessa',
+        #     last_name = 'Black',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Marcia',
+        #     last_name = 'Goodman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Doris',
+        #     last_name = 'Duncan',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Wayne',
+        #     last_name = 'Waters',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Norman',
+        #     last_name = 'Morgan',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Alberto',
+        #     last_name = 'Norman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Erma',
+        #     last_name = 'May',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Anita',
+        #     last_name = 'Mcdaniel',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Pat',
+        #     last_name = 'Pena',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kate',
+        #     last_name = 'French',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Kelley',
+        #     last_name = 'Douglas',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Angela',
+        #     last_name = 'Floyd',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Neil',
+        #     last_name = 'Ray',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Dana',
+        #     last_name = 'Silva',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Nellie',
+        #     last_name = 'Reed',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Candice',
+        #     last_name = 'Washington',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Joyce',
+        #     last_name = 'Wallace',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Christopher',
+        #     last_name = 'Fleming',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Eric',
+        #     last_name = 'Snyder',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Mandy',
+        #     last_name = 'Higgins',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Troy',
+        #     last_name = 'Mcgee',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Felix',
+        #     last_name = 'Simpson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Melanie',
+        #     last_name = 'Howell',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Georgia',
+        #     last_name = 'Dunn',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Joshua',
+        #     last_name = 'Nichols',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Gina',
+        #     last_name = 'Townsend',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Danny',
+        #     last_name = 'Alvarado',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Faith',
+        #     last_name = 'Vargas',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Irvin',
+        #     last_name = 'Sandoval',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Betsy',
+        #     last_name = 'Maldonado',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Abel',
+        #     last_name = 'Morton',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Sue',
+        #     last_name = 'Mclaughlin',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Monique',
+        #     last_name = 'Mcbride',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Deanna',
+        #     last_name = 'Mathis',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Emmett',
+        #     last_name = 'Mason',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Tomas',
+        #     last_name = 'Mann',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Jackie',
+        #     last_name = 'Foster',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Garry',
+        #     last_name = 'Riley',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Gerardo',
+        #     last_name = 'Parks',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Fernando',
+        #     last_name = 'Lamb',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Bill',
+        #     last_name = 'Newman',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Darrell',
+        #     last_name = 'Abbott',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Lila',
+        #     last_name = 'Jacobs',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Bonnie',
+        #     last_name = 'Boyd',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Melinda',
+        #     last_name = 'Evans',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Edna',
+        #     last_name = 'Greer',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Valerie',
+        #     last_name = 'Carson',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Billie',
+        #     last_name = 'Manning',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Sherry',
+        #     last_name = 'Ruiz',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Beverly',
+        #     last_name = 'Gill',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+
+        # new_child = models.User(
+        #     first_name = 'Rosemary',
+        #     last_name = 'Reid',
+        #     user_type = 3,
+        #     school = requested_school
+        # )
+        # new_child.put()
+   
+        
 class InitNDBHandler(MyHandler):
     def get(self):
         #********Posts***********
@@ -966,232 +2302,6 @@ class InitNDBHandler(MyHandler):
 
         self.redirect('/')
 
-class TeacherRegistrationHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['title'] = 'Teacher Registration'
-        self.render('teacherRegistration.html')
-
-class ChildRegistrationHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Child Registration'
-        self.render('childRegistration.html')
-
-class SchoolSetupHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'School Setup'
-        self.render('schoolSetup.html')
-
-    def post(self):
-        school = models.School(
-                self.request.get('name'),
-                primary_color = self.request.get('school_color_primary'),
-                secondary_color = self.request.get('school_color_secondary'),
-                address = self.request.get('school_address'),
-                state = self.request.get('school_state'),
-                county = self.request.get('school_county'),
-                zipcode = self.request.get('school_zipcode'),
-                phone = self.request.get('school_phone'),
-                admins = [self.user.key]
-            )
-        school.put()
-
-        school_query = models.School.query().filter(models.School.admins==self.user.key)
-        schools = [school.key for school in school_query]
-        self.user.school = schools
-        self.user.key.get().put()
-
-        self.redirect('/')
-
-
-class CreateAdminHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        user_data = self.user_model.create_user('admin@classtrack.com',
-            first_name='Admin',
-            password_raw='admin',
-            last_name='AdminLastName',
-            user_type=admin_user,
-            children=[],
-            verified='false',
-            classList=[],
-            meetings=[],
-            messageThreads=[])
-        self.redirect('/')
-
-class ProfileHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.render('profile.html')
-
-class EditProfileHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        testText = 'test of varaible passing'
-        self.render('profileEdit.html')
-
-
-class ConferenceMessageChannelHandler(MyHandler):
-    def get(self):
-        self.templateValues = {}
-        self.render('ConferenceMessageChannel.html')
-
-    def post(self):
-        self.templateValues = {}
-        user_id = self.request.get('user_id')
-        # channel.create_channel(user_id);
-        message = self.request.body
-        user_query = models.User.query()
-        channel.send_message(identifier, "Hello World, from " + user_id)
-        # for x in range(0,60):
-        #     time.sleep(1)
-        #     for user in user_query:
-        #         channel.create_channel(user.auth_ids[0]);
-        #         channel.send_message(user.auth_ids[0], message)
-        # channel.send_message(self.user_info['auth_ids'][0], message)
-        self.render('ConferenceMessageChannel.html')
-
-class ConferencePageHandler(MyHandler):
-
-
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.login_check()
-
-        dtls = self.request.get('dtls')
-        dscp = self.request.get('dscp')
-        ipv6 = self.request.get('ipv6')
-
-        roomkey = self.request.get('roomkey')
-        purpose = models.Conference.get_by_id(int(roomkey)).purpose
-        participants = models.Conference.get_by_id(int(roomkey)).participants
-        datetime = models.Conference.get_by_id(int(roomkey)).datetime
-        user_id = str(self.user_info['user_id'])
-        pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
-
-        initiator = 'true';
-        conference = models.Conference.get_by_id(int(roomkey))
-        # if len(conference.currentLoggedInUsers) != 0:
-        # if conference.currentLoggedInUsers[0] != user_id:
-        # logging.warning("THIS IS THE INITIATOR")
-        # logging.warning(conference.participant_ids[0])
-        # logging.warning("THIS IS THE CURRENT USER")
-        # logging.warning(user_id)
-        # logging.warning()
-
-        if int(user_id) == int(conference.participant_ids[0]):
-            initiator = 'false';
-
-        identifier = roomkey + user_id
-        token = channel.create_channel(identifier)
-        self.templateValues['token'] = token
-
-        audio_receive_codec = self.request.get('arc')
-        if not audio_receive_codec:
-            audio_receive_codec = get_preferred_audio_receive_codec()
-
-        user_agent = self.request.headers['User-Agent']
-        audio_send_codec = self.request.get('asc')
-        if not audio_send_codec:
-            audio_send_codec = get_preferred_audio_send_codec(user_agent)
-
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.templateValues['purpose'] = purpose
-        self.templateValues['participants'] = participants
-        self.templateValues['datetime'] = datetime
-        self.templateValues['roomkey'] = roomkey
-        self.templateValues['user_id'] = user_id
-        self.templateValues['audio_send_codec'] = audio_send_codec
-        self.templateValues['audio_receive_codec'] = audio_receive_codec
-        self.templateValues['pc_constraints'] = pc_constraints
-        self.templateValues['initiator'] = initiator
-        self.render('conference.html')
-
-    def post(self):
-        roomkey = self.request.get('roomkey')
-        user_id = self.request.get('user_id')
-        # logging.info("value of my roomkey is %s", str(roomkey))
-        conference = models.Conference.get_by_id(int(roomkey))
-        # logging.warning("User " + user_id + " has logged in")
-        # conference.currentLoggedInUsers.append(user_id)
-        # conference.put()
-        message = self.request.body
-        # logging.info("Message is %s", str(message))
-        for u_id in conference.currentLoggedInUsers:
-            if u_id != user_id:
-                channel.send_message(roomkey+u_id, message)
-            # channel.send_message(roomkey+user_id, message)
-            # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
-
-
-        # logging.warning("================ HELLO WORLD =================")
-
-
-
-        # token = channel.create_channel(identifier)
-        # self.templateValues['token'] = token
-
-        # channel.send_message(identifier, "Hello World, from " + user_id)
-        # if len(room.currentLoggedInUsers) != 0:
-        #     send_to = room.currentLoggedInUsers[0]
-        #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
-        # else:
-        #     send_to = user_id
-            # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
-        # message = self.request.get('message')
-        # if message:
-        #     channel.send_message(1, message)
-        # self.render('conference.html')
-
-
-
-
-
-class ChannelConnectionHandler(MyHandler):
-    def post(self):
-        self.setupUser()
-        logging.warning(self.request.get('from'))
-
-    def get(self):
-        self.setupUser()
-        logging.warning(self.request.get('from'))
-        user_id = self.request.get('user_id')
-        roomkey = self.request.get('roomkey')
-        conference = models.Conference.get_by_id(int(roomkey))
-        if user_id not in conference.currentLoggedInUsers:
-            conference.currentLoggedInUsers.append(user_id)
-            conference.put()
-
-
-class ChannelDisconnectionHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        logging.warning(self.request.get('from'))
-        user_id = self.request.get('user_id')
-        roomkey = self.request.get('roomkey')
-        logging.warning("THIS IS THE ROOMKEY")
-        logging.warning(roomkey)
-        conference = models.Conference.get_by_id(int(roomkey))
-        conference.currentLoggedInUsers.remove(user_id)
-        conference.put()
-
-class SendMessageHandler(MyHandler):
-    def get(self):
-        self.templateValues = {}
-        self.render('testSendMessage.html')
-
-
 
 config = {
   'webapp2_extras.auth': {
@@ -1224,11 +2334,11 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    #webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
-#    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
+    #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
@@ -1238,15 +2348,17 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+    webapp2.Route('/addChildrenToClass', AddChildrenToClassHandler, name='addChild'),
     webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
     webapp2.Route('/profile', ProfileHandler, name='profile'),
     webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
+    # webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
     webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
-    # webapp2.Route('/ConferenceMessageChannel', ConferenceMessageChannelHandler, name='conferenceMessageChannel'),
+    webapp2.Route('/makeDummyChildren', MakeDummyChildrenHandler, name="makeDummyChildren"),
+    webapp2.Route('/classManagement', ClassManagementHandler, name='classManagement'),
     # webapp2.Route('/_ah/channel/connected/', ChannelConnectionHandler, name='ConnectionHandler'),
     # webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler'),
     # webapp2.Route('/testSendMessage', SendMessageHandler, name='SendMessageHandler')

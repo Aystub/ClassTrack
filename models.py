@@ -5,6 +5,11 @@ from google.appengine.ext import ndb
 
 from webapp2_extras import security
 
+admin_user = 0   #user is a admin
+teacher_user = 1 #user is a teacher
+parent_user = 2  #user is a parent
+student_user = 3 #user is a student
+
 class User(webapp2_extras.appengine.auth.models.User):
     first_name = ndb.StringProperty()
     last_name = ndb.StringProperty()
@@ -12,15 +17,26 @@ class User(webapp2_extras.appengine.auth.models.User):
     meetings = ndb.KeyProperty(kind='Conference', repeated=True)
     invited = ndb.KeyProperty(kind='Conference', repeated=True)
     family = ndb.KeyProperty(kind='User',repeated=True)
+    message_threads = ndb.KeyProperty(kind='MessageThread',repeated=True)
     messages = ndb.KeyProperty(kind='MessageThread',repeated=True)
-    class_list = ndb.KeyProperty(kind='Classes',repeated=True)
+    course_list = ndb.KeyProperty(kind='Course',repeated=True)
+    hasCourses = ndb.ComputedProperty(lambda self: len(self.course_list) != 0)
     school = ndb.KeyProperty(kind='School',repeated=True)
+
+    def takingCourse(courseID):
+        for course in self.course_list:
+            if course == courseID:
+                return True
+        return False
 
     def id(self):
         return self.key.id()
 
     def getKey(self):
         return self.key.get()
+
+    def __unicode__(self):
+        return unicode(self.first_name)
 
     def set_password(self, raw_password):
         """Sets the password for the current user
@@ -69,13 +85,18 @@ class School(ndb.Model):
     zipcode = ndb.StringProperty(required=True)
     primary_color = ndb.StringProperty()
     secondary_color = ndb.StringProperty()
+    
+    #Why do we need these?
     students = ndb.KeyProperty(kind='User',repeated=True)
     teachers = ndb.KeyProperty(kind='User',repeated=True)
     admins = ndb.KeyProperty(kind='User',repeated=True)
-    classes = ndb.KeyProperty(kind='Classes',repeated=True)
+    classes = ndb.KeyProperty(kind='Course',repeated=True)
 
     def id(self):
         return self.key.id()
+
+    def getKey(self):
+        return self.key.get()
 
     @staticmethod #just like a Java static method
     def getSchool(num):
@@ -93,14 +114,27 @@ class School(ndb.Model):
     def remove(self):
         self.key.delete()
 
-class Classes(ndb.Model):
-    teacher = ndb.KeyProperty(kind='User',repeated=True)
+class Course(ndb.Model):
     school = ndb.KeyProperty(kind='School',required=True)
-    student_list = ndb.KeyProperty(kind='User',repeated=True)
     name = ndb.StringProperty(required=True)
+    student_list = ndb.KeyProperty(kind='User',repeated=True)
+    teacher = ndb.KeyProperty(kind='User',repeated=True)
 
     def id(self):
         return self.key.id()
+
+    @classmethod
+    def key(self):
+        return self.key
+
+    @classmethod
+    def custom_to_dict(self):
+        return {
+            school: self.school,
+            name: self.name,
+            student_list: [student.urlsafe() for student in self.student_list],
+            teacher: [teach.urlsafe() for teach in self.teacher]
+        }
 
 class PrivateMessage(ndb.Model):
     sender = ndb.KeyProperty(required=True)

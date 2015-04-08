@@ -15,3 +15,13 @@ indexes:
   - name: typeID
   - name: time
     direction: desc
+
+- kind: User
+  properties:
+  - name: user_type
+  - name: course_list
+
+- kind: User
+  properties:
+  - name: user_type
+  - name: last_name

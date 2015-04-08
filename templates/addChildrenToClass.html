@@ -1,0 +1,158 @@
+{% extends "baseActivity.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{{ super() }}{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  <div class="spacer25"></div>
+
+<form action="/addChildrenToClass" method="POST">
+  <input type="hidden" name="courseID" value={{courseID}}></input>
+    <input type="hidden" id="changeOccured" name="changeOccured" value='false'></input>
+
+  <div class="row" style="margin-top:50px">
+  <div class="col-md-6">
+      <h1>Not in Class</h1>
+      <select id="potential-students" name="potential-students" multiple style="width:300px; height:400px;">
+      </select>
+      </div>
+      <div class="col-md-6">
+      <h1>In Class </h1>
+      <select id="current-students" name="current-students" multiple style="width:300px; height:400px;">
+      </select>
+
+
+    </div>
+
+
+    <div class="row" style="width:400px; margin-left:auto; margin-right:auto">
+      <center><button onclick="selectAll()" type="submit">Submit</button></center>
+    </div>
+</div>
+</form>
+
+    <div class="row" style="width:400px; margin-left: auto; margin-right: auto">
+    <button onclick="moveRight()"> Add Students to Class </button>
+    <button onclick="moveLeft()"> Remove Students from Class </button>
+    <h1>Course ID: {{courseID}} </h1>
+    
+    </div>
+<script type="text/javascript">
+  var potential_list = {{potential_list | safe}}
+  var current_list = {{current_list | safe}}
+
+  var leftSelectedText = []
+  var rightSelectedText = []
+
+  $(document).ready(function(){
+    populateList();
+  });
+
+  function moveRight() {
+    $('#changeOccured').val('true');
+    //alert("Elft value is t : "+leftValue);
+    var leftSelect = $('#potential-students');
+    var rightSelect = $('#current-students');
+    //alert("test : " + document.forms["form1"].elements[myLeftId].options[selItem].value);
+    if (leftSelect.val() == null) {
+        alert("You must first select an item on the left side.")
+    } else {
+        var values = leftSelect.val();
+
+        var textList = [];
+
+
+        for(var i = 0; i < values.length; i++)
+        {
+          $('#potential-students option:selected').each(function(){
+            textList.push($(this).text())
+          });
+
+          rightSelect.append($("<option></option>")
+          .attr("value", values[i])
+          .text(textList[i]));
+        }
+
+        $('option:selected', leftSelect).remove();
+    }
+  }
+
+    function moveLeft() {
+    $('#changeOccured').val('true');
+
+    //alert("Elft value is t : "+leftValue);
+    var leftSelect = $('#potential-students');
+    var rightSelect = $('#current-students');
+    //alert("test : " + document.forms["form1"].elements[myLeftId].options[selItem].value);
+    if (rightSelect.val() == null) {
+        alert("You must first select an item on the right side.")
+    } else {
+        var values = rightSelect.val();
+        
+        var textList = [];
+
+
+        for(var i = 0; i < values.length; i++)
+        {
+          $('option:selected', rightSelect).each(function(){
+            textList.push($(this).text())
+          });
+
+        for(var i = 0; i < values.length; i++)
+        {
+
+
+          leftSelect.append($("<option></option>")
+          .attr("value", values[i])
+          .text(textList[i]));
+        }
+
+        $('option:selected', rightSelect).remove();
+
+    }
+  }
+}
+
+  function populateList()
+  {
+    var leftSelect = $('#potential-students');
+    var rightSelect = $('#current-students');
+    for(var i = 0; i < potential_list.length; i++)
+    {
+      leftSelect.append($("<option></option>")
+      .attr("value", potential_list[i]['value'])
+      // .text(potential_list[i]['name'] + " - " + potential_list[i]['value'])); // for keys, for testing purposes
+      .text(potential_list[i]['name']));
+    }
+
+    for(var i = 0; i < current_list.length; i++)
+    {
+      rightSelect.append($("<option></option>")
+      .attr("value", current_list[i]['value'])
+      // .text(potential_list[i]['name'] + " - " + potential_list[i]['value'])); // for keys, for testing purposes
+      .text(current_list[i]['name']));
+    }
+  }
+
+  function selectAll()
+  {
+    var leftSelect = document.getElementById('potential-students');
+    var rightSelect = document.getElementById('current-students');
+
+    for(var i = 0; i < leftSelect.options.length; i++)
+    {
+        leftSelect.options[i].selected = true;
+    }
+
+    for(var i = 0; i < rightSelect.options.length; i++)
+    {
+        rightSelect.options[i].selected = true;
+    }
+  }
+
+
+
+</script>
+
+{% endblock %}
