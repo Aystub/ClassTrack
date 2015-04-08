@@ -1219,18 +1219,16 @@ class AddChildrenToClassHandler(MyHandler):
             
             if self.request.get('current-students'):
                 current_list = self.request.params.getall('current-students')
-                logging.info(current_list)
                 for student_id in current_list:
                     if student_id != '':
                         student = models.User.get_by_id(int(student_id))
                         if student:
-                            logging.info(student)
                             if ndb.Key(models.Course, courseID) not in student.course_list:
                                 student.course_list.append(ndb.Key(models.Course, courseID))
                                 student.put()
 
 
-        student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school
+        student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school - Daniel Vu
         currentCourse = ndb.Key(models.Course, courseID)
         current_query = student_query.filter(models.User.course_list == currentCourse)
         
