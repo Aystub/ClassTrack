@@ -85,6 +85,8 @@ class School(ndb.Model):
     zipcode = ndb.StringProperty(required=True)
     primary_color = ndb.StringProperty()
     secondary_color = ndb.StringProperty()
+    
+    #Why do we need these?
     students = ndb.KeyProperty(kind='User',repeated=True)
     teachers = ndb.KeyProperty(kind='User',repeated=True)
     admins = ndb.KeyProperty(kind='User',repeated=True)

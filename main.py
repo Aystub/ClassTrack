@@ -350,7 +350,7 @@ class SignupPageHandler(MyHandler):
             body = """
             Dear {name}:
 
-            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us. 
+            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us.
 
             Please verify your email by clicking the following link:
             {link}
@@ -397,11 +397,10 @@ class VerificationHandler(MyHandler):
 
         elif verification_type == 'p':
             # supply user to the page
-            params = {
-                'user': user,
-                'token': signup_token
-            }
-            self.render('resetpassword.html', params)
+            self.setupUser()
+            self.templateValues['user'] = user
+            self.templateValues['token'] = signup_token
+            self.render('resetpassword.html')
         else:
             logging.info('verification type not supported')
             self.abort(404)
@@ -423,8 +422,13 @@ class HomePageHandler(MyHandler):
 class SetPasswordHandler(MyHandler):
     def get(self):
         self.redirect('/')
-    @user_required
+
     def post(self):
+        user = self.request.get('u')
+
+        if not user:
+            self.redirect('/login')
+
         password = self.request.get('password')
 
         old_token = self.request.get('t')
@@ -444,33 +448,44 @@ class SetPasswordHandler(MyHandler):
 
 class ForgotPasswordHandler(MyHandler):
     def get(self):
-        self._serve_page()
+        self.setupUser()
+        self.render('forgot.html')
 
     def post(self):
-        username = self.request.get('user_name')
+        self.setupUser()
+        username = self.request.get('email')
 
         user = self.user_model.get_by_auth_id(username)
         if not user:
             logging.info('Could not find any user entry for username %s', username)
-            self._serve_page(not_found=True)
+            self.templateValues['error'] = 'Sorry, we could not find an account matching ' + username
+            self.render('forgot.html')
             return
 
-        user_id = user.get_id()
+        user_id = user.id()
         token = self.user_model.create_signup_token(user_id)
 
         verification_url = self.uri_for('verification', type='p', user_id=user_id, signup_token=token, _full=True)
 
+        sender_address="classtracknoreply@gmail.com"
+        subject="Password Reset Request From Classtrack"
+        user_address = username
+        body = """
+        Dear {name}:
+
+        Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us.
+
+        Please verify your email by clicking the following link:
+        {link}
+
+        Thanks!
+        Team Classtrack
+        """.format(name=user.first_name, link=verification_url)
+
+        mail.send_mail(sender_address, user_address, subject, body)
         msg = 'Send an email to user in order to reset their password. They will be able to do so by visiting <a href="{url}">{url}</a>'
 
         self.display_message(msg.format(url=verification_url))
-
-    def _serve_page(self, not_found=False):
-        username = self.request.get('username')
-        self.templateValues['username'] = user_name
-        self.templateValues['not_found'] = not_found
-        self.render('forgot.html')
-
-
 
 class LoginPageHandler(MyHandler):
     def get(self):
@@ -951,7 +966,95 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
+        nfpost = models.NFPost(
+                caption = 'Flu shots will be given 11/19/14',
+                typeID = 1,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
 
+        nfpost = models.NFPost(
+                caption = 'Sarah made an 87 on her English Test',
+                typeID = 3,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'PTA is holding a meeting on 12/5/14',
+                typeID = 2,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'Prom has been scheduled for 4/20!!',
+                typeID = 5,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'Please complete reading from chapter 11 by Friday!',
+                typeID = 4,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+        nfpost = models.NFPost(
+                caption = 'LHS went 41-27 against CHS!',
+                typeID = 1,
+                owner = str(self.user_info['auth_ids'][0])
+            )
+        nfpost.put()
+
+        #School
+        newschool = models.School(
+                name = 'Seneca Middle School',
+                address = '810 W South 4th St, Seneca, SC 29678',
+                phone = '555-555-5555',
+                state = 'South Carolina',
+                county = 'Oconee',
+                zipcode = '55555',
+                primary_color = 'FFFFFF',
+                secondary_color = 'FFFFFF'
+            )
+        Seneca = newschool.put()
+
+        #Make Class
+        newclass = models.Classes(
+        school = Seneca,
+        name = "Math 142"
+        )
+        mathclass = newclass.put()
+
+        #Link School and Class
+        Seneca.get().class_list = [mathclass]
+
+        Seneca.get().put()
+
+        #Teacher
+        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
+            first_name="John",
+            password_raw="password",
+            last_name="Goodmen",
+            user_type=teacher_user,
+            family=[],
+            verified=True,
+            class_list=[mathclass],
+            meetings=[],
+            messageThreads=[],
+            school = [Seneca])
+
+        #Link Teacher
+        Seneca.get().teachers = [user_data[1].key]
+        mathclass.get().teacher = [user_data[1].key]
+        Seneca.get().put()
+        mathclass.get().put()
+        #Add Students and Add to List
+        studentList = []
+
+
+        #Link Students
+
+        self.redirect('/')
+>>>>>>> 1d07a798a0a182c776c13b96a59a6021cecce54e
 
 class TeacherRegistrationHandler(MyHandler):
     def get(self):
@@ -1047,7 +1150,6 @@ class ConferenceMessageChannelHandler(MyHandler):
 
 class ConferencePageHandler(MyHandler):
 
-
     def get(self):
         self.setupUser()
         self.navbarSetup()
@@ -1138,9 +1240,6 @@ class ConferencePageHandler(MyHandler):
         # if message:
         #     channel.send_message(1, message)
         # self.render('conference.html')
-
-
-
 
 
 class ChannelConnectionHandler(MyHandler):
@@ -2236,11 +2335,11 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    # webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
+    #webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
-#    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
+    #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
@@ -2251,7 +2350,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
     webapp2.Route('/addChild', AddChildHandler, name='addChild'),
     webapp2.Route('/addChildrenToClass', AddChildrenToClassHandler, name='addChild'),
-
     webapp2.Route('/addPost', AddPostHandler, name='addPost'),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
     webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
