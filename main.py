@@ -292,7 +292,7 @@ class SignupPageHandler(MyHandler):
                     )
                     new_class_key = new_class.put()
                     classList.append(new_class_key)
-            
+
 
         elif student_id:
             user_type = student_user
@@ -350,7 +350,7 @@ class SignupPageHandler(MyHandler):
             body = """
             Dear {name}:
 
-            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us. 
+            Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us.
 
             Please verify your email by clicking the following link:
             {link}
@@ -397,11 +397,10 @@ class VerificationHandler(MyHandler):
 
         elif verification_type == 'p':
             # supply user to the page
-            params = {
-                'user': user,
-                'token': signup_token
-            }
-            self.render('resetpassword.html', params)
+            self.setupUser()
+            self.templateValues['user'] = user
+            self.templateValues['token'] = signup_token
+            self.render('resetpassword.html')
         else:
             logging.info('verification type not supported')
             self.abort(404)
@@ -423,8 +422,13 @@ class HomePageHandler(MyHandler):
 class SetPasswordHandler(MyHandler):
     def get(self):
         self.redirect('/')
-    @user_required
+
     def post(self):
+        user = self.request.get('u')
+
+        if not user:
+            self.redirect('/login')
+
         password = self.request.get('password')
 
         old_token = self.request.get('t')
@@ -444,33 +448,44 @@ class SetPasswordHandler(MyHandler):
 
 class ForgotPasswordHandler(MyHandler):
     def get(self):
-        self._serve_page()
+        self.setupUser()
+        self.render('forgot.html')
 
     def post(self):
-        username = self.request.get('user_name')
+        self.setupUser()
+        username = self.request.get('email')
 
         user = self.user_model.get_by_auth_id(username)
         if not user:
             logging.info('Could not find any user entry for username %s', username)
-            self._serve_page(not_found=True)
+            self.templateValues['error'] = 'Sorry, we could not find an account matching ' + username
+            self.render('forgot.html')
             return
 
-        user_id = user.get_id()
+        user_id = user.id()
         token = self.user_model.create_signup_token(user_id)
 
         verification_url = self.uri_for('verification', type='p', user_id=user_id, signup_token=token, _full=True)
 
+        sender_address="classtracknoreply@gmail.com"
+        subject="Password Reset Request From Classtrack"
+        user_address = username
+        body = """
+        Dear {name}:
+
+        Thank you for signing up with ClassTrack! Before we can continue, we need you to verify your account with us.
+
+        Please verify your email by clicking the following link:
+        {link}
+
+        Thanks!
+        Team Classtrack
+        """.format(name=user.first_name, link=verification_url)
+
+        mail.send_mail(sender_address, user_address, subject, body)
         msg = 'Send an email to user in order to reset their password. They will be able to do so by visiting <a href="{url}">{url}</a>'
 
         self.display_message(msg.format(url=verification_url))
-
-    def _serve_page(self, not_found=False):
-        username = self.request.get('username')
-        self.templateValues['username'] = user_name
-        self.templateValues['not_found'] = not_found
-        self.render('forgot.html')
-
-
 
 class LoginPageHandler(MyHandler):
     def get(self):
@@ -1020,19 +1035,19 @@ class InitNDBHandler(MyHandler):
                 secondary_color = 'FFFFFF'
             )
         Seneca = newschool.put()
-        
+
         #Make Class
         newclass = models.Classes(
         school = Seneca,
-        name = "Math 142"        
+        name = "Math 142"
         )
         mathclass = newclass.put()
-        
+
         #Link School and Class
         Seneca.get().class_list = [mathclass]
-        
+
         Seneca.get().put()
-        
+
         #Teacher
         user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
             first_name="John",
@@ -1045,7 +1060,7 @@ class InitNDBHandler(MyHandler):
             meetings=[],
             messageThreads=[],
             school = [Seneca])
-        
+
         #Link Teacher
         Seneca.get().teachers = [user_data[1].key]
         mathclass.get().teacher = [user_data[1].key]
@@ -1053,8 +1068,8 @@ class InitNDBHandler(MyHandler):
         mathclass.get().put()
         #Add Students and Add to List
         studentList = []
-        
-        
+
+
         #Link Students
 
         self.redirect('/')
@@ -1243,8 +1258,8 @@ class ConferencePageHandler(MyHandler):
         # if message:
         #     channel.send_message(1, message)
         # self.render('conference.html')
-        
-        
+
+
 class ChannelConnectionHandler(MyHandler):
     def post(self):
         self.setupUser()
