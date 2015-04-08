@@ -1054,7 +1054,6 @@ class AddPostHandler(MyHandler):
         #Link Students
 
         self.redirect('/')
->>>>>>> 1d07a798a0a182c776c13b96a59a6021cecce54e
 
 class TeacherRegistrationHandler(MyHandler):
     def get(self):
