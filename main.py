@@ -751,7 +751,7 @@ class AddConferencePageHandler(MyHandler):
         
         participantList = []
 
-        if self.user.user_type == 1:
+        if self.user.user_type == teacher_user:
             student_key_value = int(self.request.get('student_value'))
             student_key = ndb.Key(models.User, student_key_value)
             student = student_key.get()
@@ -762,7 +762,7 @@ class AddConferencePageHandler(MyHandler):
                 entry['name'] = obj.first_name + " " + obj.last_name
                 entry['value'] = obj.id()
                 participantList.append(entry)
-        elif self.user.user_type == 2:
+        elif self.user.user_type == parent_user:
             student_key_value = int(self.request.get('student_value'))
             student_key = ndb.Key(models.User, student_key_value)
             student = student_key.get()
