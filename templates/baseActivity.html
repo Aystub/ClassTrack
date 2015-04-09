@@ -38,6 +38,7 @@
 			.nav > li > a:hover{
 				background-color: {{secondaryColor}};
 			}
+
 		</style>
 		{%block scriptBlock %}{% endblock %}
 
@@ -76,8 +77,8 @@
 					    	<p style="display: inline;">Welcome, <b>{{ first_name }}!</b>&nbsp;&nbsp;&nbsp;&nbsp;
 								<a href="{{ 'profile' }}"><button type="button" class="btn btn-default navbar-btn">Profile</button></a></p>
 						{% else %}
-							<a href="/login"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
-							<a href="/signup"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
+							<a href="/login"><button type="button" class="btn btn-default navbar-btn">Login</button></a>
+							<a href="/signup"><button type="button" class="btn btn-default navbar-btn">Signup</button></a>
 						{% endif %}
 					</div>
 				</div><!--/.nav-collapse -->
