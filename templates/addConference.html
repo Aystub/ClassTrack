@@ -37,12 +37,17 @@
 		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting" id="purpose-input"></input>
 		  </div>
 		  <div class="form-group">
+<<<<<<< HEAD
 		    <label for="participants">Select a Contact:</label>
 				<select id ="participant-select" name="participants">
 					{% for contact in contacts %}
 						<option value="{{contact.get().auth_ids[0]}}">{{ contact.get().first_name }} {{ contact.get().last_name }}</option>
 					{% endfor %}
 				</select>
+=======
+		    <label for="participants">Select a Teacher:</label>
+				<select id ="participant-select" name="participants"></select>
+>>>>>>> FixingConferenceScheduling
 
 		  </div>
 		  <div class="form-group">
@@ -58,7 +63,22 @@
 		</div>
 		</form>
 		<script>
+			function populateList()
+			{
+				var list = {{ participantList | safe }}
+				var dropdown = $('#participant-select');
+				for(var i = 0; i < list.length; i++)
+				{
+					dropdown.append($("<option></option>")
+      				.attr("value", list[i]['value'])
+      				.text(list[i]['name']));
+
+				}
+			}
+
 			$(document).ready(function(){
+				populateList();
+
 				$('#timePicker').timepicker({
 					'disableTimeRanges':[
 				        ['12am', '6am']

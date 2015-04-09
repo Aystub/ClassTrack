@@ -275,6 +275,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
+        parent_id = self.request.get('parent_id')
         school_name = self.request.get('school')
         verified = False
 
@@ -284,14 +285,18 @@ class SignupPageHandler(MyHandler):
         messageThread = []
 
         requested_school = models.School.query(models.School.name == school_name).fetch(1, keys_only = True)
+        # Check if valid school
+        if len(requested_school) == 0 or requested_school is None:
+            self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
+            if teacher_code:
+                self.render('teacherRegistration.html')
+            elif student_id or student_id == '' and not parent_id:
+                self.render('childRegistration.html')
+            else:
+                self.render('signup.html')
+            return
 
         if teacher_code:
-        # Check if valid school
-            if len(requested_school) == 0 or requested_school is None:
-                self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
-                self.render('teacherRegistration.html')
-                return
-
             user_type = teacher_user
             class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
             courseList = []
@@ -738,38 +743,70 @@ class AddConferencePageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.login_check()
+        # teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        # teachers = [teacher.to_dict() for teacher in teacher_query]
+        # if len(teachers) == 0:
+        #     self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
+        # self.templateValues['teachers'] = teacher_query
         
-        contacts = set()
-        
-        ##check for user type - Parent
-        if(self.user.user_type == parent_user):
-            ##create list of contacts
-            for child in self.user.family:
-                for course in child.get().course_list:
-                    for teacher in course.get().teacher:
-                        contacts.add(teacher)
-                        
-         ##check for user type -- Teacher              
-        elif(self.user.user_type == teacher_user):
-            ##create list of contacts
-            for course in self.user.course_list:
-                for child in course.get().student_list:
-                    for parent in child.get().family:
-                        contacts.add(parent)
-                        
-        if len(contacts) == 0:
-            self.templateValues['error'] = "Unable to locate contacts for your account. Your school may not have fully setup its account. Please try again later. If this persists, please contact your school's administrators."
-        self.templateValues['contacts'] = contacts
+        participantList = []
+
+        if self.user.user_type == 1:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            parents = student.family
+            for parent in parents:
+                obj = parent.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                participantList.append(entry)
+        elif self.user.user_type == 2:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            courses = student.course_list
+            participantList = []
+            for course in courses:
+                obj = course.get()
+                teachers = obj.teacher
+                for teacher in teachers:
+                    obj = teacher.get()
+                    entry = {}
+                    entry['name'] = obj.first_name + " " + obj.last_name
+                    entry['value'] = obj.id()
+                    participantList.append(entry)
+        self.templateValues['participantList'] = json.dumps(participantList)
         self.login_check()
         self.render('addConference.html')
+
+
+        
+
+        # teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        # teachers = [teacher.to_dict() for teacher in teacher_query]
+        # if len(teachers) == 0:
+        #     self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
+        # self.templateValues['teachers'] = teacher_query
+
+        # self.render('addConference.html')
+
+        # teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        # teachers = [teacher.to_dict() for teacher in teacher_query]
+        # if len(teachers) == 0:
+        #     self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
+        # self.templateValues['teachers'] = teacher_query
 
     def post(self):
         ##Todo: Validate Input
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
-        teachers = self.request.get('participants')
-        participants = [self.user.auth_ids[0],teachers]
+        participant = int(self.request.get('participants'))
+        participants = []
+        participants.append(ndb.Key(models.User, self.user.id()))
+        participants.append(ndb.Key(models.User, participant))
+        # participants = [self.user.auth_ids[0], ndb.Key(models.User, participant)]
 
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
@@ -784,46 +821,39 @@ class AddConferencePageHandler(MyHandler):
         # teacher = [teacher.to_dict() for teacher in teacher_query]
         # self.response.write(teacher)
 
-        participant_id = []
-        names = ''
-        for auth_id in participants:
-            model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
-            participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-            names += model_query.first_name + " "
-            names += model_query.last_name + ', '
-        clean_names = names[:-1]
-        teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # participant_id = []
+        # names = ''
+        # for auth_id in participants:
+            # model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
+            # participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+            # names += model_query.first_name + " "
+            # names += model_query.last_name + ', '
+        # clean_names = names[:-1]
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
-                participant_ids = participant_id,
+                # participant_ids = participant_id,
                 datetime = extractedDateTime,
-                names_list = clean_names
+                # names_list = clean_names
             )
         key=post.put()
 
         #adding the conference to the user who made it
         this_user = self.user
-        if not this_user.meetings:
-            this_user.meetings = [key]
-        else:
-            this_user.meetings += [key]
-
-
-        #in the future here we will make it invite the other person/add them in general
-        if not teacher.meetings:
-            teacher.meetings = [key]
-        else:
-            teacher.meetings += [key]
-
-
-        teacher.put()
+        this_user.meetings.append(key)
         this_user.put()
 
-        teacher_full_name = teacher.first_name + teacher.last_name
+        other_user = ndb.Key(models.User, participant).get()
+        #in the future here we will make it invite the other person/add them in general
+        other_user.meetings.append(key)
+        other_user.put()
+        
+
+        other_full_name = other_user.first_name + other_user.last_name
         user_full_name = self.user.first_name + self.user.last_name
 
         #Email to Inviter
@@ -838,14 +868,14 @@ class AddConferencePageHandler(MyHandler):
 
         Thanks!
         Team Classtrack
-        """.format(name=self.user.first_name, invited=teacher_full_name, date_and_time=extractedDateTime)
+        """.format(name=self.user.first_name, invited=other_full_name, date_and_time=extractedDateTime)
 
         mail.send_mail(sender_address, user_address, subject, body)
 
         #Email to Invited
         sender_address="classtracknoreply@gmail.com"
         subject="Conference Invite - Classtrack"
-        user_address = teacher.auth_ids[0]
+        user_address = other_user.auth_ids[0]
         body = """
         Dear {name}:
 
@@ -1020,7 +1050,6 @@ class AddChildHandler(MyHandler):
         this_user = self.user
         this_user.family.append(student.key)
         this_user.put()
-
         student.family.append(this_user.key)
         student.put()
 
@@ -1328,7 +1357,7 @@ class AddChildrenToClassHandler(MyHandler):
                                 student.put()
 
 
-        student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school - Daniel Vu
+        student_query = models.User.query(ndb.AND(models.User.user_type==3, models.User.school == self.user.school[0])) #We are currently assuming that the teachers only have one school - Daniel Vu
         currentCourse = ndb.Key(models.Course, courseID)
         current_query = student_query.filter(models.User.course_list == currentCourse)
 
@@ -1362,17 +1391,71 @@ class AddChildrenToClassHandler(MyHandler):
         self.templateValues['current_list'] = json.dumps(current_list)
         self.render('addChildrenToClass.html')
 
+
+class SelectCourseMenuHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        if self.user.user_type != 1:
+            self.templateValues['error'] = 'You do not have permission to access this page.'
+            self.render('fancyboxError.html')
+        else:
+            courses = self.user.courseList
+            courseList = []
+            for course in courses:
+                    entry = {}
+                    obj = course.get()
+                    entry['name'] = obj.name
+                    entry['value'] = course.id()
+                    courseList.append(entry)
+            self.templateValues['courses'] = json.dumps(courseList)
+            self.render('selectCourseMenu.html')
+
+class SelectChildMenuHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        childrenList = []
+
+        if self.user.user_type == 1: # If the user is a teacher
+            course = self.request.get('course')
+            self.templateValues['course'] = course
+            if course:
+                course = int(self.request.get('course'))
+                currentCourse = ndb.Key(models.Course, course)
+                students = models.User.query(models.User.course_list == currentCourse)
+                for student in students:
+                    entry = {}
+                    entry['name'] = student.first_name + " " + student.last_name
+                    entry['value'] = student.id()
+                    childrenList.append(entry)
+        elif self.user.user_type == 2: # if the user is a parent
+            children = self.user.family
+            for child in children:
+                obj = child.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                childrenList.append(entry)
+        self.templateValues['children'] = json.dumps(childrenList)
+        self.render('selectChildMenu.html')
+
 # Dummy data handlers
 class MakeDummyChildrenHandler(MyHandler):
     def get(self):
-        requested_school = models.School.query(models.School.name == 'Seneca Middle School').fetch(1, keys_only = True)
+        requested_school_1 = models.School.query(models.School.name == 'Seneca Middle School').fetch(1, keys_only = True)
+        requested_school_2 = models.School.query(models.School.name == 'Mauldin Middle School').fetch(1, keys_only = True)
         default_course = models.Course.query(models.Course.name == 'DEFAULTNONECOURSE').fetch(1, keys_only = True)
 
         new_child = models.User(
             first_name = 'Devin',
             last_name = 'Crawford',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_1,
             course_list = default_course
         )
         new_child.put()
@@ -1381,7 +1464,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Micheal',
             last_name = 'Campbell',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_1,
             course_list = default_course
 
         )
@@ -1391,7 +1474,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Sam',
             last_name = 'Ballard',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_1,
             course_list = default_course
         )
         new_child.put()
@@ -1400,7 +1483,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Rodolfo',
             last_name = 'Frazier',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_1,
             course_list = default_course
 
         )
@@ -1410,7 +1493,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Edith',
             last_name = 'Wolfe',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_1,
             course_list = default_course
 
         )
@@ -1420,7 +1503,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Stuart',
             last_name = 'Neal',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_2,
             course_list = default_course
 
         )
@@ -1430,7 +1513,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Darlene',
             last_name = 'Osborne',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_2,
             course_list = default_course
 
         )
@@ -1440,7 +1523,7 @@ class MakeDummyChildrenHandler(MyHandler):
             first_name = 'Taylor',
             last_name = 'Griffith',
             user_type = 3,
-            school = requested_school,
+            school = requested_school_2,
             course_list = default_course
 
         )
@@ -1630,6 +1713,8 @@ app = webapp2.WSGIApplication([
     #webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
     webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
+    webapp2.Route('/selectCourseMenu',SelectCourseMenuHandler, name='selectCourseMenu'),
+    webapp2.Route('/selectChildMenu',SelectChildMenuHandler, name='selectChildMenu'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
     #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),

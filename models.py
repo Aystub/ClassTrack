@@ -117,7 +117,6 @@ class School(ndb.Model):
 class Course(ndb.Model):
     school = ndb.KeyProperty(kind='School',required=True)
     name = ndb.StringProperty(required=True)
-    student_list = ndb.KeyProperty(kind='User',repeated=True)
     teacher = ndb.KeyProperty(kind='User',repeated=True)
 
     def id(self):
@@ -185,13 +184,15 @@ class NFPost(ndb.Model):
 
 class Conference(ndb.Model):
     purpose = ndb.StringProperty(required=True)
-    participants = ndb.StringProperty(repeated=True)
+    participants = ndb.KeyProperty(kind="User", repeated=True)
     datetime = ndb.DateTimeProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
-    currentLoggedInUsers = ndb.StringProperty(repeated=True)
-    participant_ids = ndb.IntegerProperty(repeated=True)
     accepted = ndb.BooleanProperty(default=False)
-    names_list = ndb.StringProperty()
+    # names_list = ndb.StringProperty()
+    # currentLoggedInUsers = ndb.StringProperty(repeated=True)
+    # participant_ids = ndb.IntegerProperty(repeated=True)
+    # participants = ndb.StringProperty(repeated=True)
+
 
     def id(self):
         return self.key.id()
