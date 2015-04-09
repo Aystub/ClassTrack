@@ -1,0 +1,47 @@
+	{% extends "baseActivity.html" %}
+	{% block title %}{{ title }}{% endblock %}
+	{% block top %}{{ super() }}{% endblock %}
+
+
+ 	{% block sideNavWidget %}
+
+	{% endblock %}
+
+
+	{% block content %}
+		<div class="row">
+			<div class="col-md-1"></div>
+			<div class="col-md-9" role="alert">
+				<center><h1>Class Management</h1></center>
+			</div>
+			<div class="col-md-2"></div>
+		</div>
+		<div class="row" style="margin-bottom:20px">
+			<div class="col-md-1"></div>
+			<div class="col-md-9" role="alert">
+
+
+
+			</div>
+			<div class="col-md-2"></div>
+		</div>
+		<div class="push"></div>
+
+		{% for course in courseList %}
+		<div class="row">
+			<div class="alert alert-success col-md-12" role="alert">
+				<div class="col-md-8">{{course['name']}}</div>
+				<div class="col-md-4">
+				<form action="/addChildrenToClass" method="POST">
+					<input type="hidden" name="courseID" value={{course['key']}}></input>
+					<button type="submit">Edit Children</button>
+				</form>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+
+
+	{% endblock %}
+
+	{% block bottom %}{{ super() }}{% endblock %}

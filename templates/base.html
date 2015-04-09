@@ -32,12 +32,7 @@
 		.navbar-custom-global .navbar-nav > .active > a:hover,
 		.navbar-custom-global .navbar-nav > .active > a:focus {
 			background-color: {{secondaryColor}};
-
 		}
-		.nav > li > a:hover{
-			background-color: {{secondaryColor}};
-		}
-
 	</style>
 
 </head>
@@ -45,7 +40,7 @@
 <body>
 <div class="wrapper">
 	{% block navbar %}
-	<div class="navbar-custom-global navbar-fixed-top" role="navigation">
+	<div class="navbar-custom-global" role="navigation">
 		<div class="container">
 			<div class="navbar-header">
 				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
@@ -75,7 +70,8 @@
 				</ul>
 				<div class="nav navbar-nav navbar-right">
 					{% if username %}
-							<p style="display: inline;">Welcome, <b>{{ first_name }}!</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a></p>
+							<p style="display: inline;">Welcome, <b>{{ first_name }}!</b>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="{{ 'profile' }}"><button type="button" class="btn btn-default navbar-btn">Profile</button></a></p>
 					{% else %}
 						<a href="/login"><button type="button" class="btn btn-default navbar-btn">Login</button></a>
 						<a href="/signup"><button type="button" class="btn btn-default navbar-btn">Signup</button></a>
@@ -84,7 +80,6 @@
 			</div><!--/.nav-collapse -->
 		</div>
 	</div>
-	<div style="height: 50px;"></div>
 	{% endblock %}
 
 
