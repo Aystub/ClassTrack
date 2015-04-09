@@ -884,6 +884,7 @@ class AddMessagePageHandler(MyHandler):
         self.setupUser()
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
+        recieverID = self.request.get('participants')
 
         message = models.PrivateMessage(
                 sender = self.user.key,
@@ -901,6 +902,15 @@ class AddMessagePageHandler(MyHandler):
         key = thread.put()
 
         this_user = self.user
+        if not this_user.messages:
+            this_user.messages = [key]
+        else:
+            this_user.messages += [key]
+
+        this_user.put()
+        
+        this_user = ndb.Key('User',int(recieverID)).get()
+        
         if not this_user.messages:
             this_user.messages = [key]
         else:
