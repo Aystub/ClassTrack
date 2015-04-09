@@ -950,6 +950,7 @@ class AddChildHandler(MyHandler):
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
+        
         student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
@@ -1403,6 +1404,7 @@ class InitNDBHandler(MyHandler):
         studentList = []
 
         new_child = models.User(
+            auth_ids = ["1227"],
             first_name = 'Devin',
             last_name = 'Crawford',
             user_type = 3,
@@ -1413,6 +1415,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1228"],
             first_name = 'Micheal',
             last_name = 'Campbell',
             user_type = 3,
@@ -1423,6 +1426,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1229"],
             first_name = 'Sam',
             last_name = 'Ballard',
             user_type = 3,
@@ -1433,6 +1437,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1230"],
             first_name = 'Rodolfo',
             last_name = 'Frazier',
             user_type = 3,
@@ -1443,6 +1448,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1231"],
             first_name = 'Edith',
             last_name = 'Wolfe',
             user_type = 3,
@@ -1453,6 +1459,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1232"],
             first_name = 'Stuart',
             last_name = 'Neal',
             user_type = 3,
@@ -1463,6 +1470,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1233"],
             first_name = 'Darlene',
             last_name = 'Osborne',
             user_type = 3,
@@ -1474,6 +1482,7 @@ class InitNDBHandler(MyHandler):
         studentList.append(new_child.put())
 
         new_child = models.User(
+            auth_ids = ["1234"],
             first_name = 'Taylor',
             last_name = 'Griffith',
             user_type = 3,
