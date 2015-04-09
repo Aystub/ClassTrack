@@ -434,6 +434,10 @@ class HomePageHandler(MyHandler):
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
         logging.info("LENGTH OF FAMILY: %s", len(self.user.family))
+        if self.user.user_type == 1:
+            self.templateValues['planConferenceLink'] = 'selectCourseMenu'
+        elif self.user.user_type == 2:
+            self.templateValues['planConferenceLink'] = 'selectChildMenu'
         if len(self.user.family) == 0:
             self.templateValues['warning'] = "You have not added a child to your account yet. To get the most out of ClassTrack you should link yourself to your child's account "
 
