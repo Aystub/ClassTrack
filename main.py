@@ -218,6 +218,7 @@ class MyHandler(webapp2.RequestHandler):
         if not self.user_info:
             self.redirect('index.html')
 
+
 class MainPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -413,10 +414,25 @@ class HomePageHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
-        qry = models.NFPost.query().order(-models.NFPost.time).fetch()
-        self.templateValues['newsfeed_list'] = qry
+        logging.info("LENGTH OF FAMILY: %s", len(self.user.family))
+        if len(self.user.family) == 0:
+            self.templateValues['warning'] = "You have not added a child to your account yet. To get the most out of ClassTrack you should link yourself to your child's account "
+
+        if len(self.user.meetings) > 0:
+            self.templateValues['numConf'] = len(self.user.meetings)
+        else:
+            self.templateValues['numConf'] = 0
+
+        if len(self.user.messages) > 0:
+            self.templateValues['numMess'] = len(self.user.messages)
+        else:
+            self.templateValues['numMess'] = 0
+
+        # qry = models.NFPost.query().order(-models.NFPost.time).fetch()
+        # self.templateValues['newsfeed_list'] = qry
         self.login_check()
-        self.render('home.html')
+        # self.render('home.html')
+        self.render('circleHome.html')
 
 
 class SetPasswordHandler(MyHandler):
@@ -936,16 +952,11 @@ class AddChildHandler(MyHandler):
         student_id = self.request.get("student_id")
         student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        if this_user.family == []:
-            this_user.family = [student.key]
-        else:
-            this_user.family += [student.key]
+        this_user.family.append(student.key)
         this_user.put()
 
-        if student.family == []:
-            student.family = [this_user.key]
-        else:
-            student.family += [this_user.key]
+        student.family.append(this_user.key)
+        student.put()
 
 class LookupChildHandler(MyHandler):
     def post(self):
