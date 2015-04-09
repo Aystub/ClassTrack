@@ -22,7 +22,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     course_list = ndb.KeyProperty(kind='Course',repeated=True)
     hasCourses = ndb.ComputedProperty(lambda self: len(self.course_list) != 0)
     school = ndb.KeyProperty(kind='School',repeated=True)
-    
+
     def takingCourse(courseID):
         for course in self.course_list:
             if course == courseID:
@@ -85,7 +85,7 @@ class School(ndb.Model):
     zipcode = ndb.StringProperty(required=True)
     primary_color = ndb.StringProperty()
     secondary_color = ndb.StringProperty()
-    
+
     #Why do we need these?
     students = ndb.KeyProperty(kind='User',repeated=True)
     teachers = ndb.KeyProperty(kind='User',repeated=True)
@@ -187,7 +187,8 @@ class Conference(ndb.Model):
     participants = ndb.KeyProperty(kind="User", repeated=True)
     datetime = ndb.DateTimeProperty(required=True)
     created = ndb.DateTimeProperty(auto_now_add=True)
-    accepted = ndb.BooleanProperty(default=False)
+    invited = ndb.KeyProperty(kind="User", repeated=True)
+    accepted = ndb.ComputedProperty(lambda self: len(self.invited) == 0)
     # names_list = ndb.StringProperty()
     # currentLoggedInUsers = ndb.StringProperty(repeated=True)
     # participant_ids = ndb.IntegerProperty(repeated=True)

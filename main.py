@@ -331,7 +331,8 @@ class SignupPageHandler(MyHandler):
             courseList=courseList,
             meetings=meeting,
             messageThreads=messageThread,
-            school = requested_school)
+            school=requested_school,
+            invited=[])
 
         # Check if duplicate entry for email
         if not user_data[0]: #user_data is a tuple (boolean, info). Boolean denotes success
@@ -696,7 +697,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
             for conf in conference_list:
                 names=''
                 #replace with name string
-                small_list = conf.participants
+                small_list = conf.participants + conf.invited
                 for index, part in enumerate(small_list):
                     names += part.get().first_name + " "
                     names += part.get().last_name
@@ -712,13 +713,12 @@ class ConferenceSchedulerPageHandler(MyHandler):
             for conf in invite_list:
                 names=''
                 #replace with name string
-                small_list_inv = conf.participants
-                for part in small_list_inv:
-                    person_query = models.User.query().filter(models.User.auth_ids==part)
-                    person = [person.to_dict() for person in person_query]
-                    names += person[0]['first_name'] + " "
-                    names += person[0]['last_name']
-                    names += ', '
+                small_list_inv = conf.participants + conf.invited
+                for index, part in enumerate(small_list_inv):
+                    names += part.get().first_name + " "
+                    names += part.get().last_name
+                    if(len(small_list_inv) != 1 & index != len(small_list_inv) - 1):
+                        names += ', '
                 part_list_inv.append(names)
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
@@ -749,10 +749,10 @@ class AddConferencePageHandler(MyHandler):
         # if len(teachers) == 0:
         #     self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
         # self.templateValues['teachers'] = teacher_query
-        
+
         ##Validate Get Data and 404 if not present
         ##student_key_value = int(self.request.get('student_value'))
-        
+
         participantList = []
 
         if self.user.user_type == teacher_user:
@@ -786,7 +786,7 @@ class AddConferencePageHandler(MyHandler):
         self.render('addConference.html')
 
 
-        
+
 
         # teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
         # teachers = [teacher.to_dict() for teacher in teacher_query]
@@ -808,8 +808,9 @@ class AddConferencePageHandler(MyHandler):
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         participant = int(self.request.get('participants'))
         participants = []
+        invited = []
         participants.append(ndb.Key(models.User, self.user.id()))
-        participants.append(ndb.Key(models.User, participant))
+        invited.append(ndb.Key(models.User, participant))
         # participants = [self.user.auth_ids[0], ndb.Key(models.User, participant)]
 
         # This section of code is from the master before merge 3-7-15
@@ -842,6 +843,7 @@ class AddConferencePageHandler(MyHandler):
                 participants = participants,
                 # participant_ids = participant_id,
                 datetime = extractedDateTime,
+                invited = invited
                 # names_list = clean_names
             )
         key=post.put()
@@ -853,9 +855,9 @@ class AddConferencePageHandler(MyHandler):
 
         other_user = ndb.Key(models.User, participant).get()
         #in the future here we will make it invite the other person/add them in general
-        other_user.meetings.append(key)
+        other_user.invited.append(key)
         other_user.put()
-        
+
 
         other_full_name = other_user.first_name + other_user.last_name
         user_full_name = self.user.first_name + self.user.last_name
@@ -894,6 +896,40 @@ class AddConferencePageHandler(MyHandler):
         self.response.write("<h1> Conference Added </h1>")
 
 
+class AcceptConferenceHandler(MyHandler):
+    def post(self):
+        key = self.request.get('roomkey')
+        confKey = ndb.Key('Conference', int(key))
+        conf = ndb.Key('Conference', int(key)).get()
+        this_user = self.user
+
+        invList = conf.invited
+        accList = conf.participants
+        newInvList = []
+        if this_user in invList:
+            for user in conf.invited:
+                if user == this.user:
+                    newInvList = newInvList
+                else:
+                    newInvList.append(user)
+            accList.append(this_user)
+        conf.invited = newInvList
+        conf.participants = accList
+        key2 = conf.put()
+        this_user.meetings.append(key2)
+
+        newInvConfList = []
+        for confCheck in this_user.invited:
+            if confCheck == key2:
+                newInvConfList = newInvConfList
+            else:
+                newInvConfList.append(confCheck)
+        this_user.invited = newInvConfList
+        this_user.put()
+
+        self.redirect('conferenceSchedule')
+
+
 class DelConferenceHandler(MyHandler):
     def post(self):
         ##Todo: restirct access? Should parents be able to delete Conferences
@@ -901,7 +937,7 @@ class DelConferenceHandler(MyHandler):
         key = self.request.get('roomkey')
         key2 = ndb.Key('Conference', int(key))
         key2.delete()
-        
+
         ##Todo: Delete References in User Lists
         self.redirect('conferenceSchedule')
 
@@ -925,10 +961,10 @@ class AddMessagePageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Messaginging | ClassTrack'
-        
+
         ##Validate Get Data and 404 if not present
         ##student_key_value = int(self.request.get('student_value'))
-        
+
         participantList = []
 
         if self.user.user_type == teacher_user:
@@ -961,7 +997,7 @@ class AddMessagePageHandler(MyHandler):
         self.login_check()
         self.render('addMessage.html')
         ##self.response.out.write(contacts)
-        
+
     def post(self):
         self.setupUser()
         #NEED TO VALIDATE THESE ESPECIALLY THE RECIEVER ID
@@ -991,9 +1027,9 @@ class AddMessagePageHandler(MyHandler):
             this_user.messages += [key]
 
         this_user.put()
-        
+
         this_user = ndb.Key('User',int(recieverID)).get()
-        
+
         if not this_user.messages:
             this_user.messages = [key]
         else:
@@ -1067,7 +1103,7 @@ class AddChildHandler(MyHandler):
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
-        
+
         student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
@@ -1264,7 +1300,7 @@ class ConferencePageHandler(MyHandler):
                 channel.send_message(roomkey+u_id, message)
             # channel.send_message(roomkey+user_id, message)
             # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
-            
+
         # logging.warning("================ HELLO WORLD =================")
 
         # token = channel.create_channel(identifier)
@@ -1414,14 +1450,14 @@ class SelectCourseMenuHandler(MyHandler):
             self.render('404.html')
         else:
             source = self.request.get('source')
-            
+
             if(source == "messaging"):
-                self.templateValues['source'] = "messaging" 
+                self.templateValues['source'] = "messaging"
             elif(source == "conferencing"):
                 self.templateValues['source'] =  "conferencing"
             else:
                 self.render('404.html')
-                
+
             courses = self.user.course_list
             courseList = []
             for course in courses:
@@ -1440,16 +1476,16 @@ class SelectChildMenuHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         childrenList = []
-        
+
         source = self.request.get('source')
-        
+
         if(source == "messaging"):
-            self.templateValues['url'] = "/addMessage" 
+            self.templateValues['url'] = "/addMessage"
         elif(source == "conferencing"):
             self.templateValues['url'] =  "/addConference"
         else:
             self.render('404.html')
-        
+
 
         if self.user.user_type == 1: # If the user is a teacher
             course = self.request.get('course')
@@ -1473,7 +1509,7 @@ class SelectChildMenuHandler(MyHandler):
                 childrenList.append(entry)
         self.templateValues['children'] = json.dumps(childrenList)
         self.render('selectChildMenu.html')
-     
+
 
 # Dummy data handlers
 class MakeDummyChildrenHandler(MyHandler):
@@ -1747,7 +1783,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/selectCourseMenu',SelectCourseMenuHandler, name='selectCourseMenu'),
     webapp2.Route('/selectChildMenu',SelectChildMenuHandler, name='selectChildMenu'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
-    #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
+    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
