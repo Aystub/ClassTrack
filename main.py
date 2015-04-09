@@ -2219,116 +2219,132 @@ class MakeDummyChildrenHandler(MyHandler):
 
 class InitNDBHandler(MyHandler):
     def get(self):
-        #********Posts***********
-        nfpost = models.NFPost(
-                caption = 'Last Element',
-                typeID = 0,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        nfpost = models.NFPost(
-                caption = 'Flu shots will be given 11/19/14',
-                typeID = 1,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        nfpost = models.NFPost(
-                caption = 'Sarah made an 87 on her English Test',
-                typeID = 3,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'PTA is holding a meeting on 12/5/14',
-                typeID = 2,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'Prom has been scheduled for 4/20!!',
-                typeID = 5,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'Please complete reading from chapter 11 by Friday!',
-                typeID = 4,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'LHS went 41-27 against CHS!',
-                typeID = 1,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        #******SCHOOLS*******
-        newschool = models.School(
+    newschool = models.School(
                 name = 'Seneca Middle School',
+                address = '810 W South 4th St, Seneca, SC 29678',
+                phone = '555-555-5555',
                 state = 'South Carolina',
+                county = 'Oconee',
                 zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
+                primary_color = 'FFFFFF',
+                secondary_color = 'FFFFFF'
             )
-        newschool.put()
-        newschool = models.School(
-                name = 'Hogwarts School of Witchcraft and Wizardry',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Ashford Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Naoetsu Private High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Fumizuki Academy',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Private Magic University Affiliated High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
-        newschool = models.School(
-                name = 'Karakura High School',
-                state = 'South Carolina',
-                zipcode = '55555',
-                county = 'Seneca',
-                address = 'Example Address',
-                phone = '555-555-5555'
-            )
-        newschool.put()
+        Seneca = newschool.put()
+        
+        #Make Class
+        newclass = models.Classes(
+        school = Seneca,
+        name = "Math 142"        
+        )
+        mathclass = newclass.put()
+        
+        #Link School and Class
+        Seneca.get().class_list = [mathclass]
+        
+        Seneca.get().put()
+        
+        #Teacher
+        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
+            first_name="John",
+            password_raw="password",
+            last_name="Goodmen",
+            user_type=teacher_user,
+            family=[],
+            verified=True,
+            class_list=[mathclass],
+            meetings=[],
+            messageThreads=[],
+            school = [Seneca])
+        
+        #Link Teacher
+        Seneca.get().teachers = [user_data[1].key]
+        mathclass.get().teacher = [user_data[1].key]
+        Seneca.get().put()
+        mathclass.get().put()
+        
+        #Add Students and Add to List
+        studentList = []
+        
+        new_child = models.User(
+            first_name = 'Devin',
+            last_name = 'Crawford',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Micheal',
+            last_name = 'Campbell',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Sam',
+            last_name = 'Ballard',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Rodolfo',
+            last_name = 'Frazier',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Edith',
+            last_name = 'Wolfe',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Stuart',
+            last_name = 'Neal',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Darlene',
+            last_name = 'Osborne',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+
+        new_child = models.User(
+            first_name = 'Taylor',
+            last_name = 'Griffith',
+            user_type = 3,
+            school = requested_school,
+            course_list = default_course
+
+        )
+        new_child.put()
+   
+        
+        #Link Students
 
         self.redirect('/')
 
