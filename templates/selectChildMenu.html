@@ -1,0 +1,53 @@
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<link rel="icon" href="../../favicon.ico">
+
+		<title>{{ title }}</title>
+
+		<!-- Bootstrap core CSS -->
+		<link href="/assets/css/bootstrap.css" rel="stylesheet">
+		<link href="/assets/css/sidebar.css" rel="stylesheet">
+		<link href="/assets/css/home.css" rel="stylesheet">
+
+		<script src="/assets/js/jquery.js"></script>
+		<script src="/assets/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/assets/js/timepicker/jquery.timepicker.js"></script>
+        <link rel="stylesheet" href="/assets/js/timepicker/jquery.timepicker.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="/assets/js/datepicker/js/bootstrap-datepicker.js"></script>
+        <link rel="stylesheet" href="/assets/js/datepicker/css/datepicker.css" type="text/css" media="screen" />
+		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+
+	</head>
+
+	<body>
+
+		<center><h1>Select a Child for course {{course}}</h1></center>
+		<center>
+		<form action="/addConference" method="GET">
+			<select name="student_value" id="dropdown"></select>
+			<button type="submit">Submit</button>
+		</form>
+		</center>
+		<script>
+			$(document).ready(function(){
+				var list = {{ children | safe }}
+				var dropdown = $('#dropdown');
+				for(var i = 0; i < list.length; i++)
+				{
+					dropdown.append($("<option></option>")
+      				.attr("value", list[i]['value'])
+      				.text(list[i]['name']));
+
+				}
+			});
+		</script>
+
+	</body>
+	</html>
