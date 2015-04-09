@@ -120,9 +120,23 @@ class MyHandler(webapp2.RequestHandler):
         if self.user_exists:
             children_name_list = []
             self.templateValues['logout'] = '/logout'
-            self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
+            self.templateValues['first_name'] = self.user.first_name
+            self.templateValues['last_name'] = self.user.last_name
             self.templateValues['username'] = self.user_info['auth_ids'][0]
-            self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
+            self.templateValues['school'] = self.user.school
+
+            userType = self.user.user_type
+            self.templateValues['usertype'] = userType
+
+            userTypeString = ''
+            if userType == 0:
+                userTypeString = 'Admin'
+            if userType == 1:
+                userTypeString = 'Teacher'
+            if userType == 2:
+                userTypeString = 'Parent'
+            self.templateValues['usertypeAsString'] = userTypeString
+
             if self.user.school:
                 self.templateValues['primaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].primary_color
                 self.templateValues['secondaryColor'] = models.School.query(ancestor=self.user.school[0]).fetch()[0].secondary_color
@@ -292,7 +306,7 @@ class SignupPageHandler(MyHandler):
                     )
                     new_class_key = new_class.put()
                     courseList.append(new_class_key)
-            
+
 
         elif student_id:
             user_type = student_user
@@ -1108,16 +1122,32 @@ class CreateAdminHandler(MyHandler):
             last_name='AdminLastName',
             user_type=admin_user,
             family=[],
-            school='None',
-            verified=False)
+            school= [],
+            verified=False,
+            courseList=[],
+            meetings=[],
+            messageThreads=[])
 
         self.redirect('/')
+
 
 class ProfileHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
         self.render('profile.html')
+
+        # first_name = ndb.StringProperty()
+        # last_name = ndb.StringProperty()
+        # user_type = ndb.IntegerProperty()
+        # meetings = ndb.KeyProperty(kind='Conference', repeated=True)
+        # invited = ndb.KeyProperty(kind='Conference', repeated=True)
+        # family = ndb.KeyProperty(kind='User',repeated=True)
+        # message_threads = ndb.KeyProperty(kind='MessageThread',repeated=True)
+        # messages = ndb.KeyProperty(kind='MessageThread',repeated=True)
+        # course_list = ndb.KeyProperty(kind='Course',repeated=True)
+        # hasCourses = ndb.ComputedProperty(lambda self: len(self.course_list) != 0)
+        # school = ndb.KeyProperty(kind='School',repeated=True)
 
 class EditProfileHandler(MyHandler):
     def get(self):
@@ -1314,7 +1344,7 @@ class AddChildrenToClassHandler(MyHandler):
                             if ndb.Key(models.Course, courseID) in student.course_list:
                                 student.course_list.remove(ndb.Key(models.Course, courseID))
                                 student.put()
-            
+
             if self.request.get('current-students'):
                 current_list = self.request.params.getall('current-students')
                 for student_id in current_list:
@@ -1329,7 +1359,7 @@ class AddChildrenToClassHandler(MyHandler):
         student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school - Daniel Vu
         currentCourse = ndb.Key(models.Course, courseID)
         current_query = student_query.filter(models.User.course_list == currentCourse)
-        
+
         potential_query = []
 
         current_list = []
@@ -1340,13 +1370,13 @@ class AddChildrenToClassHandler(MyHandler):
             entry['value'] = student.id()
             current_value_list.append(student.id())
             current_list.append(entry)
- 
+
         for student in student_query:
             contains = False
             if student.id() in current_value_list:
                contains = True
             if not contains:
-                potential_query.append(student) 
+                potential_query.append(student)
 
 
         potential_list = []
@@ -2185,8 +2215,8 @@ class MakeDummyChildrenHandler(MyHandler):
         #     school = requested_school
         # )
         # new_child.put()
-   
-        
+
+
 class InitNDBHandler(MyHandler):
     def get(self):
         #********Posts***********
