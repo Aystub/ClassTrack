@@ -695,10 +695,8 @@ class ConferenceSchedulerPageHandler(MyHandler):
                 #replace with name string
                 small_list = conf.participants
                 for index, part in enumerate(small_list):
-                    person_query = models.User.query().filter(models.User.auth_ids==part)
-                    person = [person.to_dict() for person in person_query]
-                    names += person[0]['first_name'] + " "
-                    names += person[0]['last_name']
+                    names += part.get().first_name + " "
+                    names += part.get().last_name
                     if(len(small_list) != 1 & index != len(small_list) - 1):
                         names += ', '
                 part_list.append(names)
