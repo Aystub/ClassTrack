@@ -1411,8 +1411,7 @@ class SelectCourseMenuHandler(MyHandler):
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         if self.user.user_type != 1:
             self.templateValues['error'] = 'You do not have permission to access this page.'
-            self.render('fancyboxError.html')
-            ##This should 404
+            self.render('404.html')
         else:
             source = self.request.get('source')
             
@@ -1421,8 +1420,7 @@ class SelectCourseMenuHandler(MyHandler):
             elif(source == "conferencing"):
                 self.templateValues['source'] =  "conferencing"
             else:
-                1==1
-                ##This should 404
+                self.render('404.html')
                 
             courses = self.user.course_list
             courseList = []
@@ -1450,8 +1448,7 @@ class SelectChildMenuHandler(MyHandler):
         elif(source == "conferencing"):
             self.templateValues['url'] =  "/addConference"
         else:
-            1==1
-            ##This should 404
+            self.render('404.html')
         
 
         if self.user.user_type == 1: # If the user is a teacher
