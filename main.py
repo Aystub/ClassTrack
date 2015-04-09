@@ -874,17 +874,34 @@ class AddMessagePageHandler(MyHandler):
         self.templateValues['title'] = 'Inbox'
         self.login_check()
 
+        ##old code
+        ##contacts_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        
+        contacts = set()
+        ##check for user type - Parent
+        if(self.user.user_type == parent_user):
+            ##create list of contacts
+            for child in self.user.family:
+                for course in child.get().course_list:
+                    for teacher in course.get().teacher:
+                        contacts.add(teacher)
+                        
+         ##check for user type -- Teacher              
+        elif(self.user.user_type == teacher_user):
+            ##create list of contacts
+            for course in self.user.course_list:
+                for child in course.get().student_list:
+                    for parent in child.get().family:
+                        contacts.add(parent)
 
-        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-        teachers = [teacher.to_dict() for teacher in teacher_query]
-        if len(teachers) == 0:
-            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
-        self.templateValues['teachers'] = teacher_query
+        ##contacts = [contact.to_dict() for contact in contact_query]
+        if len(contacts) == 0:
+            self.templateValues['error'] = "Unable to locate contacts for your account. Your school may not have fully setup its account. Please try again later. If this persists, please contact your school's administrators."
 
-        message_list = models.MessageThread.query()
-        self.templateValues['message_list'] = message_list
+        self.templateValues['contacts'] = contacts
         self.render('addMessage.html')
-
+        ##self.response.out.write(contacts)
+        
     def post(self):
         self.setupUser()
         #NEED TO VALIDATE THESE ESPECIALLY THE RECIEVER ID
