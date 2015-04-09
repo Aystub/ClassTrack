@@ -1414,7 +1414,7 @@ class SelectCourseMenuHandler(MyHandler):
             self.render('selectCourseMenu.html')
 
 class SelectChildMenuHandler(MyHandler):
-    def post(self):
+    def get(self):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
