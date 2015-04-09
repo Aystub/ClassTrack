@@ -738,15 +738,34 @@ class AddConferencePageHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
-        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-        teachers = [teacher.to_dict() for teacher in teacher_query]
-        if len(teachers) == 0:
-            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
-        self.templateValues['teachers'] = teacher_query
+        self.login_check()
+        
+        contacts = set()
+        
+        ##check for user type - Parent
+        if(self.user.user_type == parent_user):
+            ##create list of contacts
+            for child in self.user.family:
+                for course in child.get().course_list:
+                    for teacher in course.get().teacher:
+                        contacts.add(teacher)
+                        
+         ##check for user type -- Teacher              
+        elif(self.user.user_type == teacher_user):
+            ##create list of contacts
+            for course in self.user.course_list:
+                for child in course.get().student_list:
+                    for parent in child.get().family:
+                        contacts.add(parent)
+                        
+        if len(contacts) == 0:
+            self.templateValues['error'] = "Unable to locate contacts for your account. Your school may not have fully setup its account. Please try again later. If this persists, please contact your school's administrators."
+        self.templateValues['contacts'] = contacts
         self.login_check()
         self.render('addConference.html')
 
     def post(self):
+        ##Todo: Validate Input
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
         teachers = self.request.get('participants')
