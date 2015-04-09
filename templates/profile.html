@@ -11,9 +11,22 @@
     <h1 style="margin-left:-15px;">Profile:</h1>
     <br>
 
-      <p>Put profile info here</p>
+      <p>
+          <label for="userType">Account Type:</label> {{ usertypeAsString }}
+          <br>
+          <label for="fname">First Name:</label> {{ first_name }}
+          <br>
+          <label for="lname">Last Name:</label> {{ last_name }}
+          <br>
+          <label for="email">Email:</label> {{ username }}
+          <br>
 
-      <button onClick="window.location.href='profileEdit'" class="btn btn-default">Edit</button>
+      </p>
+
+      <p>
+          <a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a>
+          <a href="{{ 'profileEdit' }}"><button type="button" class="btn btn-default navbar-btn">Edit</button>
+      </p>
     </div>
 
 </div>

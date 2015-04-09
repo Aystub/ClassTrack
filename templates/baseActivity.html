@@ -73,7 +73,8 @@
 					</ul>
 					<div class="nav navbar-nav navbar-right">
 						{% if username %}
-					    	<p style="display: inline;">Welcome, <b>{{ first_name }}!</b>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ logout }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a></p>
+					    	<p style="display: inline;">Welcome, <b>{{ first_name }}!</b>&nbsp;&nbsp;&nbsp;&nbsp;
+								<a href="{{ 'profile' }}"><button type="button" class="btn btn-default navbar-btn">Profile</button></a></p>
 						{% else %}
 							<a href="/login"><button type="button" class="btn btn-warning navbar-btn">Login</button></a>
 							<a href="/signup"><button type="button" class="btn btn-warning navbar-btn">Signup</button></a>
@@ -116,14 +117,6 @@
 
 						{% elif usertype == 2 %} {#parent#}
 							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
-							<!--<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>-->
-							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
-							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
-
-
-						{% elif usertype == 3 %} {#student#}
-							<li id="calendar_li"><a class="side-nav-link" href="calendar">Calendar</a></li>
-							<li id="grades_li"><a class="side-nav-link" href="grades">Grades</a></li>
 							<!--<li id="documents_li"><a class="side-nav-link" href="documents">Documents</a></li>-->
 							<li id="conferenceSchedule_li"><a class="side-nav-link" href="conferenceSchedule">Conference</a></li>
 							<li id="messaging_li"><a class="side-nav-link" href="messaging">Inbox</a></li>
