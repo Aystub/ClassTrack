@@ -47,7 +47,9 @@
       <div class="alert alert-success col-md-11" role="alert">
           <div class="row" style="text-align:center">
                 <div class="col-md-1"></div>
-                <div class="col-md-3">{{MessageThread.get()['users'][0].get().first_name}}</div>
+                <div class="col-md-3">
+                {% for user in MessageThread.get()['users']%}{{user.get().first_name}} {{user.get().last_name}}{%if MessageThread.get()['users']|length !=1 and loop.index != MessageThread.get()['users']|length%}, {% endif %}{% endfor %}
+                </div>
                 <div class="col-md-3">{{MessageThread.get()['subject']}}</div>
                 <div class="col-md-3">{{MessageThread.get()['time'].strftime("%A, %B %d - %I:%M %p")}}</div><div class="col-md-2">
                 <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>

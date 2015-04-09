@@ -882,6 +882,7 @@ class AddMessagePageHandler(MyHandler):
 
     def post(self):
         self.setupUser()
+        #NEED TO VALIDATE THESE ESPECIALLY THE RECIEVER ID
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
         recieverID = self.request.get('participants')
@@ -895,7 +896,7 @@ class AddMessagePageHandler(MyHandler):
         thread = models.MessageThread(
                 time = messageID.get().time,
                 subject = theSubject,
-                users = [self.user.key],
+                users = [self.user.key,ndb.Key('User',int(recieverID))],
                 messageList = [messageID]
             )
 
