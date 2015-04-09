@@ -689,12 +689,13 @@ class ConferenceSchedulerPageHandler(MyHandler):
                 names=''
                 #replace with name string
                 small_list = conf.participants
-                for part in small_list:
+                for index, part in enumerate(small_list):
                     person_query = models.User.query().filter(models.User.auth_ids==part)
                     person = [person.to_dict() for person in person_query]
                     names += person[0]['first_name'] + " "
                     names += person[0]['last_name']
-                    names += ', '
+                    if(len(small_list) != 1 & index != len(small_list) - 1):
+                        names += ', '
                 part_list.append(names)
 
         invite_list = []
@@ -842,9 +843,13 @@ class AddConferencePageHandler(MyHandler):
 
 class DelConferenceHandler(MyHandler):
     def post(self):
+        ##Todo: restirct access? Should parents be able to delete Conferences
+        ##Todo: Validate Key ID
         key = self.request.get('roomkey')
         key2 = ndb.Key('Conference', int(key))
         key2.delete()
+        
+        ##Todo: Delete References in User Lists
         self.redirect('conferenceSchedule')
 
 class ContactTeacherPageHandler(MyHandler):
