@@ -966,95 +966,6 @@ class AddPostHandler(MyHandler):
             )
         nfpost.put()
 
-        nfpost = models.NFPost(
-                caption = 'Flu shots will be given 11/19/14',
-                typeID = 1,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        nfpost = models.NFPost(
-                caption = 'Sarah made an 87 on her English Test',
-                typeID = 3,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'PTA is holding a meeting on 12/5/14',
-                typeID = 2,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'Prom has been scheduled for 4/20!!',
-                typeID = 5,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'Please complete reading from chapter 11 by Friday!',
-                typeID = 4,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-        nfpost = models.NFPost(
-                caption = 'LHS went 41-27 against CHS!',
-                typeID = 1,
-                owner = str(self.user_info['auth_ids'][0])
-            )
-        nfpost.put()
-
-        #School
-        newschool = models.School(
-                name = 'Seneca Middle School',
-                address = '810 W South 4th St, Seneca, SC 29678',
-                phone = '555-555-5555',
-                state = 'South Carolina',
-                county = 'Oconee',
-                zipcode = '55555',
-                primary_color = 'FFFFFF',
-                secondary_color = 'FFFFFF'
-            )
-        Seneca = newschool.put()
-
-        #Make Class
-        newclass = models.Classes(
-        school = Seneca,
-        name = "Math 142"
-        )
-        mathclass = newclass.put()
-
-        #Link School and Class
-        Seneca.get().class_list = [mathclass]
-
-        Seneca.get().put()
-
-        #Teacher
-        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
-            first_name="John",
-            password_raw="password",
-            last_name="Goodmen",
-            user_type=teacher_user,
-            family=[],
-            verified=True,
-            class_list=[mathclass],
-            meetings=[],
-            messageThreads=[],
-            school = [Seneca])
-
-        #Link Teacher
-        Seneca.get().teachers = [user_data[1].key]
-        mathclass.get().teacher = [user_data[1].key]
-        Seneca.get().put()
-        mathclass.get().put()
-        #Add Students and Add to List
-        studentList = []
-
-
-        #Link Students
-
-        self.redirect('/')
-
 class TeacherRegistrationHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -1219,11 +1130,8 @@ class ConferencePageHandler(MyHandler):
                 channel.send_message(roomkey+u_id, message)
             # channel.send_message(roomkey+user_id, message)
             # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
-
-
+            
         # logging.warning("================ HELLO WORLD =================")
-
-
 
         # token = channel.create_channel(identifier)
         # self.templateValues['token'] = token
@@ -1356,15 +1264,9 @@ class AddChildrenToClassHandler(MyHandler):
             entry['value'] = student.id()
             potential_list.append(entry)
 
-
-
         self.templateValues['potential_list'] = json.dumps(potential_list)
         self.templateValues['current_list'] = json.dumps(current_list)
         self.render('addChildrenToClass.html')
-
-
-
-
 
 # Dummy data handlers
 class MakeDummyChildrenHandler(MyHandler):
@@ -1449,770 +1351,34 @@ class MakeDummyChildrenHandler(MyHandler):
 
         )
         new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Rita',
-        #     last_name = 'Anderson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Johnnie',
-        #     last_name = 'Bates',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Kelly',
-        #     last_name = 'Thompson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Robin',
-        #     last_name = 'Reese',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Michele',
-        #     last_name = 'Robinson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Elsa',
-        #     last_name = 'Morris',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Beth',
-        #     last_name = 'Cross',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Andres',
-        #     last_name = 'Henderson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Jesus',
-        #     last_name = 'Drake',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Ethel',
-        #     last_name = 'Wright',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Ida',
-        #     last_name = 'Burns',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Elaine',
-        #     last_name = 'Lawson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Lawrence',
-        #     last_name = 'Chapman',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Jean',
-        #     last_name = 'Sanchez',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Alice',
-        #     last_name = 'Joseph',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Wm',
-        #     last_name = 'Mitchell',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Regina',
-        #     last_name = 'Rose',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Ramona',
-        #     last_name = 'Rogers',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Richard',
-        #     last_name = 'Holt',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Ann',
-        #     last_name = 'Bell',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Corey',
-        #     last_name = 'Adams',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Lana',
-        #     last_name = 'Klein',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Pablo',
-        #     last_name = 'Mendoza',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Floyd',
-        #     last_name = 'Walsh',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Edmund',
-        #     last_name = 'Woods',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Dale',
-        #     last_name = 'Payne',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Geraldine',
-        #     last_name = 'Phillips',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Drew',
-        #     last_name = 'Leonard',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Sherri',
-        #     last_name = 'Luna',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Lorene',
-        #     last_name = 'Olson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Luke',
-        #     last_name = 'Dawson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Luther',
-        #     last_name = 'Farmer',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Tanya',
-        #     last_name = 'Mcguire',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Kathryn',
-        #     last_name = 'Elliott',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Jeremiah',
-        #     last_name = 'Howard',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Alicia',
-        #     last_name = 'Vega',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Eula',
-        #     last_name = 'Hughes',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Reginald',
-        #     last_name = 'Cohen',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Shelley',
-        #     last_name = 'Lyons',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Casey',
-        #     last_name = 'Ortiz',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Paul',
-        #     last_name = 'Holloway',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Vanessa',
-        #     last_name = 'Black',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Marcia',
-        #     last_name = 'Goodman',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Doris',
-        #     last_name = 'Duncan',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Wayne',
-        #     last_name = 'Waters',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Norman',
-        #     last_name = 'Morgan',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Alberto',
-        #     last_name = 'Norman',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Erma',
-        #     last_name = 'May',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Anita',
-        #     last_name = 'Mcdaniel',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Pat',
-        #     last_name = 'Pena',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Kate',
-        #     last_name = 'French',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Kelley',
-        #     last_name = 'Douglas',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Angela',
-        #     last_name = 'Floyd',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Neil',
-        #     last_name = 'Ray',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Dana',
-        #     last_name = 'Silva',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Nellie',
-        #     last_name = 'Reed',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Candice',
-        #     last_name = 'Washington',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Joyce',
-        #     last_name = 'Wallace',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Christopher',
-        #     last_name = 'Fleming',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Eric',
-        #     last_name = 'Snyder',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Mandy',
-        #     last_name = 'Higgins',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Troy',
-        #     last_name = 'Mcgee',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Felix',
-        #     last_name = 'Simpson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Melanie',
-        #     last_name = 'Howell',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Georgia',
-        #     last_name = 'Dunn',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Joshua',
-        #     last_name = 'Nichols',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Gina',
-        #     last_name = 'Townsend',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Danny',
-        #     last_name = 'Alvarado',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Faith',
-        #     last_name = 'Vargas',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Irvin',
-        #     last_name = 'Sandoval',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Betsy',
-        #     last_name = 'Maldonado',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Abel',
-        #     last_name = 'Morton',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Sue',
-        #     last_name = 'Mclaughlin',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Monique',
-        #     last_name = 'Mcbride',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Deanna',
-        #     last_name = 'Mathis',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Emmett',
-        #     last_name = 'Mason',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Tomas',
-        #     last_name = 'Mann',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Jackie',
-        #     last_name = 'Foster',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Garry',
-        #     last_name = 'Riley',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Gerardo',
-        #     last_name = 'Parks',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Fernando',
-        #     last_name = 'Lamb',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Bill',
-        #     last_name = 'Newman',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Darrell',
-        #     last_name = 'Abbott',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Lila',
-        #     last_name = 'Jacobs',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Bonnie',
-        #     last_name = 'Boyd',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Melinda',
-        #     last_name = 'Evans',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Edna',
-        #     last_name = 'Greer',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Valerie',
-        #     last_name = 'Carson',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Billie',
-        #     last_name = 'Manning',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Sherry',
-        #     last_name = 'Ruiz',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Beverly',
-        #     last_name = 'Gill',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
-
-        # new_child = models.User(
-        #     first_name = 'Rosemary',
-        #     last_name = 'Reid',
-        #     user_type = 3,
-        #     school = requested_school
-        # )
-        # new_child.put()
    
         
 class InitNDBHandler(MyHandler):
     def get(self):
-    newschool = models.School(
-                name = 'Seneca Middle School',
-                address = '810 W South 4th St, Seneca, SC 29678',
-                phone = '555-555-5555',
-                state = 'South Carolina',
-                county = 'Oconee',
-                zipcode = '55555',
-                primary_color = 'FFFFFF',
-                secondary_color = 'FFFFFF'
-            )
+        newschool = models.School(
+                    name = 'Seneca Middle School',
+                    address = '810 W South 4th St, Seneca, SC 29678',
+                    phone = '555-555-5555',
+                    state = 'South Carolina',
+                    county = 'Oconee',
+                    zipcode = '55555',
+                    primary_color = 'FFFFFF',
+                    secondary_color = 'FFFFFF'
+                )
         Seneca = newschool.put()
-        
+
         #Make Class
-        newclass = models.Classes(
+        newclass = models.Course(
         school = Seneca,
         name = "Math 142"        
         )
         mathclass = newclass.put()
-        
+
         #Link School and Class
         Seneca.get().class_list = [mathclass]
-        
-        Seneca.get().put()
-        
+
+        Seneca = Seneca.get().put()
+
         #Teacher
         user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
             first_name="John",
@@ -2225,96 +1391,105 @@ class InitNDBHandler(MyHandler):
             meetings=[],
             messageThreads=[],
             school = [Seneca])
-        
+
         #Link Teacher
-        Seneca.get().teachers = [user_data[1].key]
-        mathclass.get().teacher = [user_data[1].key]
-        Seneca.get().put()
-        mathclass.get().put()
-        
+        Seneca.get().teachers.append(user_data[1].key)
+        mathclass.get().teacher.append(user_data[1].key)
+
+        Seneca = Seneca.get().put()
+        mathclass = mathclass.get().put()
+
         #Add Students and Add to List
         studentList = []
-        
+
         new_child = models.User(
             first_name = 'Devin',
             last_name = 'Crawford',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
         )
-        new_child.put()
+
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Micheal',
             last_name = 'Campbell',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
 
         )
-        new_child.put()
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Sam',
             last_name = 'Ballard',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass],
+
         )
-        new_child.put()
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Rodolfo',
             last_name = 'Frazier',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
 
         )
-        new_child.put()
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Edith',
             last_name = 'Wolfe',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
 
         )
-        new_child.put()
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Stuart',
             last_name = 'Neal',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
 
         )
-        new_child.put()
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Darlene',
             last_name = 'Osborne',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
 
         )
-        new_child.put()
+
+        studentList.append(new_child.put())
 
         new_child = models.User(
             first_name = 'Taylor',
             last_name = 'Griffith',
             user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            school = [Seneca],
+            course_list = [mathclass]
 
         )
-        new_child.put()
-   
-        
+
+        studentList.append(new_child.put())
+
         #Link Students
+        Seneca.get().students = studentList
+        mathclass.get().student_list = studentList
+
+        Seneca.get().put()
+        mathclass.get().put()
 
         self.redirect('/')
 

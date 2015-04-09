@@ -22,7 +22,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     course_list = ndb.KeyProperty(kind='Course',repeated=True)
     hasCourses = ndb.ComputedProperty(lambda self: len(self.course_list) != 0)
     school = ndb.KeyProperty(kind='School',repeated=True)
-
+    
     def takingCourse(courseID):
         for course in self.course_list:
             if course == courseID:
