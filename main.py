@@ -653,7 +653,10 @@ class CalendarPageHandler(MyHandler):
             for conf in conference_list:
                 data = {}
                 names = ''
-                data['title'] = conf.names_list + "\n" + conf.purpose
+                for participent in conf.participants:
+                    if (participent.get() != self.user):
+                        names += participent.get().first_name + " " + participent.get().last_name
+                data['title'] = names + "\n" + conf.purpose
                 data['start'] = conf.datetime.strftime("%Y-%m-%d")
                 conferences.append(data)
         # data['title'] = 'daniel'
@@ -1310,8 +1313,8 @@ class ClassManagementHandler(MyHandler):
     def get(self):
         self.setupUser()
         courseList = []
-        if self.user.courseList:
-            teacherCourseList = self.user.courseList
+        if self.user.course_list:
+            teacherCourseList = self.user.course_list
             for course in teacherCourseList:
                 data = course.get()
                 entry = {}
