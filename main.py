@@ -717,19 +717,36 @@ class AddConferencePageHandler(MyHandler):
         # if len(teachers) == 0:
         #     self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
         # self.templateValues['teachers'] = teacher_query
-        student_key_value = int(self.request.get('student_value'))
-        student_key = ndb.Key(models.User, student_key_value)
-        student = student_key.get()
-        logging.info(student)
-        parents = student.family
-        parentList = []
-        for parent in parents:
-            obj = parent.get()
-            entry = {}
-            entry['name'] = obj.first_name + " " + obj.last_name
-            entry['value'] = obj.id()
-            parentList.append(entry)
-        self.templateValues['participantList'] = json.dumps(parentList)
+        
+        participantList = []
+
+        if self.user.user_type == 1:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            parents = student.family
+            for parent in parents:
+                obj = parent.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                participantList.append(entry)
+        elif self.user.user_type == 2:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            courses = student.course_list
+            participantList = []
+            for course in courses:
+                obj = course.get()
+                teachers = obj.teacher
+                for teacher in teachers:
+                    obj = teacher.get()
+                    entry = {}
+                    entry['name'] = obj.first_name + " " + obj.last_name
+                    entry['value'] = obj.id()
+                    participantList.append(entry)
+        self.templateValues['participantList'] = json.dumps(participantList)
         self.login_check()
         self.render('addConference.html')
 
@@ -1401,16 +1418,20 @@ class SelectCourseMenuHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
-        courses = self.user.courseList
-        courseList = []
-        for course in courses:
-            entry = {}
-            obj = course.get()
-            entry['name'] = obj.name
-            entry['value'] = course.id()
-            courseList.append(entry)
-        self.templateValues['courses'] = json.dumps(courseList)
-        self.render('selectCourseMenu.html')
+        if self.user.user_type != 1:
+            self.templateValues['error'] = 'You do not have permission to access this page.'
+            self.render('fancyboxError.html')
+        else:
+            courses = self.user.courseList
+            courseList = []
+            for course in courses:
+                    entry = {}
+                    obj = course.get()
+                    entry['name'] = obj.name
+                    entry['value'] = course.id()
+                    courseList.append(entry)
+            self.templateValues['courses'] = json.dumps(courseList)
+            self.render('selectCourseMenu.html')
 
 class SelectChildMenuHandler(MyHandler):
     def post(self):
@@ -1418,21 +1439,31 @@ class SelectChildMenuHandler(MyHandler):
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
-        course = self.request.get('course')
         childrenList = []
-        self.templateValues['course'] = course
-        if course:
-            course = int(self.request.get('course'))
-            currentCourse = ndb.Key(models.Course, course)
-            students = models.User.query(models.User.course_list == currentCourse)
-            for student in students:
-                logging.info(student)
+
+        if self.user.user_type == 1: # If the user is a teacher
+            course = self.request.get('course')
+            self.templateValues['course'] = course
+            if course:
+                course = int(self.request.get('course'))
+                currentCourse = ndb.Key(models.Course, course)
+                students = models.User.query(models.User.course_list == currentCourse)
+                for student in students:
+                    entry = {}
+                    entry['name'] = student.first_name + " " + student.last_name
+                    entry['value'] = student.id()
+                    childrenList.append(entry)
+        elif self.user.user_type == 2: # if the user is a parent
+            children = self.user.family
+            for child in children:
+                obj = child.get()
                 entry = {}
-                entry['name'] = student.first_name + " " + student.last_name
-                entry['value'] = student.id()
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
                 childrenList.append(entry)
         self.templateValues['children'] = json.dumps(childrenList)
         self.render('selectChildMenu.html')
+
 
 
 # Dummy data handlers

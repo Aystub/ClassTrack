@@ -28,26 +28,9 @@
 
 	<body>
 
-		<center><h1>Select a Child</h1></center>
-		<center>
-		<form action="/addConference" method="GET">
-			<select name="student_value" id="dropdown"></select>
-			<button type="submit">Submit</button>
-		</form>
-		</center>
-		<script>
-			$(document).ready(function(){
-				var list = {{ children | safe }}
-				var dropdown = $('#dropdown');
-				for(var i = 0; i < list.length; i++)
-				{
-					dropdown.append($("<option></option>")
-      				.attr("value", list[i]['value'])
-      				.text(list[i]['name']));
-
-				}
-			});
-		</script>
+	    {% if error %}
+	      <div class="alert alert-warning" style="margin-top:20px"><p> {{ error }} </p></div>
+	    {% endif %}
 
 	</body>
 	</html>
