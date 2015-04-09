@@ -924,34 +924,41 @@ class AddMessagePageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Inbox'
-        self.login_check()
-
-        ##old code
-        ##contacts_query = models.User.query().filter(models.User.user_type==1) #is a teacher
+        self.templateValues['title'] = 'Messaginging | ClassTrack'
         
-        contacts = set()
-        ##check for user type - Parent
-        if(self.user.user_type == parent_user):
-            ##create list of contacts
-            for child in self.user.family:
-                for course in child.get().course_list:
-                    for teacher in course.get().teacher:
-                        contacts.add(teacher)
-                        
-         ##check for user type -- Teacher              
-        elif(self.user.user_type == teacher_user):
-            ##create list of contacts
-            for course in self.user.course_list:
-                for child in course.get().student_list:
-                    for parent in child.get().family:
-                        contacts.add(parent)
+        ##Validate Get Data and 404 if not present
+        ##student_key_value = int(self.request.get('student_value'))
+        
+        participantList = []
 
-        ##contacts = [contact.to_dict() for contact in contact_query]
-        if len(contacts) == 0:
-            self.templateValues['error'] = "Unable to locate contacts for your account. Your school may not have fully setup its account. Please try again later. If this persists, please contact your school's administrators."
-
-        self.templateValues['contacts'] = contacts
+        if self.user.user_type == teacher_user:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            parents = student.family
+            for parent in parents:
+                obj = parent.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                participantList.append(entry)
+        elif self.user.user_type == parent_user:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            courses = student.course_list
+            participantList = []
+            for course in courses:
+                obj = course.get()
+                teachers = obj.teacher
+                for teacher in teachers:
+                    obj = teacher.get()
+                    entry = {}
+                    entry['name'] = obj.first_name + " " + obj.last_name
+                    entry['value'] = obj.id()
+                    participantList.append(entry)
+        self.templateValues['participantList'] = json.dumps(participantList)
+        self.login_check()
         self.render('addMessage.html')
         ##self.response.out.write(contacts)
         
@@ -1405,7 +1412,18 @@ class SelectCourseMenuHandler(MyHandler):
         if self.user.user_type != 1:
             self.templateValues['error'] = 'You do not have permission to access this page.'
             self.render('fancyboxError.html')
+            ##This should 404
         else:
+            source = self.request.get('source')
+            
+            if(source == "messaging"):
+                self.templateValues['source'] = "messaging" 
+            elif(source == "conferencing"):
+                self.templateValues['source'] =  "conferencing"
+            else:
+                1==1
+                ##This should 404
+                
             courses = self.user.course_list
             courseList = []
             for course in courses:
@@ -1424,36 +1442,17 @@ class SelectChildMenuHandler(MyHandler):
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
         childrenList = []
-
-        if self.user.user_type == 1: # If the user is a teacher
-            course = self.request.get('course')
-            self.templateValues['course'] = course
-            if course:
-                course = int(self.request.get('course'))
-                currentCourse = ndb.Key(models.Course, course)
-                students = models.User.query(models.User.course_list == currentCourse)
-                for student in students:
-                    entry = {}
-                    entry['name'] = student.first_name + " " + student.last_name
-                    entry['value'] = student.id()
-                    childrenList.append(entry)
-        elif self.user.user_type == 2: # if the user is a parent
-            children = self.user.family
-            for child in children:
-                obj = child.get()
-                entry = {}
-                entry['name'] = obj.first_name + " " + obj.last_name
-                entry['value'] = obj.id()
-                childrenList.append(entry)
-        self.templateValues['children'] = json.dumps(childrenList)
-        self.render('selectChildMenu.html')
         
-    def post(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        childrenList = []
+        source = self.request.get('source')
+        
+        if(source == "messaging"):
+            self.templateValues['url'] = "/addMessage" 
+        elif(source == "conferencing"):
+            self.templateValues['url'] =  "/addConference"
+        else:
+            1==1
+            ##This should 404
+        
 
         if self.user.user_type == 1: # If the user is a teacher
             course = self.request.get('course')
@@ -1477,6 +1476,7 @@ class SelectChildMenuHandler(MyHandler):
                 childrenList.append(entry)
         self.templateValues['children'] = json.dumps(childrenList)
         self.render('selectChildMenu.html')
+     
 
 # Dummy data handlers
 class MakeDummyChildrenHandler(MyHandler):

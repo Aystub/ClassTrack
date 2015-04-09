@@ -28,19 +28,18 @@
 
 	<body>
 
+        {% if error %}
+	      <div class="alert alert-warning" style=""><p> {{ error }} </p></div>
+	    {% else %}
+    
 		<form role="form" action="/addMessage" method="POST" onSubmit="return window.checkValidity();">
 		  <div class="form-group">
 		    <label for="purpose">Subject:</label>
 		    <input class="form-control" type="text" name="purpose" placeholder="Subject" id="purpose-input"></input>
 		  </div>
 		  <div class="form-group">
-		    <label for="participants">Select a Contact:</label>
-				<select id ="participant-select" name="participants">
-					{% for contact in contacts %}
-						<option value="{{contact.id()}}">{{ contact.get().first_name }} {{ contact.get().last_name }}</option>
-					{% endfor %}
-				</select>
-
+		    <label for="participants">Select a Participant:</label>
+				<select id ="participant-select" name="participants"></select>
 		  </div>
 		  <div class="form-group">
 		      <label for="Message">Message:</label>
@@ -51,32 +50,40 @@
 		</div>
 		</form>
 		<script>
+			function populateList()
+			{
+				var list = {{ participantList | safe }}
+				var dropdown = $('#participant-select');
+				for(var i = 0; i < list.length; i++)
+				{
+					dropdown.append($("<option></option>")
+      				.attr("value", list[i]['value'])
+      				.text(list[i]['name']));
+
+				}
+			}
+
 			$(document).ready(function(){
+				populateList();
+
 				$('#timePicker').timepicker({
 					'disableTimeRanges':[
 				        ['12am', '6am']
 						// ['8am', '3pm']
 					]
 				});
-
 				$.fn.datepicker.defaults.format = "mm/dd/yyyy";
 				$('#timePicker').timepicker('option', { useSelect: true });
 				$('#datePicker').datepicker({
 				});
-
-
 				var d = new Date();
-
 				var month = d.getMonth()+1;
 				var day = d.getDate();
-
 				// var output = d.getFullYear() + '/' +
 				//     (month<10 ? '0' : '') + month + '/' +
 				//     (day<10 ? '0' : '') + day;
-
 				//  $("#date-input").text(output);
 			});
-
 			function checkValidity()
 			{
 				if($("#datePicker").val() == "")
@@ -95,5 +102,6 @@
 				}
 			}
 		</script>
+	    {% endif %}
 	</body>
 	</html>

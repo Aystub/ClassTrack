@@ -31,6 +31,7 @@
 		<center><h1>Select a Course </h1></center>
 		<center>
 		<form action="/selectChildMenu" method="GET">
+            <input type="hidden" name="source" value= "{{source}}">
 			<select name="course" id="dropdown"></select>
 			<button type="submit">Submit</button>
 		</form>
