@@ -34,7 +34,7 @@
 		    <input class="form-control" type="text" name="purpose" placeholder="Subject" id="purpose-input"></input>
 		  </div>
 		  <div class="form-group">
-		    <label for="participants">Select a Teacher:</label>
+		    <label for="participants">Select a Contact:</label>
 				<select id ="participant-select" name="participants">
 					{% for contact in contacts %}
 						<option value="{{contact.id()}}">{{ contact.get().first_name }} {{ contact.get().last_name }}</option>
