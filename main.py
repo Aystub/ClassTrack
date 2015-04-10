@@ -123,7 +123,6 @@ class MyHandler(webapp2.RequestHandler):
                 self.templateValues['children_list'] = children_query
 
             
-            self.templateValues['selected_class'] = courseList[len(courseList)-1]
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
