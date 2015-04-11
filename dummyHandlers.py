@@ -127,7 +127,7 @@ class InitNDBHandler(webapp2.RequestHandler):
 
         #Teacher
         user_data = models.User(
-            auth_id="jgoodmen@cse.sc.edu",
+            auth_ids=["jgoodmen@cse.sc.edu"],
             first_name="John",
             password_raw="password",
             last_name="Goodmen",
