@@ -1,3 +1,23 @@
+# For Testing Team
+ClassTrack is designed to allow for teachers and parents to web conference and send messages without downloading any additional software.
+
+Our datastore has been filled with prefilled data for you to use. 
+
+# Parent instructions
+- To get access, simply hit the register button in the top right hand corner.
+- When prompted for school name, use "Seneca Middle School"
+- When prompted to link a child, use 1234. Additional children can be found in dummyHandlers.py
+
+# Teacher Instructions
+ - To get access, register at usc-classtrack.appspot.com/teacherRegistration
+ - When prompted for school name, use "Seneca Middle School"
+ - Teachers are prompted to link a child, don't do this. Simply skip. We will handle this later. No error pops up if you do link a child
+
+# Setting up a school
+  - To set up a school, go to usc-classtrack.appspot.com/schoolSetup
+
+
+
 ClassTrack
 
 http://usc-classtrack.appspot.com/

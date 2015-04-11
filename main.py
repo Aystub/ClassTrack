@@ -1252,7 +1252,7 @@ class SelectCourseMenuHandler(MyHandler):
             else:
                 self.render('404.html')
 
-            courses = self.user.course_list
+            courses = self.user.courseList
             courseList = []
             for course in courses:
                     entry = {}
