@@ -19,7 +19,13 @@
 		<div class="row" style="margin-bottom:20px">
 			<div class="col-md-1"></div>
 			<div class="col-md-9" role="alert">
-			    <center><button href="addConference" id="add_button" class="custom_button fancybox fancybox.iframe">Add a Conference</button></center>
+			    <center><button href="{% if user.user_type == 1%}
+                                                    /selectCourseMenu?source=conferencing
+                                                    {%elif user.user_type == 2%}
+                                                    /selectChildMenu?source=conferencing
+                                                    {%endif%}
+                                                    "id="add_button" class="custom_button fancybox fancybox.iframe">
+                                                    Add a Conference</button></center>
 
 				    <script>
 				        $(document).ready(function() {
@@ -53,7 +59,7 @@
 						<div class="col-md-6">
 							<form method="GET" action="http://54.164.63.7:9000/">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
-								<input type="hidden" name="name" value={{ first_name }}>
+								<input type="hidden" name="name" value={{ conference.first_name }}>
 
 								<input class="btn btn-default btn-block" type="submit" value="Enter">
 							</form>
@@ -89,8 +95,18 @@
 				<div class="col-md-2">{{part_list_inv[loop.index0]}}</div>
 				<div class="col-md-6">
 					<div class="row">
-						<div class="col-md-6"><button type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> Accept</button></div>
-						<div class="col-md-6"><button type="button" class="btn btn-default btn-block"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Decline</button></div>
+						<div class="col-md-6">
+							<form method="POST" action="acceptConference">
+								<input type="hidden" name="roomkey" value={{invitation.id()}}>
+								<input name=SeleniumTestDelete id={{invitation['purpose']}} class="btn btn-default btn-block" type="submit" value="Accept">
+							</form>
+						</div>
+						<div class="col-md-6">
+							<form method="POST" action="delConference">
+								<input type="hidden" name="roomkey" value={{invitation.id()}}>
+								<input name=SeleniumTestDelete id={{invitation['purpose']}} class="btn btn-default btn-block" type="submit" value="Decline">
+							</form>
+						</div>
 					</div>
 				</div>
 			</div>

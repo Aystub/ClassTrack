@@ -20,8 +20,13 @@
         <div class="row" style="margin-bottom:20px">
 			<div class="col-md-1"></div>
 			<div class="col-md-9" role="alert">
-			    <center><button href="addMessage" id="add_button" class="custom_button fancybox fancybox.iframe">New Message</button></center>
-
+			    <center><button href="{% if user.user_type == 1%}
+                                                    /selectCourseMenu?source=messaging 
+                                                    {%elif user.user_type == 2%}
+                                                    /selectChildMenu?source=messaging
+                                                    {%endif%}
+                                                    "id="add_button" class="custom_button fancybox fancybox.iframe">
+                                                    Send a Message</button></center>
 				    <script>
 				        $(document).ready(function() {
 				            $('.fancybox').fancybox({
@@ -47,7 +52,14 @@
       <div class="alert alert-success col-md-11" role="alert">
           <div class="row" style="text-align:center">
                 <div class="col-md-1"></div>
-                <div class="col-md-3">{{MessageThread.get()['users'][0].get().first_name}}</div>
+                <div class="col-md-3">
+                {% for user in MessageThread.get()['users'] -%}
+                    {{user.get().first_name}}
+                    {{user.get().last_name -}}
+                        {%if MessageThread.get()['users']|length !=1 and loop.index != MessageThread.get()['users']|length %}, 
+                        {% endif %}
+                {%- endfor %}
+                </div>
                 <div class="col-md-3">{{MessageThread.get()['subject']}}</div>
                 <div class="col-md-3">{{MessageThread.get()['time'].strftime("%A, %B %d - %I:%M %p")}}</div><div class="col-md-2">
                 <button href="/showMessage?messageId={{MessageThread.id()}}" id="show_message" class="btn fancybox fancybox.iframe">View Messages</button>

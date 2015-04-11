@@ -7,6 +7,8 @@ import logging
 import datetime
 from datetime import datetime
 import models
+import dummyHandlers
+
 import json
 import re
 import time
@@ -84,33 +86,6 @@ def user_required(handler):
 
 class MyHandler(webapp2.RequestHandler):
     "Setup self.user and self.templateValues values."
-    # def setupUser(self):
-    #     """Returns the implementation of the user model.
-    #        It is consistent with config['webapp2_extras.auth']['user_model'], if set.
-    #     """
-    #     self.user_exists = self.auth.get_user_by_session()
-    #     self.templateValues = {}
-    #     if self.user_exists:
-    #         children_name_list = []
-    #         self.templateValues['logout'] = '/logout'
-    #         self.templateValues['first_name'] = self.user_model.get_by_id(self.user_info['user_id']).first_name
-    #         self.templateValues['username'] = self.user_info['auth_ids'][0]
-    #         self.templateValues['usertype'] = self.user_model.get_by_id(self.user_info['user_id']).user_type
-    #         self.templateValues['id'] = self.user_info['user_id']
-
-    #         #Children
-    #         children_ids = self.user.children
-    #         if not children_ids[0] == "None": #list is not empty
-    #             children_query = models.User.query(models.User.auth_ids.IN(children_ids))
-    #             self.templateValues['children_list'] = children_query
-
-    #         #Course
-    #         courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-    #         self.templateValues['selected_class'] = courseList[len(courseList)-1]
-    #     else:
-    #         self.templateValues['login'] = '/login'
-    #         self.templateValues['signup'] = '/signup'
-
     def setupUser(self):
         """Returns the implementation of the user model.
            It is consistent with config['webapp2_extras.auth']['user_model'], if set.
@@ -147,9 +122,7 @@ class MyHandler(webapp2.RequestHandler):
                 children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
-            #Course
-            courseList = ['Math', 'PE', 'Geography', 'English'] # These need to go to the class select handler
-            self.templateValues['selected_class'] = courseList[len(courseList)-1]
+            
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
@@ -232,7 +205,6 @@ class MyHandler(webapp2.RequestHandler):
         if not self.user_info:
             self.redirect('index.html')
 
-
 class MainPageHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -275,6 +247,7 @@ class SignupPageHandler(MyHandler):
         last_name = self.request.get('lname')
         teacher_code = self.request.get('teacher_code')
         student_id = self.request.get('student_id')
+        parent_id = self.request.get('parent_id')
         school_name = self.request.get('school')
         verified = False
 
@@ -284,14 +257,18 @@ class SignupPageHandler(MyHandler):
         messageThread = []
 
         requested_school = models.School.query(models.School.name == school_name).fetch(1, keys_only = True)
+        # Check if valid school
+        if len(requested_school) == 0 or requested_school is None:
+            self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
+            if teacher_code:
+                self.render('teacherRegistration.html')
+            elif student_id or student_id == '' and not parent_id:
+                self.render('childRegistration.html')
+            else:
+                self.render('signup.html')
+            return
 
         if teacher_code:
-        # Check if valid school
-            if len(requested_school) == 0 or requested_school is None:
-                self.templateValues['error'] = 'We were unable to find your school. Please ensure that you have entered the school name properly. If you continue to have issues, please check with your school administrator to see if your school is registered in our system.'
-                self.render('teacherRegistration.html')
-                return
-
             user_type = teacher_user
             class_name_indexes = json.loads(self.request.get('class-indexes')) # for classes
             courseList = []
@@ -326,7 +303,8 @@ class SignupPageHandler(MyHandler):
             courseList=courseList,
             meetings=meeting,
             messageThreads=messageThread,
-            school = requested_school)
+            school=requested_school,
+            invited=[])
 
         # Check if duplicate entry for email
         if not user_data[0]: #user_data is a tuple (boolean, info). Boolean denotes success
@@ -429,6 +407,10 @@ class HomePageHandler(MyHandler):
         self.templateValues['title'] = 'Home'
         self.templateValues['filter_list'] = filter_list
         logging.info("LENGTH OF FAMILY: %s", len(self.user.family))
+        if self.user.user_type == 1:
+            self.templateValues['planConferenceLink'] = 'selectCourseMenu'
+        elif self.user.user_type == 2:
+            self.templateValues['planConferenceLink'] = 'selectChildMenu'
         if len(self.user.family) == 0:
             self.templateValues['warning'] = "You have not added a child to your account yet. To get the most out of ClassTrack you should link yourself to your child's account "
 
@@ -447,7 +429,6 @@ class HomePageHandler(MyHandler):
         self.login_check()
         # self.render('home.html')
         self.render('circleHome.html')
-
 
 class SetPasswordHandler(MyHandler):
     def get(self):
@@ -648,7 +629,10 @@ class CalendarPageHandler(MyHandler):
             for conf in conference_list:
                 data = {}
                 names = ''
-                data['title'] = conf.names_list + "\n" + conf.purpose
+                for participent in conf.participants:
+                    if (participent.get() != self.user):
+                        names += participent.get().first_name + " " + participent.get().last_name
+                data['title'] = names + "\n" + conf.purpose
                 data['start'] = conf.datetime.strftime("%Y-%m-%d")
                 conferences.append(data)
         # data['title'] = 'daniel'
@@ -688,13 +672,12 @@ class ConferenceSchedulerPageHandler(MyHandler):
             for conf in conference_list:
                 names=''
                 #replace with name string
-                small_list = conf.participants
-                for part in small_list:
-                    person_query = models.User.query().filter(models.User.auth_ids==part)
-                    person = [person.to_dict() for person in person_query]
-                    names += person[0]['first_name'] + " "
-                    names += person[0]['last_name']
-                    names += ', '
+                small_list = conf.participants + conf.invited
+                for index, part in enumerate(small_list):
+                    names += part.get().first_name + " "
+                    names += part.get().last_name
+                    if(len(small_list) != 1 & index != len(small_list) - 1):
+                        names += ', '
                 part_list.append(names)
 
         invite_list = []
@@ -705,13 +688,12 @@ class ConferenceSchedulerPageHandler(MyHandler):
             for conf in invite_list:
                 names=''
                 #replace with name string
-                small_list_inv = conf.participants
-                for part in small_list_inv:
-                    person_query = models.User.query().filter(models.User.auth_ids==part)
-                    person = [person.to_dict() for person in person_query]
-                    names += person[0]['first_name'] + " "
-                    names += person[0]['last_name']
-                    names += ', '
+                small_list_inv = conf.participants + conf.invited
+                for index, part in enumerate(small_list_inv):
+                    names += part.get().first_name + " "
+                    names += part.get().last_name
+                    if(len(small_list_inv) != 1 & index != len(small_list_inv) - 1):
+                        names += ', '
                 part_list_inv.append(names)
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
@@ -722,34 +704,54 @@ class ConferenceSchedulerPageHandler(MyHandler):
         self.login_check()
         self.render('conferenceSchedule.html')
 
-#class acceptConference(MyHandler):
-    # def get(self):
-    #     self.setupUser()
-    #     self.navbarSetup()
-    #     self.templateValues['user'] = self.user
-    #     self.templateValues['title'] = 'Grades | ClassTrack'
-    #     self.login_check()
-    #     self.render('grades.html')
-
 class AddConferencePageHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
         self.templateValues['title'] = 'Conferencing | ClassTrack'
-        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-        teachers = [teacher.to_dict() for teacher in teacher_query]
-        if len(teachers) == 0:
-            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
-        self.templateValues['teachers'] = teacher_query
+        participantList = []
+
+        if self.user.user_type == teacher_user:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            parents = student.family
+            for parent in parents:
+                obj = parent.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                participantList.append(entry)
+        elif self.user.user_type == parent_user:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            courses = student.course_list
+            participantList = []
+            for course in courses:
+                obj = course.get()
+                teachers = obj.teacher
+                for teacher in teachers:
+                    obj = teacher.get()
+                    entry = {}
+                    entry['name'] = obj.first_name + " " + obj.last_name
+                    entry['value'] = obj.id()
+                    participantList.append(entry)
+        self.templateValues['participantList'] = json.dumps(participantList)
         self.login_check()
         self.render('addConference.html')
 
     def post(self):
+        ##Todo: Validate Input
         self.setupUser()
         extractedDateTime = datetime.strptime(self.request.get('date')+" "+self.request.get('time'), "%m/%d/%Y %I:%M%p")
-        teachers = self.request.get('participants')
-        participants = [self.user.auth_ids[0],teachers]
+        participant = int(self.request.get('participants'))
+        participants = []
+        invited = []
+        participants.append(ndb.Key(models.User, self.user.id()))
+        invited.append(ndb.Key(models.User, participant))
+        # participants = [self.user.auth_ids[0], ndb.Key(models.User, participant)]
 
         # This section of code is from the master before merge 3-7-15
         # Keeping here to test changes from WebRTC
@@ -764,46 +766,40 @@ class AddConferencePageHandler(MyHandler):
         # teacher = [teacher.to_dict() for teacher in teacher_query]
         # self.response.write(teacher)
 
-        participant_id = []
-        names = ''
-        for auth_id in participants:
-            model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
-            participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
-            names += model_query.first_name + " "
-            names += model_query.last_name + ', '
-        clean_names = names[:-1]
-        teacher = models.User.query(models.User.auth_ids==teachers).get()
+        # participant_id = []
+        # names = ''
+        # for auth_id in participants:
+            # model_query = models.User.query().filter(models.User.auth_ids == auth_id).get()
+            # participant_id.append(model_query.getKey().id()) # This adds an L to the end of the key, this may prove a problem later. - Daniel Vu
+            # names += model_query.first_name + " "
+            # names += model_query.last_name + ', '
+        # clean_names = names[:-1]
+        # teacher = models.User.query(models.User.auth_ids==teachers).get()
 
         # self.response.write(teacher)
 
         post = models.Conference(
                 purpose = self.request.get('purpose'),
                 participants = participants,
-                participant_ids = participant_id,
+                # participant_ids = participant_id,
                 datetime = extractedDateTime,
-                names_list = clean_names
+                invited = invited
+                # names_list = clean_names
             )
         key=post.put()
 
         #adding the conference to the user who made it
         this_user = self.user
-        if not this_user.meetings:
-            this_user.meetings = [key]
-        else:
-            this_user.meetings += [key]
-
-
-        #in the future here we will make it invite the other person/add them in general
-        if not teacher.meetings:
-            teacher.meetings = [key]
-        else:
-            teacher.meetings += [key]
-
-
-        teacher.put()
+        this_user.meetings.append(key)
         this_user.put()
 
-        teacher_full_name = teacher.first_name + teacher.last_name
+        other_user = ndb.Key(models.User, participant).get()
+        #in the future here we will make it invite the other person/add them in general
+        other_user.invited.append(key)
+        other_user.put()
+
+
+        other_full_name = other_user.first_name + other_user.last_name
         user_full_name = self.user.first_name + self.user.last_name
 
         #Email to Inviter
@@ -818,14 +814,14 @@ class AddConferencePageHandler(MyHandler):
 
         Thanks!
         Team Classtrack
-        """.format(name=self.user.first_name, invited=teacher_full_name, date_and_time=extractedDateTime)
+        """.format(name=self.user.first_name, invited=other_full_name, date_and_time=extractedDateTime)
 
         mail.send_mail(sender_address, user_address, subject, body)
 
         #Email to Invited
         sender_address="classtracknoreply@gmail.com"
         subject="Conference Invite - Classtrack"
-        user_address = teacher.auth_ids[0]
+        user_address = other_user.auth_ids[0]
         body = """
         Dear {name}:
 
@@ -840,11 +836,49 @@ class AddConferencePageHandler(MyHandler):
         self.response.write("<h1> Conference Added </h1>")
 
 
+class AcceptConferenceHandler(MyHandler):
+    def post(self):
+        key = self.request.get('roomkey')
+        confKey = ndb.Key('Conference', int(key))
+        conf = ndb.Key('Conference', int(key)).get()
+        this_user = self.user
+
+        invList = conf.invited
+        accList = conf.participants
+        newInvList = []
+        if this_user in invList:
+            for user in conf.invited:
+                if user == this.user:
+                    newInvList = newInvList
+                else:
+                    newInvList.append(user)
+            accList.append(this_user)
+        conf.invited = newInvList
+        conf.participants = accList
+        key2 = conf.put()
+        this_user.meetings.append(key2)
+
+        newInvConfList = []
+        for confCheck in this_user.invited:
+            if confCheck == key2:
+                newInvConfList = newInvConfList
+            else:
+                newInvConfList.append(confCheck)
+        this_user.invited = newInvConfList
+        this_user.put()
+
+        self.redirect('conferenceSchedule')
+
+
 class DelConferenceHandler(MyHandler):
     def post(self):
+        ##Todo: restirct access? Should parents be able to delete Conferences
+        ##Todo: Validate Key ID
         key = self.request.get('roomkey')
         key2 = ndb.Key('Conference', int(key))
         key2.delete()
+
+        ##Todo: Delete References in User Lists
         self.redirect('conferenceSchedule')
 
 class ContactTeacherPageHandler(MyHandler):
@@ -866,24 +900,50 @@ class AddMessagePageHandler(MyHandler):
         self.setupUser()
         self.navbarSetup()
         self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Inbox'
+        self.templateValues['title'] = 'Messaginging | ClassTrack'
+
+        ##Validate Get Data and 404 if not present
+        ##student_key_value = int(self.request.get('student_value'))
+
+        participantList = []
+
+        if self.user.user_type == teacher_user:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            parents = student.family
+            for parent in parents:
+                obj = parent.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                participantList.append(entry)
+        elif self.user.user_type == parent_user:
+            student_key_value = int(self.request.get('student_value'))
+            student_key = ndb.Key(models.User, student_key_value)
+            student = student_key.get()
+            courses = student.course_list
+            participantList = []
+            for course in courses:
+                obj = course.get()
+                teachers = obj.teacher
+                for teacher in teachers:
+                    obj = teacher.get()
+                    entry = {}
+                    entry['name'] = obj.first_name + " " + obj.last_name
+                    entry['value'] = obj.id()
+                    participantList.append(entry)
+        self.templateValues['participantList'] = json.dumps(participantList)
         self.login_check()
-
-
-        teacher_query = models.User.query().filter(models.User.user_type==1) #is a teacher
-        teachers = [teacher.to_dict() for teacher in teacher_query]
-        if len(teachers) == 0:
-            self.templateValues['error'] = "Unable to locate teachers for your child. Your school may not have fully setup your child's account. Please try again later. If this persists, please contact your school's administrators."
-        self.templateValues['teachers'] = teacher_query
-
-        message_list = models.MessageThread.query()
-        self.templateValues['message_list'] = message_list
         self.render('addMessage.html')
+        ##self.response.out.write(contacts)
 
     def post(self):
         self.setupUser()
+        #NEED TO VALIDATE THESE ESPECIALLY THE RECIEVER ID
         theSubject = self.request.get('purpose')
         theMessage = self.request.get('message')
+        recieverID = self.request.get('participants')
 
         message = models.PrivateMessage(
                 sender = self.user.key,
@@ -894,13 +954,22 @@ class AddMessagePageHandler(MyHandler):
         thread = models.MessageThread(
                 time = messageID.get().time,
                 subject = theSubject,
-                users = [self.user.key],
+                users = [self.user.key,ndb.Key('User',int(recieverID))],
                 messageList = [messageID]
             )
 
         key = thread.put()
 
         this_user = self.user
+        if not this_user.messages:
+            this_user.messages = [key]
+        else:
+            this_user.messages += [key]
+
+        this_user.put()
+
+        this_user = ndb.Key('User',int(recieverID)).get()
+
         if not this_user.messages:
             this_user.messages = [key]
         else:
@@ -968,14 +1037,13 @@ class AddChildHandler(MyHandler):
         this_user = self.user
         this_user.family.append(student.key)
         this_user.put()
-
         student.family.append(this_user.key)
         student.put()
 
 class LookupChildHandler(MyHandler):
     def post(self):
         student_id = self.request.get("childID")
-        
+
         student_query = models.User.query().filter(models.User.auth_ids==student_id,models.User.user_type == 3)
         self.response.out.write(json.dumps([p.to_dict() for p in student_query], default=default))
 
@@ -1035,7 +1103,6 @@ class SchoolSetupHandler(MyHandler):
 
         self.redirect('/')
 
-
 class CreateAdminHandler(MyHandler):
     def get(self):
         self.setupUser()
@@ -1052,7 +1119,6 @@ class CreateAdminHandler(MyHandler):
             messageThreads=[])
 
         self.redirect('/')
-
 
 class ProfileHandler(MyHandler):
     def get(self):
@@ -1079,157 +1145,12 @@ class EditProfileHandler(MyHandler):
         testText = 'test of varaible passing'
         self.render('profileEdit.html')
 
-
-class ConferenceMessageChannelHandler(MyHandler):
-    def get(self):
-        self.templateValues = {}
-        self.render('ConferenceMessageChannel.html')
-
-    def post(self):
-        self.templateValues = {}
-        user_id = self.request.get('user_id')
-        # channel.create_channel(user_id);
-        message = self.request.body
-        user_query = models.User.query()
-        channel.send_message(identifier, "Hello World, from " + user_id)
-        # for x in range(0,60):
-        #     time.sleep(1)
-        #     for user in user_query:
-        #         channel.create_channel(user.auth_ids[0]);
-        #         channel.send_message(user.auth_ids[0], message)
-        # channel.send_message(self.user_info['auth_ids'][0], message)
-        self.render('ConferenceMessageChannel.html')
-
-class ConferencePageHandler(MyHandler):
-
-    def get(self):
-        self.setupUser()
-        self.navbarSetup()
-        self.login_check()
-
-        dtls = self.request.get('dtls')
-        dscp = self.request.get('dscp')
-        ipv6 = self.request.get('ipv6')
-
-        roomkey = self.request.get('roomkey')
-        purpose = models.Conference.get_by_id(int(roomkey)).purpose
-        participants = models.Conference.get_by_id(int(roomkey)).participants
-        datetime = models.Conference.get_by_id(int(roomkey)).datetime
-        user_id = str(self.user_info['user_id'])
-        pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
-
-        initiator = 'true';
-        conference = models.Conference.get_by_id(int(roomkey))
-        # if len(conference.currentLoggedInUsers) != 0:
-        # if conference.currentLoggedInUsers[0] != user_id:
-        # logging.warning("THIS IS THE INITIATOR")
-        # logging.warning(conference.participant_ids[0])
-        # logging.warning("THIS IS THE CURRENT USER")
-        # logging.warning(user_id)
-        # logging.warning()
-
-        if int(user_id) == int(conference.participant_ids[0]):
-            initiator = 'false';
-
-        identifier = roomkey + user_id
-        token = channel.create_channel(identifier)
-        self.templateValues['token'] = token
-
-        audio_receive_codec = self.request.get('arc')
-        if not audio_receive_codec:
-            audio_receive_codec = get_preferred_audio_receive_codec()
-
-        user_agent = self.request.headers['User-Agent']
-        audio_send_codec = self.request.get('asc')
-        if not audio_send_codec:
-            audio_send_codec = get_preferred_audio_send_codec(user_agent)
-
-        self.templateValues['user'] = self.user
-        self.templateValues['title'] = 'Conferencing | ClassTrack'
-        self.templateValues['purpose'] = purpose
-        self.templateValues['participants'] = participants
-        self.templateValues['datetime'] = datetime
-        self.templateValues['roomkey'] = roomkey
-        self.templateValues['user_id'] = user_id
-        self.templateValues['audio_send_codec'] = audio_send_codec
-        self.templateValues['audio_receive_codec'] = audio_receive_codec
-        self.templateValues['pc_constraints'] = pc_constraints
-        self.templateValues['initiator'] = initiator
-        self.render('conference.html')
-
-    def post(self):
-        roomkey = self.request.get('roomkey')
-        user_id = self.request.get('user_id')
-        # logging.info("value of my roomkey is %s", str(roomkey))
-        conference = models.Conference.get_by_id(int(roomkey))
-        # logging.warning("User " + user_id + " has logged in")
-        # conference.currentLoggedInUsers.append(user_id)
-        # conference.put()
-        message = self.request.body
-        # logging.info("Message is %s", str(message))
-        for u_id in conference.currentLoggedInUsers:
-            if u_id != user_id:
-                channel.send_message(roomkey+u_id, message)
-            # channel.send_message(roomkey+user_id, message)
-            # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
-            
-        # logging.warning("================ HELLO WORLD =================")
-
-        # token = channel.create_channel(identifier)
-        # self.templateValues['token'] = token
-
-        # channel.send_message(identifier, "Hello World, from " + user_id)
-        # if len(room.currentLoggedInUsers) != 0:
-        #     send_to = room.currentLoggedInUsers[0]
-        #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
-        # else:
-        #     send_to = user_id
-            # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
-        # message = self.request.get('message')
-        # if message:
-        #     channel.send_message(1, message)
-        # self.render('conference.html')
-
-
-class ChannelConnectionHandler(MyHandler):
-    def post(self):
-        self.setupUser()
-        logging.warning(self.request.get('from'))
-
-    def get(self):
-        self.setupUser()
-        logging.warning(self.request.get('from'))
-        user_id = self.request.get('user_id')
-        roomkey = self.request.get('roomkey')
-        conference = models.Conference.get_by_id(int(roomkey))
-        if user_id not in conference.currentLoggedInUsers:
-            conference.currentLoggedInUsers.append(user_id)
-            conference.put()
-
-
-class ChannelDisconnectionHandler(MyHandler):
-    def get(self):
-        self.setupUser()
-        logging.warning(self.request.get('from'))
-        user_id = self.request.get('user_id')
-        roomkey = self.request.get('roomkey')
-        logging.warning("THIS IS THE ROOMKEY")
-        logging.warning(roomkey)
-        conference = models.Conference.get_by_id(int(roomkey))
-        conference.currentLoggedInUsers.remove(user_id)
-        conference.put()
-
-class SendMessageHandler(MyHandler):
-    def get(self):
-        self.templateValues = {}
-        self.render('testSendMessage.html')
-
 class ClassManagementHandler(MyHandler):
     def get(self):
         self.setupUser()
         courseList = []
-        if self.user.courseList:
-            teacherCourseList = self.user.courseList
+        if self.user.course_list:
+            teacherCourseList = self.user.course_list
             for course in teacherCourseList:
                 data = course.get()
                 entry = {}
@@ -1239,7 +1160,6 @@ class ClassManagementHandler(MyHandler):
 
         self.templateValues['courseList'] = courseList
         self.render('classManagement.html')
-
 
 class AddChildrenToClassHandler(MyHandler):
     def post(self):
@@ -1276,7 +1196,7 @@ class AddChildrenToClassHandler(MyHandler):
                                 student.put()
 
 
-        student_query = models.User.query(models.User.user_type==3) #is a student. We still need to filter by school - Daniel Vu
+        student_query = models.User.query(ndb.AND(models.User.user_type==3, models.User.school == self.user.school[0])) #We are currently assuming that the teachers only have one school - Daniel Vu
         currentCourse = ndb.Key(models.Course, courseID)
         current_query = student_query.filter(models.User.course_list == currentCourse)
 
@@ -1310,238 +1230,76 @@ class AddChildrenToClassHandler(MyHandler):
         self.templateValues['current_list'] = json.dumps(current_list)
         self.render('addChildrenToClass.html')
 
-# Dummy data handlers
-class MakeDummyChildrenHandler(MyHandler):
+class SelectCourseMenuHandler(MyHandler):
     def get(self):
-        requested_school = models.School.query(models.School.name == 'Seneca Middle School').fetch(1, keys_only = True)
-        default_course = models.Course.query(models.Course.name == 'DEFAULTNONECOURSE').fetch(1, keys_only = True)
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        if self.user.user_type != 1:
+            self.templateValues['error'] = 'You do not have permission to access this page.'
+            self.render('404.html')
+        else:
+            source = self.request.get('source')
 
-        new_child = models.User(
-            first_name = 'Devin',
-            last_name = 'Crawford',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-        )
-        new_child.put()
+            if(source == "messaging"):
+                self.templateValues['source'] = "messaging"
+            elif(source == "conferencing"):
+                self.templateValues['source'] =  "conferencing"
+            else:
+                self.render('404.html')
 
-        new_child = models.User(
-            first_name = 'Micheal',
-            last_name = 'Campbell',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
+            courses = self.user.course_list
+            courseList = []
+            for course in courses:
+                    entry = {}
+                    obj = course.get()
+                    entry['name'] = obj.name
+                    entry['value'] = course.id()
+                    courseList.append(entry)
+            self.templateValues['courses'] = json.dumps(courseList)
+            self.render('selectCourseMenu.html')
 
-        )
-        new_child.put()
-
-        new_child = models.User(
-            first_name = 'Sam',
-            last_name = 'Ballard',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-        )
-        new_child.put()
-
-        new_child = models.User(
-            first_name = 'Rodolfo',
-            last_name = 'Frazier',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-
-        )
-        new_child.put()
-
-        new_child = models.User(
-            first_name = 'Edith',
-            last_name = 'Wolfe',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-
-        )
-        new_child.put()
-
-        new_child = models.User(
-            first_name = 'Stuart',
-            last_name = 'Neal',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-
-        )
-        new_child.put()
-
-        new_child = models.User(
-            first_name = 'Darlene',
-            last_name = 'Osborne',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-
-        )
-        new_child.put()
-
-        new_child = models.User(
-            first_name = 'Taylor',
-            last_name = 'Griffith',
-            user_type = 3,
-            school = requested_school,
-            course_list = default_course
-
-        )
-        new_child.put()
-
-class InitNDBHandler(MyHandler):
+class SelectChildMenuHandler(MyHandler):
     def get(self):
-        newschool = models.School(
-                name = 'Seneca Middle School',
-                address = '810 W South 4th St, Seneca, SC 29678',
-                phone = '555-555-5555',
-                state = 'South Carolina',
-                county = 'Oconee',
-                zipcode = '55555',
-                primary_color = 'FFFFFF',
-                secondary_color = 'FFFFFF'
-            )
+        self.setupUser()
+        self.navbarSetup()
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        childrenList = []
 
-        Seneca = newschool.put()
+        source = self.request.get('source')
 
-        #Make Class
-        newclass = models.Course(
-        school = Seneca,
-        name = "Math 142"
-        )
-        mathclass = newclass.put()
-
-        #Link School and Class
-        Seneca.get().class_list = [mathclass]
-
-        Seneca = Seneca.get().put()
-
-        #Teacher
-        user_data = self.user_model.create_user("jgoodmen@cse.sc.edu",
-            first_name="John",
-            password_raw="password",
-            last_name="Goodmen",
-            user_type=teacher_user,
-            family=[],
-            verified=True,
-            class_list=[mathclass],
-            meetings=[],
-            messageThreads=[],
-            school = [Seneca])
-
-        #Link Teacher
-        Seneca.get().teachers.append(user_data[1].key)
-        mathclass.get().teacher.append(user_data[1].key)
-
-        Seneca = Seneca.get().put()
-        mathclass = mathclass.get().put()
+        if(source == "messaging"):
+            self.templateValues['url'] = "/addMessage"
+        elif(source == "conferencing"):
+            self.templateValues['url'] =  "/addConference"
+        else:
+            self.render('404.html')
 
 
-        #Add Students and Add to List
-        studentList = []
-
-        new_child = models.User(
-            auth_ids = ["1227"],
-            first_name = 'Devin',
-            last_name = 'Crawford',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-        )
-
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1228"],
-            first_name = 'Micheal',
-            last_name = 'Campbell',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-
-        )
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1229"],
-            first_name = 'Sam',
-            last_name = 'Ballard',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass],
-
-        )
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1230"],
-            first_name = 'Rodolfo',
-            last_name = 'Frazier',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-
-        )
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1231"],
-            first_name = 'Edith',
-            last_name = 'Wolfe',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-
-        )
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1232"],
-            first_name = 'Stuart',
-            last_name = 'Neal',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-
-        )
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1233"],
-            first_name = 'Darlene',
-            last_name = 'Osborne',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-
-        )
-
-        studentList.append(new_child.put())
-
-        new_child = models.User(
-            auth_ids = ["1234"],
-            first_name = 'Taylor',
-            last_name = 'Griffith',
-            user_type = 3,
-            school = [Seneca],
-            course_list = [mathclass]
-
-        )
-        studentList.append(new_child.put())
-
-        #Link Students
-        Seneca.get().students = studentList
-        mathclass.get().student_list = studentList
-
-        Seneca.get().put()
-        mathclass.get().put()
-
-        self.redirect('/')
+        if self.user.user_type == 1: # If the user is a teacher
+            course = self.request.get('course')
+            self.templateValues['course'] = course
+            if course:
+                course = int(self.request.get('course'))
+                currentCourse = ndb.Key(models.Course, course)
+                students = models.User.query(models.User.course_list == currentCourse)
+                for student in students:
+                    entry = {}
+                    entry['name'] = student.first_name + " " + student.last_name
+                    entry['value'] = student.id()
+                    childrenList.append(entry)
+        elif self.user.user_type == 2: # if the user is a parent
+            children = self.user.family
+            for child in children:
+                obj = child.get()
+                entry = {}
+                entry['name'] = obj.first_name + " " + obj.last_name
+                entry['value'] = obj.id()
+                childrenList.append(entry)
+        self.templateValues['children'] = json.dumps(childrenList)
+        self.render('selectChildMenu.html')
 
 
 config = {
@@ -1555,53 +1313,67 @@ config = {
 }
 
 app = webapp2.WSGIApplication([
+    # Generic Page Handlers/ Prelogin
     webapp2.Route('/', MainPageHandler, name='home'),
     webapp2.Route('/index', MainPageHandler, name='index'),
-    webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
-    webapp2.Route('/signup', SignupPageHandler),
-    webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
+    webapp2.Route('/about', AboutPageHandler, name='about'),
     webapp2.Route('/password', SetPasswordHandler),
     webapp2.Route('/login', LoginPageHandler, name='login'),
     webapp2.Route('/logout', LogoutPageHandler, name='logout'),
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
-    webapp2.Route('/jqNFpost', jqueryPostHandler, name='post'),
-    webapp2.Route('/message', PrivateMessageHandler, name='post'),
-    webapp2.Route('/home', HomePageHandler, name='home'),
-    webapp2.Route('/portal/', PortalPageHandler, name='portal'),
-    webapp2.Route('/about', AboutPageHandler, name='about'),
-    webapp2.Route('/contact', ContactPageHandler, name='contact'),
+    
+    # Registration Handlers
+    webapp2.Route('/signup', SignupPageHandler),
+    webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
+    webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
+    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
+    webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
+    webapp2.Route('/schoolGetter', SchoolNameHandler, name='schoolGetter'),
     webapp2.Route('/lookupChild', LookupChildHandler, name='lookupChild'),
-    webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
-    webapp2.Route('/grades',GradesPageHandler, name='grades'),
-    #webapp2.Route('/documents',DocumentsPageHandler, name='documents'),
-    webapp2.Route('/conference',ConferencePageHandler, name='chatroom'),
+    webapp2.Route('/addChild', AddChildHandler, name='addChild'),
+
+    # Generic Helper Handlers
+    webapp2.Route('/jqNFpost', jqueryPostHandler, name='post'),
+    webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>', VerificationHandler, name='verification'),
+    webapp2.Route('/selectCourseMenu',SelectCourseMenuHandler, name='selectCourseMenu'),
+    webapp2.Route('/selectChildMenu',SelectChildMenuHandler, name='selectChildMenu'),
+
+    # Dummy Data Create Functions    
+    webapp2.Route('/makeNDB',dummyHandlers.InitNDBHandler, name='initNDB'),
+    webapp2.Route('/makeDummyChildren', dummyHandlers.MakeDummyChildrenHandler, name="makeDummyChildren"),
+
+    # Conference Handlers
     webapp2.Route('/conferenceSchedule',ConferenceSchedulerPageHandler, name='chatroomscheduler'),
     webapp2.Route('/addConference',AddConferencePageHandler, name='addConference'),
-    #webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
+    webapp2.Route('/acceptConference', AcceptConferenceHandler, name='acceptConference'),
     webapp2.Route('/delConference',DelConferenceHandler, name='delConference'),
+
+    # Message Handlers
+    webapp2.Route('/message', PrivateMessageHandler, name='post'),
     webapp2.Route('/messaging',ContactTeacherPageHandler, name='messaging'),
     webapp2.Route('/showMessage',ShowMessagePageHandler, name='showmessage'),
     webapp2.Route('/addMessage',AddMessagePageHandler, name='addmessage'),
     webapp2.Route('/replyMessage',ReplyMessageHandler, name='replymessage'),
-    webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
-    webapp2.Route('/schoolSetup',SchoolSetupHandler, name='schoolsetup'),
-    webapp2.Route('/makeNDB',InitNDBHandler, name='initNDB'),
-    webapp2.Route('/addChild', AddChildHandler, name='addChild'),
-    webapp2.Route('/addChildrenToClass', AddChildrenToClassHandler, name='addChild'),
-    webapp2.Route('/addPost', AddPostHandler, name='addPost'),
-    webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
-    webapp2.Route('/teacherRegistration', TeacherRegistrationHandler, name='teacherRegistration'),
-    webapp2.Route('/profile', ProfileHandler, name='profile'),
-    webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
-    webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
-    # webapp2.Route('/.*', NotFoundPageHandler, name='notFound'),
-    webapp2.Route('/createAdmin', CreateAdminHandler, name='CreateAdmin'),
-    webapp2.Route('/makeDummyChildren', MakeDummyChildrenHandler, name="makeDummyChildren"),
+    webapp2.Route('/contact', ContactPageHandler, name='contact'),
+
+    # Account Management Handlers
     webapp2.Route('/classManagement', ClassManagementHandler, name='classManagement'),
-    # webapp2.Route('/_ah/channel/connected/', ChannelConnectionHandler, name='ConnectionHandler'),
-    # webapp2.Route('/_ah/channel/disconnected/', ChannelDisconnectionHandler, name='DisconnectionHandler'),
-    # webapp2.Route('/testSendMessage', SendMessageHandler, name='SendMessageHandler')
+    webapp2.Route('/addChildrenToClass', AddChildrenToClassHandler, name='addChild'),
+    webapp2.Route('/profile', ProfileHandler, name='profile'),
+
+    # Other Pages    
+    webapp2.Route('/home', HomePageHandler, name='home'),
+    webapp2.Route('/portal/', PortalPageHandler, name='portal'),    
+    webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
+
+    # Not Used Pages    
+    webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
+    webapp2.Route('/grades',GradesPageHandler, name='grades'),
+    webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),
+    webapp2.Route('/addPost', AddPostHandler, name='addPost'),
+
+
     webapp2.Route('/.*', NotFoundPageHandler)
 ], debug=True, config=config)

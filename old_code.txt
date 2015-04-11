@@ -1,0 +1,153 @@
+class ConferencePageHandler(MyHandler):
+
+    def get(self):
+        self.setupUser()
+        self.navbarSetup()
+        self.login_check()
+
+        dtls = self.request.get('dtls')
+        dscp = self.request.get('dscp')
+        ipv6 = self.request.get('ipv6')
+
+        roomkey = self.request.get('roomkey')
+        purpose = models.Conference.get_by_id(int(roomkey)).purpose
+        participants = models.Conference.get_by_id(int(roomkey)).participants
+        datetime = models.Conference.get_by_id(int(roomkey)).datetime
+        user_id = str(self.user_info['user_id'])
+        pc_constraints = make_pc_constraints(dtls, dscp, ipv6)
+
+        initiator = 'true';
+        conference = models.Conference.get_by_id(int(roomkey))
+        # if len(conference.currentLoggedInUsers) != 0:
+        # if conference.currentLoggedInUsers[0] != user_id:
+        # logging.warning("THIS IS THE INITIATOR")
+        # logging.warning(conference.participant_ids[0])
+        # logging.warning("THIS IS THE CURRENT USER")
+        # logging.warning(user_id)
+        # logging.warning()
+
+        if int(user_id) == int(conference.participant_ids[0]):
+            initiator = 'false';
+
+        identifier = roomkey + user_id
+        token = channel.create_channel(identifier)
+        self.templateValues['token'] = token
+
+        audio_receive_codec = self.request.get('arc')
+        if not audio_receive_codec:
+            audio_receive_codec = get_preferred_audio_receive_codec()
+
+        user_agent = self.request.headers['User-Agent']
+        audio_send_codec = self.request.get('asc')
+        if not audio_send_codec:
+            audio_send_codec = get_preferred_audio_send_codec(user_agent)
+
+        self.templateValues['user'] = self.user
+        self.templateValues['title'] = 'Conferencing | ClassTrack'
+        self.templateValues['purpose'] = purpose
+        self.templateValues['participants'] = participants
+        self.templateValues['datetime'] = datetime
+        self.templateValues['roomkey'] = roomkey
+        self.templateValues['user_id'] = user_id
+        self.templateValues['audio_send_codec'] = audio_send_codec
+        self.templateValues['audio_receive_codec'] = audio_receive_codec
+        self.templateValues['pc_constraints'] = pc_constraints
+        self.templateValues['initiator'] = initiator
+        self.render('conference.html')
+
+    def post(self):
+        roomkey = self.request.get('roomkey')
+        user_id = self.request.get('user_id')
+        # logging.info("value of my roomkey is %s", str(roomkey))
+        conference = models.Conference.get_by_id(int(roomkey))
+        # logging.warning("User " + user_id + " has logged in")
+        # conference.currentLoggedInUsers.append(user_id)
+        # conference.put()
+        message = self.request.body
+        # logging.info("Message is %s", str(message))
+        for u_id in conference.currentLoggedInUsers:
+            if u_id != user_id:
+                channel.send_message(roomkey+u_id, message)
+            # channel.send_message(roomkey+user_id, message)
+            # channel.send_message(roomkey+user, '{"one" : "1", "two" : "2", "three" : "3"}')
+            
+        # logging.warning("================ HELLO WORLD =================")
+
+        # token = channel.create_channel(identifier)
+        # self.templateValues['token'] = token
+
+        # channel.send_message(identifier, "Hello World, from " + user_id)
+        # if len(room.currentLoggedInUsers) != 0:
+        #     send_to = room.currentLoggedInUsers[0]
+        #     channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # else:
+        #     send_to = user_id
+            # channel.send_message(roomkey + send_to, "Hello World, from " + user_id)
+        # message = self.request.get('message')
+        # if message:
+        #     channel.send_message(1, message)
+        # self.render('conference.html')
+
+
+
+
+========================================
+========================================
+========================================
+
+
+class ConferenceMessageChannelHandler(MyHandler):
+    def get(self):
+        self.templateValues = {}
+        self.render('ConferenceMessageChannel.html')
+
+    def post(self):
+        self.templateValues = {}
+        user_id = self.request.get('user_id')
+        # channel.create_channel(user_id);
+        message = self.request.body
+        user_query = models.User.query()
+        channel.send_message(identifier, "Hello World, from " + user_id)
+        # for x in range(0,60):
+        #     time.sleep(1)
+        #     for user in user_query:
+        #         channel.create_channel(user.auth_ids[0]);
+        #         channel.send_message(user.auth_ids[0], message)
+        # channel.send_message(self.user_info['auth_ids'][0], message)
+        self.render('ConferenceMessageChannel.html')
+
+
+
+class ChannelConnectionHandler(MyHandler):
+    def post(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        conference = models.Conference.get_by_id(int(roomkey))
+        if user_id not in conference.currentLoggedInUsers:
+            conference.currentLoggedInUsers.append(user_id)
+            conference.put()
+
+
+class ChannelDisconnectionHandler(MyHandler):
+    def get(self):
+        self.setupUser()
+        logging.warning(self.request.get('from'))
+        user_id = self.request.get('user_id')
+        roomkey = self.request.get('roomkey')
+        logging.warning("THIS IS THE ROOMKEY")
+        logging.warning(roomkey)
+        conference = models.Conference.get_by_id(int(roomkey))
+        conference.currentLoggedInUsers.remove(user_id)
+        conference.put()
+
+
+========================================
+========================================
+========================================
+

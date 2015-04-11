@@ -28,32 +28,18 @@
 
 	<body>
 
-        {% if error %}
-	      <div class="alert alert-warning" style=""><p> {{ error }} </p></div>
-	    {% else %}
-    
-		<form role="form" action="/addMessage" method="POST" onSubmit="return window.checkValidity();">
-		  <div class="form-group">
-		    <label for="purpose">Subject:</label>
-		    <input class="form-control" type="text" name="purpose" placeholder="Subject" id="purpose-input"></input>
-		  </div>
-		  <div class="form-group">
-		    <label for="participants">Select a Participant:</label>
-				<select id ="participant-select" name="participants"></select>
-		  </div>
-		  <div class="form-group">
-		      <label for="Message">Message:</label>
-		      <textarea class="form-control" placeholder="Message" id ="Message" name = "message"></textarea>
-          </div>
-
-		  <button type="submit" class="btn btn-default">Submit</button>
-		</div>
+		<center><h1>Select a Course </h1></center>
+		<center>
+		<form action="/selectChildMenu" method="GET">
+            <input type="hidden" name="source" value= "{{source}}">
+			<select name="course" id="dropdown"></select>
+			<button type="submit">Submit</button>
 		</form>
+		</center>
 		<script>
-			function populateList()
-			{
-				var list = {{ participantList | safe }}
-				var dropdown = $('#participant-select');
+			$(document).ready(function(){
+				var list = {{ courses | safe }}
+				var dropdown = $('#dropdown');
 				for(var i = 0; i < list.length; i++)
 				{
 					dropdown.append($("<option></option>")
@@ -61,12 +47,8 @@
       				.text(list[i]['name']));
 
 				}
-			}
-
-			$(document).ready(function(){
-				populateList();
 			});
 		</script>
-	    {% endif %}
+
 	</body>
 	</html>
