@@ -71,8 +71,13 @@ function addChild(student_id){
     url: "/addChild",
     type: "POST",
     data: { student_id : student_id },
-    success: function(){
-      $("#message").html("You have been successfully linked!")
+    success: function(info){
+      if(info){
+        $("#message").html(info);
+      }
+      else{
+        $("#message").html("You have been successfully linked!");
+      }
     },
     error: function(){
       $("#message").html("We're sorry, something went wrong.")

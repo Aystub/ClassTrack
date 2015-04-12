@@ -122,7 +122,7 @@ class MyHandler(webapp2.RequestHandler):
                 children_query = models.User.query(models.User.key.IN(children_ids))
                 self.templateValues['children_list'] = children_query
 
-            
+
         else:
             self.templateValues['login'] = '/login'
             self.templateValues['signup'] = '/signup'
@@ -494,9 +494,9 @@ class ForgotPasswordHandler(MyHandler):
         """.format(name=user.first_name, link=verification_url)
 
         mail.send_mail(sender_address, user_address, subject, body)
-        msg = 'Send an email to user in order to reset their password. They will be able to do so by visiting <a href="{url}">{url}</a>'
+        msg = 'Reset link has been sent to {email}'
 
-        self.display_message(msg.format(url=verification_url))
+        self.display_message(msg.format(email=username))
 
 class LoginPageHandler(MyHandler):
     def get(self):
@@ -1035,10 +1035,13 @@ class AddChildHandler(MyHandler):
         student_id = self.request.get("student_id")
         student = models.User.query(models.User.auth_ids==student_id).fetch()[0]
         this_user = self.user
-        this_user.family.append(student.key)
-        this_user.put()
-        student.family.append(this_user.key)
-        student.put()
+        if student.key not in this_user.family:
+            this_user.family.append(student.key)
+            this_user.put()
+            student.family.append(this_user.key)
+            student.put()
+        else:
+            self.response.write("Sorry, you have already been linked to that child.")
 
 class LookupChildHandler(MyHandler):
     def post(self):
@@ -1323,7 +1326,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
     webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
     webapp2.Route('/post', PostHandler, name='post'),
-    
+
     # Registration Handlers
     webapp2.Route('/signup', SignupPageHandler),
     webapp2.Route('/childRegistration', ChildRegistrationHandler, name='childRegistration'),
@@ -1340,7 +1343,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/selectCourseMenu',SelectCourseMenuHandler, name='selectCourseMenu'),
     webapp2.Route('/selectChildMenu',SelectChildMenuHandler, name='selectChildMenu'),
 
-    # Dummy Data Create Functions    
+    # Dummy Data Create Functions
     webapp2.Route('/makeNDB',dummyHandlers.InitNDBHandler, name='initNDB'),
     webapp2.Route('/makeDummyChildren', dummyHandlers.MakeDummyChildrenHandler, name="makeDummyChildren"),
 
@@ -1363,12 +1366,12 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/addChildrenToClass', AddChildrenToClassHandler, name='addChild'),
     webapp2.Route('/profile', ProfileHandler, name='profile'),
 
-    # Other Pages    
+    # Other Pages
     webapp2.Route('/home', HomePageHandler, name='home'),
-    webapp2.Route('/portal/', PortalPageHandler, name='portal'),    
+    webapp2.Route('/portal/', PortalPageHandler, name='portal'),
     webapp2.Route('/profileEdit', EditProfileHandler, name='profileEdit'),
 
-    # Not Used Pages    
+    # Not Used Pages
     webapp2.Route('/calendar',CalendarPageHandler, name='calendar'),
     webapp2.Route('/grades',GradesPageHandler, name='grades'),
     webapp2.Route('/classSelect',ClassSelectPageHandler, name='classselect'),

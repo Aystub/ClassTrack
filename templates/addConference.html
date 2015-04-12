@@ -19,10 +19,16 @@
 		<script src="/assets/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="/assets/js/timepicker/jquery.timepicker.js"></script>
         <link rel="stylesheet" href="/assets/js/timepicker/jquery.timepicker.css" type="text/css" media="screen" />
-        <script type="text/javascript" src="/assets/js/datepicker/js/bootstrap-datepicker.js"></script>
+        <script type="text/javascript" src="/assets/js/datepicker/js/bootstrap-datepicker.min.js"></script>
         <link rel="stylesheet" href="/assets/js/datepicker/css/datepicker.css" type="text/css" media="screen" />
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 		<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+
+		<style>
+		#timePickerDiv{
+			display:none;
+		}
+		</style>
 
 	</head>
 
@@ -32,22 +38,31 @@
 	      <div class="alert alert-warning" style=""><p> {{ error }} </p></div>
 	    {% else %}
 		<form role="form" action="/addConference" method="POST" onSubmit="return window.checkValidity();">
-		  <div class="form-group">
-		    <label for="purpose">Purpose of Meeting:</label>
-		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting" id="purpose-input"></input>
+			<label for="purpose">Purpose of Meeting:</label>
+			<div class="form-group input-group">
+				<span class="input-group-addon" id="purpose-addon"><span class="glyphicon glyphicon-bookmark"></span></span>
+		    <input class="form-control" type="text" name="purpose" placeholder="Purpose of Meeting" id="purpose-input" aria-describedby="purpose-addon"></input>
 		  </div>
-		  <div class="form-group">
-		    <label for="participants">Select a Participant:</label>
-				<select id ="participant-select" name="participants"></select>
+
+			<label for="participants">Select a Participant:</label>
+		  <div class="form-group input-group">
+				<span class="input-group-addon" id="person-addon"><span class="glyphicon glyphicon-user"></span></span>
+				<select id ="participant-select" class="form-control" name="participants"  aria-describedby="person-addon"></select>
 		  </div>
-		  <div class="form-group">
-		      <label for="date">Date:</label>
-		      <input id ="datePicker" class="form-control" size="16" type="text" name="date" readonly="readonly">
-		</div>
-  		  <div class="form-group">
-		      <label for="time">Time:</label>
-		      <input id="timePicker" type="text" class="form-control" name="time"></input>
-		  </div>
+
+			<label for="date">Date:</label>
+		  <div class="form-group input-group">
+					<span class="input-group-addon" id="date-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+		      <input id ="datePicker" class="form-control" size="16" type="text" name="date" aria-describedby="date-addon">
+			</div>
+
+			<div id="timePickerDiv">
+				<label for="time">Time:</label>
+			  <div class="form-group input-group">
+					<span class="input-group-addon" id="time-addon"><span class="glyphicon glyphicon-time"></span></span>
+		      <input id="timePicker" type="text" class="form-control" name="time" aria-describedby="time-addon">
+		  	</div>
+			</div>
 
 		  <button type="submit" class="btn btn-default">Submit</button>
 		</div>
@@ -72,26 +87,56 @@
 				$('#timePicker').timepicker({
 					'disableTimeRanges':[
 				        ['12am', '6am']
-						// ['8am', '3pm']
 					]
 				});
-				$.fn.datepicker.defaults.format = "mm/dd/yyyy";
-				$('#timePicker').timepicker('option', { useSelect: true });
+
 				$('#datePicker').datepicker({
+					startDate: "0d",
+    			autoclose: true,
+    			todayHighlight: true
 				});
-				var d = new Date();
-				var month = d.getMonth()+1;
-				var day = d.getDate();
-				// var output = d.getFullYear() + '/' +
-				//     (month<10 ? '0' : '') + month + '/' +
-				//     (day<10 ? '0' : '') + day;
-				//  $("#date-input").text(output);
+
+				$("#datePicker").on('change', function(){
+					if(validDate($("#datePicker").val())){
+						$("#timePickerDiv").show(0);
+
+						//Find current time
+						var d = new Date();
+						var hours = d.getHours();
+						var minutes = d.getMinutes();
+						var ampm = "am";
+						if (hours > 12){
+							hours = hours - 12;
+							ampm = "pm";
+						}
+
+						if(minutes > 0 && minutes < 30){
+							minutes = ":30";
+						}
+						else{
+							hours++;
+							minutes = ":00";
+						}
+
+						var time = "" + hours + minutes + ampm;
+
+						//check if date selected is today
+						if(isToday($("#datePicker").val())){
+							$('#timePicker').timepicker('option', {'minTime': time, 'maxTime': '11:30pm', 'useSelect': true});
+						}
+						else{
+							$('#timePicker').timepicker('option', {'minTime': '6:00am', 'maxTime': '11:30pm', 'useSelect': true});
+						}
+						$(".ui-timepicker-select").attr("class", "ui-timepicker-select form-control");
+						$(".ui-timepicker-select").attr("aria-describedby", "time-addon");
+					}
+				});
+
 			});
-			function checkValidity()
-			{
-				if($("#datePicker").val() == "")
-				{
-					alert("Please choose a date for the conference");
+
+			function checkValidity(){
+				if(!validDate($("#datePicker").val())){
+					alert("Please enter a valid time in the format: 'mm/dd/yyyy'");
 					return false;
 				}
 				else if($("#purpose-input").val() == "")
@@ -103,6 +148,27 @@
 				{
 					return true;
 				}
+			}
+
+			function validDate(date){
+				if(date != "" && date.length == 10 && date.charAt(2) == '/' && date.charAt(5) == '/'){
+					return true;
+				}
+				else{
+					return false;
+				}
+			}
+
+			function isToday(date){
+				var today = new Date();
+				var month = today.getMonth()+1;
+				var day = today.getDate();
+				var year = today.getFullYear();
+
+				if(date.substring(0,2) == month && date.substring(3,5) == day && date.substring(6,10) == year){
+					return true;
+				}
+				return false;
 			}
 		</script>
 	    {% endif %}
