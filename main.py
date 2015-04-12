@@ -799,8 +799,8 @@ class AddConferencePageHandler(MyHandler):
         other_user.put()
 
 
-        other_full_name = other_user.first_name + other_user.last_name
-        user_full_name = self.user.first_name + self.user.last_name
+        other_full_name = other_user.first_name + " " + other_user.last_name
+        user_full_name = self.user.first_name + " " + self.user.last_name
 
         #Email to Inviter
         sender_address="classtracknoreply@gmail.com"
@@ -876,7 +876,10 @@ class DelConferenceHandler(MyHandler):
         ##Todo: Validate Key ID
         key = self.request.get('roomkey')
         key2 = ndb.Key('Conference', int(key))
+        self.user.meetings.remove(key2)
+        self.user.put()
         key2.delete()
+
 
         ##Todo: Delete References in User Lists
         self.redirect('conferenceSchedule')
@@ -1152,8 +1155,8 @@ class ClassManagementHandler(MyHandler):
     def get(self):
         self.setupUser()
         courseList = []
-        if self.user.course_list:
-            teacherCourseList = self.user.course_list
+        if self.user.courseList:
+            teacherCourseList = self.user.courseList
             for course in teacherCourseList:
                 data = course.get()
                 entry = {}
@@ -1252,7 +1255,7 @@ class SelectCourseMenuHandler(MyHandler):
             else:
                 self.render('404.html')
 
-            courses = self.user.course_list
+            courses = self.user.courseList
             courseList = []
             for course in courses:
                     entry = {}
