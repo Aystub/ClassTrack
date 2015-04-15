@@ -59,7 +59,8 @@
 						<div class="col-md-6">
 							<form method="GET" action="http://54.164.63.7:9000/">
 								<input type="hidden" name="roomkey" value={{conference.id()}}>
-								<input type="hidden" name="name" value={{ conference.first_name }}>
+								<input type="hidden" name="first_name" value={{ user.first_name }}>
+								<input type="hidden" name="last_name" value={{ user.last_name }}>
 
 								<input class="btn btn-default btn-block" type="submit" value="Enter">
 							</form>

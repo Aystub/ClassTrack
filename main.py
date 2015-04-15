@@ -696,6 +696,7 @@ class ConferenceSchedulerPageHandler(MyHandler):
                         names += ', '
                 part_list_inv.append(names)
         self.templateValues['user'] = self.user
+        self.templateValues['Name'] = self.user.first_name + " " + self.user.last_name
         self.templateValues['title'] = 'Schedule a Conference | ClassTrack'
         self.templateValues['conference_list'] = conference_list
         self.templateValues['conference_list_inv'] = invite_list
