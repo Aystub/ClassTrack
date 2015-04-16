@@ -1149,7 +1149,8 @@ class EditProfileHandler(MyHandler):
     def get(self):
         self.setupUser()
         self.navbarSetup()
-        testText = 'test of varaible passing'
+        school = self.user.school
+        self.templateValues['school'] = school[0].get().name # We are currently assuming parents only have 1 school
         self.render('profileEdit.html')
 
 class ClassManagementHandler(MyHandler):
