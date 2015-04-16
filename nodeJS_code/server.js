@@ -1,8 +1,3 @@
-//var app = require('express')();
-//var http = require('http').Server(app);
-//var io = require('socket.io')(http);
-//var path = require('path');
-
 var express = require('express');
 var path = require('path');
 var app = express();
@@ -13,24 +8,11 @@ app.engine('html', require('ejs').renderFile);
 app.use(express.static(__dirname + '/public'));
 app.set('view engine', 'ejs');
 var port = 9000;
-// Twilio Variables
-// Download the Node helper library from twilio.com/docs/node/install
-// These vars are your accountSid and authToken from twilio.com/user/account
-//var accountSid = 'ACcb6772c21e4a877a59724e4ae0fe3313';
-//var authToken = '947e6e10dedfbc614af87e6bc24131d0';
-//var client = require('twilio')(accountSid, authToken);
-
 
 
 // Server variables
 var roomsContainer = {};
 
-
-
-  app.get('/home', function(request, response){
-    templateVariables = {}
-    response.render('home', templateVariables);
-  });
 
 
 app.get('/', function(request, response){
@@ -127,6 +109,10 @@ io.on('connection', function(socket){
       if(roomsContainer[socket.room]['users'].length == 0)
       {
         delete roomsContainer[socket.room];
+      }
+      else if(roomsContainer[socket.room]['users'].length == 1)
+      {
+        io.to(socket.room).emit('resetInitiator', {});
       }
     }
     console.log(roomsContainer);

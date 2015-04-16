@@ -406,16 +406,6 @@
 
 
     function endCall() {
-        //msgString = '';
-        //console.log('Client to Server: {{user_id}} has disconnected');
-        //path = '/_ah/channel/disconnected/?roomkey=' + roomkey + '&user_id=' + {
-        //    {
-        //        user_id
-        //    }
-        //};
-        //var xhr = new XMLHttpRequest();
-        //xhr.open('GET', path, true);
-        //xhr.send(msgString);
         socket.emit('disconnect', {roomkey: roomkey ,user_id: user_id});
         localStream = null;
         localVideo.src = null;

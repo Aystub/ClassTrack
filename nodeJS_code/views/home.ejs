@@ -19,6 +19,8 @@
   <link rel="stylesheet" type="text/css" href="css/chatroom_demo.css">
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="node_modules/simplewebrtc/simplewebrtc.bundle.js"></script>
+
 
 </head>
 <body>
@@ -50,12 +52,15 @@
 
     <div class="row">
     <!-- Has to be on one line due to whitespace being included -->
-      <div class="col-md-6" id="video_container"><video id="localVideo" autoplay style="background-color:#FFF"></video></div><div class="col-md-6" id="remote_video_container"><video id="remoteVideo" autoplay style="background-color:#FFF"></div> 
+      <!-- <div class="col-md-6" id="video_container"><video id="localVideo" autoplay style="background-color:#FFF"></video></div><div class="col-md-6" id="remote_video_container"><video id="remoteVideo" autoplay style="background-color:#FFF"></div>  -->
+
+        <video height="300" id="localVideo"></video>
+        <div id="remote_video_container"></div>
     </div>
     <div class="row video_controls">
-        <button id="connect_button" class="custom_button" onclick="initialize()">Connect</button>
+        <!-- <button id="connect_button" class="custom_button" onclick="initialize()">Connect</button> -->
         <!-- <button id="mute_button" class="custom_button" onclick="mute()">Mute</button>-->
-        <button id="disconnect_button" class="custom_button" onclick="endCall()">Disconnect</button>
+        <!-- <button id="disconnect_button" class="custom_button" onclick="endCall()">Disconnect</button> -->
         <!-- <button id="screen_sharing_button" class="custom_button" onclick="shareScreen()">Screen Sharing</button> -->
 
     </div>
@@ -63,15 +68,7 @@
     
       
 
-<!--
-    <div class="row" id="conference_properties">
-      <div class="alert alert-success col-md-12" role="alert">
-          <div class="col-md-4"><%= user_id %> </div>
-          <div class="col-md-4"><%= name %></div>
-          <div class="col-md-4"><%= roomkey %></div>
-        </div>
-    </div>
--->
+
     <div class="row" style="width:50%; margin-left: auto; margin-right: auto">
       <form id="chatform">
       <input style="width:100%" type="text" id="chatText"></input>
@@ -93,115 +90,28 @@
         <script src="js/jquery.js"></script>
         <script src="js/modernizr-latest.js"></script>
         <script src="js/adapter.js"></script>
-        <script>
-            debugAlerts = false;
-            var socket = io();
-            var roomkey = <%= roomkey %>;
-            var user_id = '<%= user_id %>';
-            var name = '<%= name %>';
-            var roomMembers =  <%- JSON.stringify(roomMembers) %>['members']; 
-            var initiator = <%= initiator %>;
-            var audio_receive_codec = '<%= audio_receive_codec %>';
-            var audio_send_codec = '<%= audio_send_codec %>';
-            console.log(roomMembers);
 
-            $(document).ready(function(){
-
-            socket.emit('user_id set', user_id);
-            socket.emit('name set', name);
-            socket.emit('join room', roomkey);
-            
-             //console.log("This is the user_id: " + user_id);
-
-             
-
-      for(var x = 0; x < roomMembers.length; x++)
-      {
-         $('#chatMembersList').append('<li class="chatMemberElement">' + roomMembers[x] + '</li>');
-      }
+<script>
+  var webrtc = new SimpleWebRTC({
+    // the id/element dom element that will hold "our" video
+    localVideoEl: 'localVideo',
+    // the id/element dom element that will hold remote videos
+    remoteVideosEl: 'remotesVideos',
+    // immediately ask for camera access
+    autoRequestMedia: true,
+    url: '52.5.194.210:8080'
+  });
 
 
-     $("#chatform").submit(function(e)
-     {
-       e.preventDefault();
-       socket.emit('send chat message', $('#chatText').val());
-       $('#chatText').val('');
-
-       $("#chatbox").animate({ scrollTop: $("#chatbox")[0].scrollHeight}, 1000);
-
-
-     });
-
-     socket.on('receive chat message', function(data){
-       $('#chatbox').append('<b>' + data.name + ': </b>' + data.msg + '<br/>');
-
-       $("#chatbox").animate({ scrollTop: $("#chatbox")[0].scrollHeight}, 1000);
-
-
-     });
-
-     socket.on('WebRTC message', function(message){
-       console.log('Server->Client: ' + message.data);
-       var msg = message;
-       console.log('Server->Client: ' + JSON.stringify(msg));
-       if(msg.type === 'joined')
-       {
-         channelReady = true;
-         multipleParticipants = true;
-         if(initialized){
-           maybeStart();
-         }
-         else{
-           initialize();
-         }
-       }
-
-        // Since the turn response is async and also GAE might disorder the
-        // Message delivery due to possible datastore query at server side,
-        // So callee needs to cache messages before peerConnection is created.
-        if (!initiator && !started) {
-          if (msg.type === 'offer') {
-            // Add offer to the beginning of msgQueue, since we can't handle
-            // Early candidates before offer at present.
-            msgQueue.unshift(msg);
-            // Callee creates PeerConnection
-            signalingReady = true;
-            maybeStart();
-          } else {
-            msgQueue.push(msg);
-          }
-        } else {
-          processSignalingMessage(msg);
-        }
-    });
-
-    socket.on('joined', function(data){
-      //alert(msg.name + " joined");
-      //$('#chatMembersList').append('<li class="chatMemberElement">' + data.name + '</li>');
-      $('#chatbox').append('<b> ' + data.name + ' has joined the room! </b><br/>');
-    });
-
-    socket.on('disconnect', function(data){
-      var name = data.name;
-      $("li:contains('"+name+"')").remove();
-      $('#chatbox').append('<b>' + name + ' has left the room </b><br/>');
-      handleDisconnect();
-    });
-
-    socket.on('member list', function(members){
-      $('#chatMembersList').empty();
-      $('#chatMembersList').append('<li><strong>Current Members: </strong></li>');
-      for(var x = 0; x < members.length; x++)
-      {
-        $('#chatMembersList').append('<li class="chatMemberElement">' + members[x] + '</li>');
-      }
-      //$('#chatbox').append('<b>' + members[members.length-1] + ' has joined! </b> <br/>');
-    });
-    initialized = true; 
-  }); // ------ Ends $(document).ready -----
+  // we have to wait until it's ready
+  webrtc.on('readyToCall', function () {
+    // you can name it anything
+    webrtc.joinRoom('cupcake');
+  });
 
 </script>
-<script src="js/WebRTC.js"></script>
+
+<!-- <script src="js/WebRTC.js"></script>-- >
 
 
 
@@ -220,6 +130,7 @@
   <script src="js/bootstrap.min.js"></script>
   <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
   <script src="js/ie10-viewport-bug-workaround.js"></script>
+
 
 </body>
 </html>

@@ -63,15 +63,6 @@
     
       
 
-<!--
-    <div class="row" id="conference_properties">
-      <div class="alert alert-success col-md-12" role="alert">
-          <div class="col-md-4"><%= user_id %> </div>
-          <div class="col-md-4"><%= name %></div>
-          <div class="col-md-4"><%= roomkey %></div>
-        </div>
-    </div>
--->
     <div class="row" style="width:50%; margin-left: auto; margin-right: auto">
       <form id="chatform">
       <input style="width:100%" type="text" id="chatText"></input>
@@ -103,7 +94,6 @@
             var initiator = <%= initiator %>;
             var audio_receive_codec = '<%= audio_receive_codec %>';
             var audio_send_codec = '<%= audio_send_codec %>';
-            console.log(roomMembers);
 
             $(document).ready(function(){
 
@@ -124,7 +114,8 @@
      $("#chatform").submit(function(e)
      {
        e.preventDefault();
-       socket.emit('send chat message', $('#chatText').val());
+       var parsedChat = $('#chatText').val().replace("<", "&lt").replace(">", "&gt");
+       socket.emit('send chat message', parsedChat);
        $('#chatText').val('');
 
        $("#chatbox").animate({ scrollTop: $("#chatbox")[0].scrollHeight}, 1000);
@@ -173,6 +164,10 @@
         } else {
           processSignalingMessage(msg);
         }
+    });
+
+    socket.on('resetInitiator', function(data){
+      initiator = 0;
     });
 
     socket.on('joined', function(data){
