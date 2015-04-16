@@ -877,12 +877,28 @@ class DelConferenceHandler(MyHandler):
         ##Todo: Validate Key ID
         key = self.request.get('roomkey')
         key2 = ndb.Key('Conference', int(key))
-        self.user.meetings.remove(key2)
-        self.user.put()
+        conf = key2.get()
+        #loop through the conference invited and accepted list
+        if(conf.participants):
+            meeting_list = []
+            for user in conf.participants:
+                this_user = user.get()
+                meeting_list = this_user.meetings
+                meeting_list.remove(key2)
+                this_user.meetings = meeting_list
+                this_user.put()
+        if(conf.invited):
+            meeting_list = []
+            for user in conf.invited:
+                this_user = user.get()
+                meeting_list = this_user.invited
+                meeting_list.remove(key2)
+                this_user.invited = meeting_list
+                this_user.put()
+
+
+
         key2.delete()
-
-
-        ##Todo: Delete References in User Lists
         self.redirect('conferenceSchedule')
 
 class ContactTeacherPageHandler(MyHandler):
