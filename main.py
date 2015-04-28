@@ -910,8 +910,9 @@ class ContactTeacherPageHandler(MyHandler):
         self.login_check()
 
         #message_list = models.MessageThread.query().order(-models.MessageThread.time)
-        message_list = self.user.messages
-        self.templateValues['message_list'] = message_list
+        if self.user.messages:
+            message_list = self.user.messages
+            self.templateValues['message_list'] = message_list
         #self.response.write(self.user.key)
         self.render('messaging.html')
 
